@@ -2337,17 +2337,22 @@
 
         // Check if user is logged in
         function checkLogin() {
+            // Always show the login screen — never auto-skip into the course,
+            // even if a previous session exists in this browser.
+            document.getElementById('loginModal').classList.remove('hidden');
+
+            // Convenience only: pre-fill the last-used name so returning users
+            // just click "Begin Course" instead of retyping — but the login
+            // screen itself is never skipped.
             const savedUser = localStorage.getItem('drugDiscoveryCurrentUser');
             if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                document.getElementById('userAvatar').textContent = currentUser.username.charAt(0).toUpperCase();
-                document.getElementById('loginModal').classList.add('hidden');
-                srsLoad();
-                adaptiveLoad();
-                updateReviewFab();
-                initializeCourse();
-            } else {
-                document.getElementById('loginModal').classList.remove('hidden');
+                try {
+                    const prev = JSON.parse(savedUser);
+                    const input = document.getElementById('username');
+                    if (input && prev.username && prev.username !== 'Guest') {
+                        input.value = prev.username;
+                    }
+                } catch(e) {}
             }
         }
 
@@ -4578,21 +4583,44 @@
         let realTimeAccum     = 0;      // seconds elapsed before most recent play
         const SLIDE_SIZE      = 4;
 
-        // Chrome TTS keep-alive: Chrome silently pauses speechSynthesis after ~14s
+        // Chrome TTS keep-alive + stall detector.
+        // Chrome has a well-known bug where speechSynthesis silently hangs
+        // (speaking stays true but no audio/callbacks ever fire again),
+        // especially on long sessions or after the tab loses focus.
+        // Fix: proactively "kick" the engine with pause+resume on every tick,
+        // and force-restart the current sentence if too long passes with no progress.
         let _chromeFix = null;
+        let _lastSpeechProgress = 0;
+
         function startChromeFix() {
             stopChromeFix();
+            _lastSpeechProgress = Date.now();
             _chromeFix = setInterval(function() {
                 if (!isPlaying) return;
-                // If Chrome paused us, resume
-                if (speechSynthesis.speaking && speechSynthesis.paused) {
+
+                // Proactive kick: pause immediately followed by resume forces
+                // Chrome's speech engine to stay responsive even when it
+                // would otherwise silently stall.
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.pause();
                     speechSynthesis.resume();
                 }
-                // Fallback: if supposed to be playing but nothing is speaking, re-trigger
-                if (isPlaying && !speechSynthesis.speaking && !speechSynthesis.pending) {
+
+                // If nothing is speaking or queued at all, restart the current sentence
+                if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+                    speakSentence();
+                    return;
+                }
+
+                // Stall detector: if too much time has passed since the last
+                // onstart/onend event fired, the engine has silently hung.
+                // Force a clean restart of the current sentence.
+                if (Date.now() - _lastSpeechProgress > 18000) {
+                    speechSynthesis.cancel();
+                    _lastSpeechProgress = Date.now();
                     speakSentence();
                 }
-            }, 10000);
+            }, 5000);
         }
         function stopChromeFix() {
             if (_chromeFix) { clearInterval(_chromeFix); _chromeFix = null; }
@@ -4872,8 +4900,9 @@
                     '<span class="wr-pending">' + pnd.replace(/</g,'&lt;') + '</span>';
             };
 
-            utterance.onstart = () => { setAvatarSpeaking(true); };
+            utterance.onstart = () => { _lastSpeechProgress = Date.now(); setAvatarSpeaking(true); };
             utterance.onend = () => {
+                _lastSpeechProgress = Date.now();
                 // Show full sentence text when done
                 const slideIdx  = Math.floor(currentSentenceIndex / SLIDE_SIZE);
                 const bulletIdx = currentSentenceIndex - slideIdx * SLIDE_SIZE;
@@ -4902,12 +4931,14 @@
             };
 
             utterance.onerror = (e) => {
+                _lastSpeechProgress = Date.now();
                 if (e.error === 'interrupted' || e.error === 'canceled') return;
                 stopMouthAnim(); // stop mouth during retry gap
                 setTimeout(() => { if (isPlaying) speakSentence(); }, 400);
             };
 
             currentUtterance = utterance;
+            _lastSpeechProgress = Date.now();
             speechSynthesis.speak(utterance);
         }
 
@@ -5016,6 +5047,22 @@
                 const fsBtn = document.getElementById('fullscreenBtn');
                 if (fsBtn) fsBtn.title = 'Fullscreen';
             }
+        });
+
+        // Recover narration if the browser throttled/suspended it while the
+        // tab was backgrounded, then the learner switches back to this tab.
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) return;
+            if (!isPlaying) return;
+            setTimeout(() => {
+                if (!isPlaying) return;
+                if (speechSynthesis.paused) {
+                    speechSynthesis.resume();
+                } else if (!speechSynthesis.speaking && !speechSynthesis.pending) {
+                    speakSentence();
+                }
+                _lastSpeechProgress = Date.now();
+            }, 200);
         });
 
         function changeSpeed(val) {
