@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="devtools-guard.js"></script>
+<title>Module 4: Key Terminologies | Excelra</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f8fb;
+    --accent: #2757d6;
+    --accent-soft: rgba(39,87,214,0.08);
+    --accent-glow: rgba(39,87,214,0.18);
+    --highlight: #c2410c;
+    --ink: #16181d;
+    --ink-soft: #3a4150;
+    --muted: #6b7280;
+    --border: #e5e9f0;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; }
+
+  /* Quiet backdrop — a faint fixed grid instead of the old dark particle
+     animation, which read as generic "AI slide deck" rather than course material. */
+  #bgCanvas { position:fixed; inset:0; z-index:0;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px; opacity:0.5;
+  }
+  .vignette { display:none; }
+
+  #startScreen {
+    position:fixed; inset:0; z-index:100; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; background:var(--bg);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  #startScreen.hidden { opacity:0; transform:scale(1.05); pointer-events:none; }
+  .start-badge {
+    display:inline-flex; align-items:center; gap:8px; padding:6px 18px;
+    border:1px solid var(--border); border-radius:100px; font-size:12px;
+    font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
+    margin-bottom:32px; background:var(--accent-soft);
+  }
+  .start-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+  .start-module { font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:600; color:var(--muted); letter-spacing:4px; text-transform:uppercase; margin-bottom:12px; }
+  .start-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(32px,5.5vw,60px); font-weight:700; line-height:1.15; text-align:center; max-width:800px; margin-bottom:16px; color:var(--ink); }
+  .start-title .accent { color:var(--accent); }
+  .start-sub { font-size:17px; color:var(--muted); max-width:520px; text-align:center; line-height:1.6; margin-bottom:44px; font-weight:400; }
+  .start-btn {
+    position:relative; display:inline-flex; align-items:center; gap:12px;
+    padding:16px 40px; border:none; border-radius:10px; cursor:pointer;
+    background: var(--accent); color:#fff;
+    font-family:'Inter',sans-serif; font-size:16px; font-weight:700; letter-spacing:0.3px;
+    transition: all 0.2s ease; box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .start-btn:hover { transform:translateY(-1px); box-shadow: 0 8px 22px var(--accent-glow); }
+  .start-btn:active { transform:scale(0.98); }
+  .start-btn i { font-size:14px; }
+  .start-brand { position:absolute; bottom:36px; display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px; font-weight:500; }
+
+  #presentation {
+    position:fixed; inset:0; z-index:10; display:flex; align-items:center;
+    padding:0 8vw; opacity:0; transition:opacity 0.5s ease; pointer-events:none;
+    background:var(--bg);
+  }
+  #presentation.active { opacity:1; pointer-events:auto; }
+  .slide-num {
+    position:absolute; left:5vw; top:50%; transform:translateY(-50%);
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(90px,16vw,220px);
+    font-weight:800; color:var(--surface); line-height:1; pointer-events:none;
+    transition: opacity 0.5s ease, transform 0.5s ease; user-select:none;
+  }
+  .slide-num.fade-out { opacity:0; transform:translateY(-50%) scale(0.9); }
+  .slide-content { position:relative; z-index:1; margin-left:clamp(80px,13vw,190px); max-width:720px; width:100%; }
+  .slide-label {
+    display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:700;
+    letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:20px;
+    opacity:0; transform:translateY(15px); transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+  .slide-label.visible { opacity:1; transform:translateY(0); }
+  .slide-label .line { width:24px; height:2px; background:var(--accent); border-radius:2px; }
+  .slide-title {
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(26px,3.4vw,42px);
+    font-weight:700; line-height:1.2; margin-bottom:30px; color:var(--ink);
+    opacity:0; transform:translateY(20px); transition: all 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s;
+  }
+  .slide-title.visible { opacity:1; transform:translateY(0); }
+  .slide-title .hl { color:var(--highlight); }
+
+  .bullet {
+    display:flex; gap:14px; margin-bottom:16px; opacity:0; transform:translateX(-16px);
+    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+    padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface);
+  }
+  .bullet.visible { opacity:1; transform:translateX(0); }
+  .bullet-icon {
+    flex-shrink:0; width:28px; height:28px; border-radius:8px; background:var(--accent-soft);
+    color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px;
+    margin-top:1px;
+  }
+  .bullet-text { font-size:clamp(14px,1.4vw,16px); line-height:1.65; color:var(--ink-soft); font-weight:400; }
+  .bullet-text .key { color:var(--highlight); font-weight:600; }
+  .bullet-text .em { color:var(--accent); font-weight:600; }
+
+  .title-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .title-slide .slide-title { font-size:clamp(30px,4.4vw,52px); margin-bottom:12px; }
+  .title-slide .slide-subtitle { font-size:clamp(15px,1.8vw,20px); color:var(--muted); font-weight:400; margin-bottom:8px; opacity:0; transform:translateY(15px); transition:all 0.6s ease 0.3s; }
+  .title-slide .slide-subtitle.visible { opacity:1; transform:translateY(0); }
+  .title-slide .slide-brand { font-size:13px; color:var(--accent); font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0; transition:all 0.6s ease 0.5s; }
+  .title-slide .slide-brand.visible { opacity:1; }
+
+  .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px; }
+  .summary-card {
+    padding:16px 18px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); opacity:0; transform:translateY(15px) scale(0.97);
+    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+  .summary-card.visible { opacity:1; transform:translateY(0) scale(1); }
+  .summary-card .sc-icon { font-size:17px; color:var(--accent); margin-bottom:8px; }
+  .summary-card .sc-text { font-size:13px; line-height:1.6; color:var(--ink-soft); }
+  .summary-card .sc-text .key { color:var(--highlight); font-weight:600; }
+
+  .closing-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
+
+  /* ── Diagram slide type: real pipeline / flow visual instead of bullets ── */
+  .slide-content.has-diagram { max-width:980px; }
+  .diagram-flow {
+    display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:nowrap;
+    gap:0; margin:8px 0 26px; overflow-x:auto; padding-bottom:6px;
+  }
+  .diagram-node {
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    flex:1 1 0; min-width:56px; max-width:120px;
+    opacity:0; transform:translateY(12px); transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .diagram-node.visible { opacity:1; transform:translateY(0); }
+  .diagram-node-icon {
+    width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+    background:var(--surface); border:1.5px solid var(--border); color:var(--muted); font-size:15px;
+    transition: all 0.3s ease; margin-bottom:8px; flex-shrink:0;
+  }
+  .diagram-node.current .diagram-node-icon { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 4px 14px var(--accent-glow); }
+  .diagram-node.done .diagram-node-icon { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .diagram-node-label { font-size:10px; font-weight:700; color:var(--ink-soft); line-height:1.3; }
+  .diagram-node.current .diagram-node-label { color:var(--accent); }
+  .diagram-arrow { color:var(--border); font-size:13px; margin:14px 1px 0; flex:0 0 auto; }
+  .diagram-arrow.done { color:var(--accent); }
+  .diagram-detail {
+    padding:16px 20px; border-radius:10px; background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+  }
+  .diagram-detail-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
+  .diagram-detail-text { font-size:clamp(14px,1.4vw,16px); line-height:1.65; color:var(--ink-soft); }
+  .diagram-detail-text .key { color:var(--highlight); font-weight:600; }
+  .diagram-detail-text .em { color:var(--accent); font-weight:600; }
+
+  .top-bar {
+    position:fixed; top:0; left:0; right:0; z-index:20; display:flex;
+    align-items:center; justify-content:space-between; padding:20px 32px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.75) 70%, transparent 100%);
+    opacity:0; transition:opacity 0.5s ease;
+  }
+  .top-bar.visible { opacity:1; }
+  .top-bar-left { display:flex; align-items:center; gap:10px; }
+  .top-bar-logo { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:var(--ink); letter-spacing:0.5px; }
+  .top-bar-logo span { color:var(--accent); }
+  .top-bar-right { display:flex; align-items:center; gap:16px; }
+  .module-chip {
+    padding:5px 14px; border-radius:100px; border:1px solid var(--accent); background:var(--accent-soft);
+    font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
+  }
+  .bottom-bar {
+    position:fixed; bottom:0; left:0; right:0; z-index:20; padding:0 32px 24px;
+    background:linear-gradient(0deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.85) 65%, transparent 100%);
+    opacity:0; transition:opacity 0.5s ease;
+  }
+  .bottom-bar.visible { opacity:1; }
+  .progress-track {
+    width:100%; height:5px; background:var(--border); border-radius:3px;
+    margin-bottom:18px; overflow:visible; cursor:pointer; position:relative;
+  }
+  .progress-fill {
+    height:100%; width:0%; border-radius:3px; background:var(--accent);
+    transition:width 0.4s ease; position:relative;
+  }
+  .progress-fill.scrubbing { transition:none; }
+  .progress-fill::after {
+    content:''; position:absolute; right:-6px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; border-radius:50%; background:var(--accent); border:2.5px solid #fff;
+    box-shadow:0 1px 4px rgba(0,0,0,0.25);
+  }
+  .controls-row { display:flex; align-items:center; justify-content:space-between; }
+  .controls-left { display:flex; align-items:center; gap:8px; }
+  .controls-right { display:flex; align-items:center; gap:12px; }
+  .ctrl-btn {
+    width:40px; height:40px; border:none; border-radius:10px; cursor:pointer;
+    background:var(--surface); color:var(--ink-soft); font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.2s ease; border:1px solid var(--border);
+  }
+  .ctrl-btn:hover { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .ctrl-btn.active { color:var(--accent); background:var(--accent-soft); border-color:var(--accent); }
+  .ctrl-btn.play-btn { width:48px; height:48px; border-radius:14px; font-size:16px; background:var(--accent); color:#fff; border-color:var(--accent); }
+  .ctrl-btn.play-btn:hover { background:#1e46b8; color:#fff; }
+  .audio-wave { display:flex; align-items:center; gap:3px; height:20px; margin-left:8px; }
+  .audio-wave .bar { width:3px; border-radius:3px; background:var(--accent); animation:wave 0.8s ease-in-out infinite; }
+  .audio-wave .bar:nth-child(1) { height:8px; animation-delay:0s; }
+  .audio-wave .bar:nth-child(2) { height:14px; animation-delay:0.15s; }
+  .audio-wave .bar:nth-child(3) { height:10px; animation-delay:0.3s; }
+  .audio-wave .bar:nth-child(4) { height:16px; animation-delay:0.1s; }
+  .audio-wave .bar:nth-child(5) { height:6px; animation-delay:0.25s; }
+  .audio-wave.paused .bar { animation-play-state:paused; height:4px !important; }
+  @keyframes wave { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
+  .slide-counter { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:1px; font-variant-numeric:tabular-nums; }
+  .slide-counter .current { color:var(--accent); font-size:14px; }
+  .transition-overlay {
+    position:fixed; inset:0; z-index:15; background:var(--bg);
+    opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+  }
+  .transition-overlay.active { opacity:1; }
+
+  #introVideo, #outroVideo {
+    position:fixed; inset:0; z-index:10; width:100%; height:100%;
+    object-fit:contain; background:#000; display:none;
+  }
+
+  @media (max-width:768px) {
+    .slide-num { font-size:80px; left:2vw; }
+    .slide-content { margin-left:clamp(50px,11vw,120px); }
+    .summary-grid { grid-template-columns:1fr; }
+    .top-bar, .bottom-bar { padding-left:16px; padding-right:16px; }
+    .bottom-bar { padding-bottom:16px; }
+    .start-brand { bottom:20px; }
+    .diagram-node { width:78px; }
+    .diagram-node-icon { width:42px; height:42px; font-size:15px; }
+  }
+  @media (max-width:480px) {
+    .slide-num { display:none; }
+    .slide-content { margin-left:0; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="bgCanvas" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<div id="startScreen" role="dialog" aria-label="Start presentation">
+  <div class="start-badge"><div class="dot"></div> Drug Discovery Course</div>
+  <div class="start-module">Module 04</div>
+  <h1 class="start-title">Key <span class="accent">Terminologies</span></h1>
+  <p class="start-sub">Five essential terms you will see throughout the rest of this course.</p>
+  <button class="start-btn" id="startBtn" aria-label="Begin presentation"><i class="fas fa-play"></i> Begin Presentation</button>
+  <div class="start-brand">
+    <span>Built by</span>
+    <span style="color:var(--ink);font-weight:700;">Excelra</span>
+    <span style="color:var(--muted);">— Where Data Means More</span>
+  </div>
+</div>
+
+<div class="transition-overlay" id="transOverlay" aria-hidden="true"></div>
+
+<video id="introVideo" src="Introduction.mp4" playsinline></video>
+<video id="outroVideo" src="Outro.mp4" playsinline></video>
+
+<header class="top-bar" id="topBar">
+  <div class="top-bar-left">
+    <div class="top-bar-logo">Excel<span>ra</span></div>
+  </div>
+  <div class="top-bar-right">
+    <div class="module-chip">Module 04</div>
+  </div>
+</header>
+
+<main id="presentation" aria-live="polite">
+  <div class="slide-num" id="slideNum" aria-hidden="true">01</div>
+  <div class="slide-content" id="slideContent"></div>
+</main>
+
+<footer class="bottom-bar" id="bottomBar">
+  <div class="progress-track" id="progressTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+  <div class="controls-row">
+    <div class="controls-left">
+      <button class="ctrl-btn" id="btnRestart" title="Restart" aria-label="Restart"><i class="fas fa-rotate-left"></i></button>
+      <button class="ctrl-btn" id="btnPrev" title="Previous section" aria-label="Previous section"><i class="fas fa-backward-step"></i></button>
+      <button class="ctrl-btn play-btn" id="btnPlay" title="Play / Pause" aria-label="Play or Pause"><i class="fas fa-pause"></i></button>
+      <button class="ctrl-btn" id="btnNext" title="Next section" aria-label="Next section"><i class="fas fa-forward-step"></i></button>
+      <div class="audio-wave" id="audioWave">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+    </div>
+    <div class="controls-right">
+      <button class="ctrl-btn" id="btnMute" title="Mute / Unmute" aria-label="Mute or Unmute"><i class="fas fa-volume-high"></i></button>
+      <button class="ctrl-btn" id="btnFullscreen" title="Full screen" aria-label="Toggle full screen"><i class="fas fa-expand"></i></button>
+      <div class="slide-counter"><span class="current" id="counterCurrent">01</span> / <span id="counterTotal">01</span></div>
+    </div>
+  </div>
+</footer>
+
+<script src="voice-engine.js"></script>
+<script>
+const slides = [
+  {
+    "type": "title",
+    "label": "Module 04",
+    "title": "Key <span class=\"hl\">Terminologies</span>",
+    "subtitle": "Five terms that form the foundation",
+    "brand": "Excelra \u2014 Where Data Means More",
+    "segments": [
+      "Welcome to Module Four, Key Terminologies. Let's lock in five terms you'll see again and again."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Term 1",
+    "title": "<span class=\"hl\">ADMET</span>",
+    "segments": [
+      "<span class=\"key\">ADMET</span> stands for Absorption, Distribution, Metabolism, Excretion, and Toxicity.",
+      "It is not Activity, Dosage, Mechanism, Efficacy, and Testing, and it is not any kind of assay methodology \u2014 ADMET is specifically pharmacokinetics and safety.",
+      "These five properties decide whether a molecule can ever become a medicine, no matter how well it performs against its target."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Term 2",
+    "title": "Agonist vs. <span class=\"hl\">Antagonist</span>",
+    "segments": [
+      "An <span class=\"em\">agonist</span> binds a receptor and activates it, producing a biological response.",
+      "An <span class=\"key\">antagonist</span> binds a receptor but does not activate it \u2014 instead, it blocks the action of agonists. It is not an inhibitor or an activator in the general sense; its defining trait is that blocking action."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Term 3",
+    "title": "<span class=\"hl\">IC50</span>",
+    "segments": [
+      "<span class=\"key\">IC50</span> \u2014 the half-maximal inhibitory concentration \u2014 is the concentration of a compound needed to inhibit a biological process by fifty percent, measured <span class=\"em\">in vitro</span>, in a lab dish rather than a living organism.",
+      "It is not about absorption, and it is not about metabolism time \u2014 it is purely a measure of inhibitory potency."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Term 4",
+    "title": "<span class=\"hl\">SAR</span>",
+    "segments": [
+      "<span class=\"key\">SAR</span> stands for Structure-Activity Relationship \u2014 the connection between a molecule's chemical structure and its biological activity.",
+      "Change the structure slightly, and activity can change dramatically. This relationship is the foundation of the Lead Optimization stage you saw in Module Three."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Term 5",
+    "title": "<span class=\"hl\">Bioavailability</span>",
+    "segments": [
+      "<span class=\"key\">Bioavailability</span> describes how efficiently a drug reaches systemic circulation \u2014 the bloodstream \u2014 after it's administered.",
+      "Of all five terms, this is the one most directly tied to how well a drug actually reaches where it needs to work in the body."
+    ]
+  },
+  {
+    "type": "summary",
+    "label": "Recap",
+    "title": "Five Terms, One <span class=\"hl\">Foundation</span>",
+    "cards": [
+      {
+        "icon": "fa-vial",
+        "text": "<span class=\"key\">ADMET</span> \u2014 Absorption, Distribution, Metabolism, Excretion, Toxicity"
+      },
+      {
+        "icon": "fa-ban",
+        "text": "<span class=\"key\">Antagonist</span> \u2014 blocks agonist activity at a receptor"
+      },
+      {
+        "icon": "fa-chart-line",
+        "text": "<span class=\"key\">IC50</span> \u2014 concentration for 50% inhibition, measured in vitro"
+      },
+      {
+        "icon": "fa-dna",
+        "text": "<span class=\"key\">SAR</span> \u2014 how structure connects to biological activity"
+      },
+      {
+        "icon": "fa-droplet",
+        "text": "<span class=\"key\">Bioavailability</span> \u2014 how efficiently a drug reaches the bloodstream"
+      }
+    ],
+    "segments": [
+      "Five terms to remember: ADMET, agonist and antagonist, IC50, SAR, and bioavailability \u2014 you will see every one of them again in later modules."
+    ]
+  },
+  {
+    "type": "closing",
+    "label": "Next Up",
+    "title": "Ready for the <span class=\"hl\">Flashcards</span>?",
+    "subtitle": "Module 5: Stakeholders",
+    "brand": "Flip each card and see how many you already know!",
+    "segments": [
+      "That completes Module Four.",
+      "Next, we meet the people who use these terms every day \u2014 the stakeholders of drug discovery.",
+      "You are now ready for the quiz and the flashcard game. Good luck."
+    ]
+  }
+];
+
+let selectedVoice = null;
+let voicesLoaded = false;
+const synth = window.presentationVoice.synth;
+function loadVoices() {
+  selectedVoice = window.presentationVoice.getVoice();
+  voicesLoaded = !!selectedVoice;
+}
+synth.addEventListener('voiceschanged', loadVoices);
+loadVoices();
+
+// ── Section model: [0]=intro clip, [1..N]=slides, [N+1]=outro clip ──
+const totalSections = slides.length + 2;
+let currentSection = 0;
+let currentSlide = 0;
+let isPlaying = false;
+let isMuted = false;
+let currentUtterance = null;
+let segmentTimeout = null;
+let isTransitioning = false;
+let genToken = 0; // bumped on every stop/jump so a stale slide's speech callback can never affect whatever plays next
+
+const slideNum = document.getElementById('slideNum');
+const slideContent = document.getElementById('slideContent');
+const progressFill = document.getElementById('progressFill');
+const counterCurrent = document.getElementById('counterCurrent');
+const counterTotal = document.getElementById('counterTotal');
+const audioWave = document.getElementById('audioWave');
+const transOverlay = document.getElementById('transOverlay');
+const btnPlay = document.getElementById('btnPlay');
+const btnMute = document.getElementById('btnMute');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+const btnRestart = document.getElementById('btnRestart');
+const introVideoEl = document.getElementById('introVideo');
+const outroVideoEl = document.getElementById('outroVideo');
+
+counterTotal.textContent = String(totalSections).padStart(2, '0');
+
+function stripHTML(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || '';
+}
+function estimateDuration(text) {
+  const words = text.split(/\s+/).length;
+  return (words / 2.6) * 1000;
+}
+
+function renderSlide(index) {
+  const s = slides[index];
+  const num = String(index + 1).padStart(2, '0');
+  slideNum.textContent = num;
+  let html = '';
+  if (s.type === 'title' || s.type === 'closing') {
+    html = `<div class="slide-label"><span class="line"></span>${s.label}<span class="line"></span></div>`;
+    html += `<h2 class="slide-title">${s.title}</h2>`;
+    if (s.subtitle) html += `<div class="slide-subtitle">${s.subtitle}</div>`;
+    if (s.brand) html += `<div class="slide-brand">${s.brand}</div>`;
+    slideContent.className = 'slide-content ' + (s.type === 'title' ? 'title-slide' : 'closing-slide');
+  } else if (s.type === 'summary') {
+    html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
+    html += `<h2 class="slide-title">${s.title}</h2>`;
+    html += `<div class="summary-grid">`;
+    s.cards.forEach((c, i) => {
+      html += `<div class="summary-card" data-idx="${i}"><div class="sc-icon"><i class="fas ${c.icon}"></i></div><div class="sc-text">${c.text}</div></div>`;
+    });
+    html += `</div>`;
+    slideContent.className = 'slide-content';
+  } else if (s.type === 'diagram') {
+    html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
+    html += `<h2 class="slide-title">${s.title}</h2>`;
+    html += `<div class="diagram-flow">`;
+    s.stages.forEach((st, i) => {
+      const stateClass = i < s.currentIndex ? 'done' : (i === s.currentIndex ? 'current' : '');
+      html += `<div class="diagram-node ${stateClass}" data-idx="${i}"><div class="diagram-node-icon"><i class="fas ${st.icon}"></i></div><div class="diagram-node-label">${st.label}</div></div>`;
+      if (i < s.stages.length - 1) html += `<div class="diagram-arrow ${i < s.currentIndex ? 'done' : ''}"><i class="fas fa-arrow-right"></i></div>`;
+    });
+    html += `</div>`;
+    html += `<div class="diagram-detail"><div class="diagram-detail-label">${s.stages[s.currentIndex].label}</div><div class="diagram-detail-text">${s.detail}</div></div>`;
+    slideContent.className = 'slide-content has-diagram';
+  } else {
+    html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
+    html += `<h2 class="slide-title">${s.title}</h2>`;
+    s.segments.forEach((seg, i) => {
+      html += `<div class="bullet" data-idx="${i}"><div class="bullet-icon"><i class="fas fa-chevron-right"></i></div><div class="bullet-text">${seg}</div></div>`;
+    });
+    slideContent.className = 'slide-content';
+  }
+  slideContent.innerHTML = html;
+}
+function animateSlideIn(index) {
+  const s = slides[index];
+  slideNum.classList.remove('fade-out');
+  setTimeout(() => {
+    const label = slideContent.querySelector('.slide-label');
+    const title = slideContent.querySelector('.slide-title');
+    if (label) label.classList.add('visible');
+    if (title) title.classList.add('visible');
+    if (s.type === 'diagram') {
+      const nodes = slideContent.querySelectorAll('.diagram-node');
+      nodes.forEach((n, i) => setTimeout(() => n.classList.add('visible'), i * 90));
+    }
+  }, 100);
+  if (s.type === 'title' || s.type === 'closing') {
+    setTimeout(() => {
+      const sub = slideContent.querySelector('.slide-subtitle');
+      const brand = slideContent.querySelector('.slide-brand');
+      if (sub) sub.classList.add('visible');
+      if (brand) brand.classList.add('visible');
+    }, 400);
+  }
+}
+function showSegment(index) {
+  const s = slides[currentSlide];
+  if (s.type === 'title' || s.type === 'closing' || s.type === 'diagram') return;
+  if (s.type === 'summary') {
+    const cards = slideContent.querySelectorAll('.summary-card');
+    if (cards[index]) cards[index].classList.add('visible');
+  } else {
+    const bullets = slideContent.querySelectorAll('.bullet');
+    if (bullets[index]) bullets[index].classList.add('visible');
+  }
+}
+function speakSegment(text) {
+  return new Promise(resolve => {
+    if (isMuted || !synth) {
+      segmentTimeout = setTimeout(resolve, estimateDuration(stripHTML(text)));
+      return;
+    }
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(stripHTML(text));
+    if (selectedVoice) utter.voice = selectedVoice;
+    const delivery = window.presentationVoice.delivery;
+    utter.rate = delivery.rate;
+    utter.pitch = delivery.pitch;
+    utter.volume = 1;
+    currentUtterance = utter;
+    utter.onend = () => { currentUtterance = null; resolve(); };
+    utter.onerror = () => { currentUtterance = null; resolve(); };
+    synth.speak(utter);
+    const safeTimeout = setTimeout(() => {
+      if (currentUtterance === utter) { synth.cancel(); currentUtterance = null; resolve(); }
+    }, 30000);
+    utter.onend = () => { clearTimeout(safeTimeout); currentUtterance = null; resolve(); };
+  });
+}
+async function playCurrentSlide() {
+  const myToken = ++genToken; // owns this run; any earlier run is now stale and will bail out
+  if (!isPlaying) return;
+  const s = slides[currentSlide];
+  animateSlideIn(currentSlide);
+  const introDelay = (s.type === 'title' || s.type === 'closing') ? 1200 : (s.type === 'diagram' ? 900 : 800);
+  await delay(introDelay);
+  if (!isPlaying || myToken !== genToken) return;
+  const segs = s.segments || [];
+  for (let i = 0; i < segs.length; i++) {
+    if (!isPlaying || myToken !== genToken) return;
+    showSegment(i);
+    await speakSegment(segs[i]);
+    if (!isPlaying || myToken !== genToken) return;
+    await delay(350);
+  }
+  if (!isPlaying || myToken !== genToken) return;
+  await delay(1200);
+  if (!isPlaying || myToken !== genToken) return;
+  goToSection(currentSection + 1);
+}
+
+function stopSpeech() {
+  genToken++;
+  clearTimeout(segmentTimeout);
+  synth.cancel();
+  currentUtterance = null;
+}
+function delay(ms) {
+  return new Promise(r => { segmentTimeout = setTimeout(r, ms); });
+}
+function updatePlayBtn() {
+  btnPlay.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
+  if (isPlaying) { audioWave.classList.remove('paused'); btnPlay.classList.add('active'); }
+  else { audioWave.classList.add('paused'); btnPlay.classList.remove('active'); }
+}
+
+// ── Unified section navigation: intro clip → every slide → outro clip ──
+function updateProgressForSection(index, subProgress) {
+  subProgress = subProgress || 0;
+  const pct = (index + Math.min(1, Math.max(0, subProgress))) / totalSections;
+  progressFill.style.width = (Math.min(1, pct) * 100) + '%';
+  counterCurrent.textContent = String(index + 1).padStart(2, '0');
+}
+
+function hideAllSectionViews() {
+  introVideoEl.pause();
+  outroVideoEl.pause();
+  introVideoEl.style.display = 'none';
+  outroVideoEl.style.display = 'none';
+  document.getElementById('presentation').classList.remove('active');
+}
+
+function enterIntroSection() {
+  introVideoEl.style.display = 'block';
+  introVideoEl.currentTime = 0;
+  updateProgressForSection(0, 0);
+  if (isPlaying) {
+    const p = introVideoEl.play();
+    if (p && p.catch) p.catch(() => {});
+  }
+}
+function enterOutroSection() {
+  outroVideoEl.style.display = 'block';
+  outroVideoEl.currentTime = 0;
+  updateProgressForSection(totalSections - 1, 0);
+  if (isPlaying) {
+    const p = outroVideoEl.play();
+    if (p && p.catch) p.catch(() => {});
+  }
+}
+function enterSlideSection() {
+  document.getElementById('presentation').classList.add('active');
+  renderSlide(currentSlide);
+  updateProgressForSection(currentSlide + 1, 0);
+  if (isPlaying) {
+    playCurrentSlide();
+  } else {
+    animateSlideIn(currentSlide);
+    const s = slides[currentSlide];
+    if (s.type === 'summary') {
+      slideContent.querySelectorAll('.summary-card').forEach((c, i) => {
+        setTimeout(() => c.classList.add('visible'), 300 + i * 150);
+      });
+    } else if (s.type !== 'title' && s.type !== 'closing' && s.type !== 'diagram') {
+      slideContent.querySelectorAll('.bullet').forEach((b, i) => {
+        setTimeout(() => b.classList.add('visible'), 300 + i * 150);
+      });
+    }
+  }
+}
+
+function goToSection(index, opts) {
+  opts = opts || {};
+  if (isTransitioning) return;
+  index = Math.max(0, Math.min(totalSections - 1, index));
+  isTransitioning = true;
+  stopSpeech();
+  const delayMs = opts.instant ? 0 : 350;
+  if (!opts.instant) {
+    slideNum.classList.add('fade-out');
+    transOverlay.classList.add('active');
+  }
+  setTimeout(() => {
+    currentSection = index;
+    hideAllSectionViews();
+    transOverlay.classList.remove('active');
+    isTransitioning = false;
+    if (index === 0) {
+      enterIntroSection();
+    } else if (index === totalSections - 1) {
+      enterOutroSection();
+    } else {
+      currentSlide = index - 1;
+      enterSlideSection();
+    }
+  }, delayMs);
+}
+
+function finishPresentation() {
+  window.parent && window.parent.postMessage({ type: 'presentation-complete', module: 'module4' }, '*');
+}
+
+introVideoEl.addEventListener('ended', () => { if (currentSection === 0) goToSection(1); });
+outroVideoEl.addEventListener('ended', () => { if (currentSection === totalSections - 1) finishPresentation(); });
+introVideoEl.addEventListener('timeupdate', () => {
+  if (currentSection === 0 && introVideoEl.duration) updateProgressForSection(0, introVideoEl.currentTime / introVideoEl.duration);
+});
+outroVideoEl.addEventListener('timeupdate', () => {
+  if (currentSection === totalSections - 1 && outroVideoEl.duration) updateProgressForSection(totalSections - 1, outroVideoEl.currentTime / outroVideoEl.duration);
+});
+// Deliberately NOT listening to introVideoEl/outroVideoEl's native 'play'/'pause'
+// events to drive isPlaying: a video firing 'pause' as part of naturally
+// reaching its end was being misread as a manual pause, which stopped the
+// presentation from auto-continuing into the next section. isPlaying is
+// now only ever set by our own explicit code below (togglePlay, start,
+// restart), never by incidental native media events.
+
+function togglePlay() {
+  if (currentSection === 0 || currentSection === totalSections - 1) {
+    const vid = currentSection === 0 ? introVideoEl : outroVideoEl;
+    if (vid.paused) {
+      const p = vid.play();
+      if (p && p.catch) p.catch(() => {});
+      isPlaying = true;
+    } else {
+      vid.pause();
+      isPlaying = false;
+    }
+    updatePlayBtn();
+  } else {
+    if (isPlaying) { isPlaying = false; stopSpeech(); updatePlayBtn(); }
+    else { isPlaying = true; updatePlayBtn(); playCurrentSlide(); }
+  }
+}
+function toggleMute() {
+  isMuted = !isMuted;
+  btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
+  btnMute.classList.toggle('active', isMuted);
+  if (isMuted) synth.cancel();
+}
+const btnFullscreen = document.getElementById('btnFullscreen');
+function updateFullscreenBtn() {
+  const isFs = !!document.fullscreenElement;
+  btnFullscreen.innerHTML = isFs ? '<i class="fas fa-compress"></i>' : '<i class="fas fa-expand"></i>';
+  btnFullscreen.classList.toggle('active', isFs);
+}
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    const target = document.documentElement;
+    (target.requestFullscreen ? target.requestFullscreen() : Promise.reject())
+      .catch(() => { /* fullscreen not available in this embedding context */ });
+  } else {
+    document.exitFullscreen && document.exitFullscreen();
+  }
+}
+document.addEventListener('fullscreenchange', updateFullscreenBtn);
+btnFullscreen.addEventListener('click', toggleFullscreen);
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  document.getElementById('startScreen').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('topBar').classList.add('visible');
+    document.getElementById('bottomBar').classList.add('visible');
+    isPlaying = true;
+    updatePlayBtn();
+    goToSection(0);
+  }, 800);
+});
+btnPlay.addEventListener('click', togglePlay);
+// Clicking anywhere on the slide/video stage itself (not the control
+// bar or a link/button inside a slide) toggles play/pause too, so it
+// behaves like a normal video player — including while full-screen.
+document.getElementById('presentation').addEventListener('click', function(e) {
+  if (e.target.closest('a, button')) return;
+  togglePlay();
+});
+btnMute.addEventListener('click', toggleMute);
+btnPrev.addEventListener('click', () => goToSection(currentSection - 1));
+btnNext.addEventListener('click', () => goToSection(currentSection + 1));
+btnRestart.addEventListener('click', () => { isPlaying = false; updatePlayBtn(); goToSection(0); });
+document.addEventListener('keydown', e => {
+  if (document.getElementById('startScreen').style.display !== 'none' && !document.getElementById('startScreen').classList.contains('hidden')) return;
+  if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') { e.preventDefault(); goToSection(currentSection + 1); }
+  if (e.code === 'ArrowLeft') { e.preventDefault(); goToSection(currentSection - 1); }
+  if (e.code === 'KeyM') { e.preventDefault(); toggleMute(); }
+  if (e.code === 'KeyF') { e.preventDefault(); toggleFullscreen(); }
+  if (e.code === 'KeyR') { e.preventDefault(); isPlaying = false; updatePlayBtn(); goToSection(0); }
+});
+
+const progressTrackEl = document.getElementById('progressTrack');
+let isScrubbing = false;
+function pctFromPointer(clientX) {
+  const rect = progressTrackEl.getBoundingClientRect();
+  let pct = (clientX - rect.left) / rect.width;
+  return Math.min(1, Math.max(0, pct));
+}
+function previewAt(pct) {
+  const target = Math.round(pct * (totalSections - 1));
+  progressFill.style.width = (pct * 100) + '%';
+  counterCurrent.textContent = String(target + 1).padStart(2, '0');
+}
+function commitScrub(clientX) {
+  const pct = pctFromPointer(clientX);
+  const target = Math.round(pct * (totalSections - 1));
+  goToSection(target, { instant: true });
+}
+progressTrackEl.addEventListener('mousedown', e => { isScrubbing = true; progressFill.classList.add('scrubbing'); previewAt(pctFromPointer(e.clientX)); });
+window.addEventListener('mousemove', e => { if (isScrubbing) previewAt(pctFromPointer(e.clientX)); });
+window.addEventListener('mouseup', e => { if (!isScrubbing) return; isScrubbing = false; progressFill.classList.remove('scrubbing'); commitScrub(e.clientX); });
+progressTrackEl.addEventListener('click', e => { if (isScrubbing) return; commitScrub(e.clientX); });
+progressTrackEl.addEventListener('touchstart', e => { isScrubbing = true; progressFill.classList.add('scrubbing'); previewAt(pctFromPointer(e.touches[0].clientX)); }, { passive: true });
+progressTrackEl.addEventListener('touchmove', e => { if (isScrubbing) previewAt(pctFromPointer(e.touches[0].clientX)); }, { passive: true });
+progressTrackEl.addEventListener('touchend', e => { if (!isScrubbing) return; isScrubbing = false; progressFill.classList.remove('scrubbing'); commitScrub(e.changedTouches[0].clientX); });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { synth.pause(); }
+  else if (isPlaying && currentSection > 0 && currentSection < totalSections - 1) {
+    synth.resume();
+    if (synth.paused) { synth.cancel(); playCurrentSlide(); }
+  }
+});
+window.addEventListener('beforeunload', () => { synth.cancel(); });
+</script>
+</body>
+</html>
