@@ -95,7 +95,12 @@
             background-image: url('Main UI BGM.jpg');
             background-size: cover;
             background-position: center;
-            opacity: 0.12;
+            /* Off by default — at any visible opacity this image's bright
+               starfield peeks through as stray white specks along the edges
+               of whatever content sits above it (most noticeably beside the
+               lesson video). Only Course Relaxer brings it to full opacity,
+               where it's meant to be seen. */
+            opacity: 0;
             transition: opacity 1s ease;
             pointer-events: none;
         }
@@ -1180,6 +1185,48 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .content-body.fading-in { animation: contentFadeIn 0.32s ease both; }
+
+        /* ========== "WHY THIS ACTIVITY" COLLAPSIBLE PANEL ========== */
+        .module-purpose {
+            background: #eef1ff;
+            border: 1px solid #dbe3fb;
+            border-radius: 12px;
+            margin: 0 0 1.25rem 0;
+            overflow: hidden;
+        }
+        .module-purpose-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.9rem 1.15rem;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #3346c9;
+            text-align: left;
+        }
+        .module-purpose-toggle-icon {
+            display: inline-block;
+            font-size: 0.65rem;
+            transition: transform 0.2s ease;
+        }
+        .module-purpose.collapsed .module-purpose-toggle-icon { transform: rotate(-90deg); }
+        .module-purpose-body-wrap {
+            overflow: hidden;
+            max-height: 220px;
+            transition: max-height 0.25s ease;
+        }
+        .module-purpose.collapsed .module-purpose-body-wrap { max-height: 0; }
+        .module-purpose-body {
+            padding: 0 1.15rem 1.1rem;
+            font-size: 0.85rem;
+            line-height: 1.65;
+            color: #434d68;
+        }
 
         /* ========== LESSON VIDEO PLACEHOLDER ========== */
         .video-placeholder-frame {
@@ -2317,9 +2364,9 @@
             <div class="logo">
                 <div class="logo-text" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
                     Drug Discovery <span>Interactive Course</span>
-                    <span style="display:inline-flex;align-items:center;gap:0.3rem;opacity:0.85;">
-                        <span style="font-weight:400;font-size:0.78rem;">by</span>
-                        <img src="Logo.png" alt="Excelra" style="height:17px;width:auto;display:block;background:rgba(255,255,255,0.9);border-radius:3px;padding:3px 6px;">
+                    <span style="display:inline-flex;align-items:center;gap:0.4rem;">
+                        <span style="font-weight:400;font-size:0.78rem;opacity:0.85;">by</span>
+                        <img src="Logo.png" alt="Excelra" style="height:16px;width:auto;display:block;background:#ffffff;border-radius:5px;padding:4px 9px;">
                     </span>
                 </div>
             </div>
@@ -2813,6 +2860,9 @@
             resetNarration();
             // Extra safety net in case anything else queued speech.
             try { speechSynthesis.cancel(); } catch(e) {}
+            // A narrated presentation iframe has its own separate speech
+            // synthesis instance — cancelling ours above does not reach it.
+            stopActiveLessonMedia();
             // Dismiss any notification toast so it doesn't linger over the login screen.
             const note = document.getElementById('notification');
             if (note) note.classList.remove('active');
@@ -2870,6 +2920,10 @@
                 // Pause any playing narration — the whole point is a break,
                 // so it shouldn't keep talking behind the relaxer screen.
                 if (typeof isPlaying !== 'undefined' && isPlaying) pauseNarration();
+                // A narrated presentation iframe is only hidden via CSS
+                // (scaled/opacity-0), not removed — it keeps playing its own
+                // video/narration underneath unless told to pause too.
+                stopActiveLessonMedia();
                 startRelaxerQuotes();
             } else {
                 stopRelaxerQuotes();
@@ -2927,6 +2981,7 @@
                     id: 1,
                     title: "Module 1: Introduction",
                     icon: "🏠",
+                    purpose: "This presentation introduces the core vocabulary and concepts of drug discovery before the rest of the course builds on them. The quiz and Term Scramble game that follow check that these foundational terms have stuck, since every later module assumes you already know them.",
                     duration: 300,
                     lessons: [
                         {
@@ -3012,6 +3067,7 @@
                     id: 2,
                     title: "Module 2: Business Overview",
                     icon: "💼",
+                    purpose: "This presentation frames drug discovery as a business decision, not only a scientific one — the stages, the odds of success, and the timeline involved. The activities that follow test whether you can reason about drug development as an investment, which is the lens the rest of the course keeps returning to.",
                     duration: 300,
                     lessons: [
                         {
@@ -3098,6 +3154,7 @@
                     id: 3,
                     title: "Module 3: End-to-End Process",
                     icon: "🗺️",
+                    purpose: "This presentation walks the full pipeline from target identification to a filed IND, giving you the map that every later module fills in piece by piece. The quiz and game check that you can place a given activity in the right stage of that pipeline, not just recognize the stage names.",
                     duration: 420,
                     lessons: [
                         {
@@ -3185,6 +3242,7 @@
                     id: 4,
                     title: "Module 4: Key Terminologies",
                     icon: "📖",
+                    purpose: "This presentation defines the technical terms used without further explanation for the rest of the course. The activities exist purely to lock that vocabulary in now, before it's assumed knowledge in every module that follows.",
                     duration: 300,
                     lessons: [
                         {
@@ -3270,6 +3328,7 @@
                     id: 5,
                     title: "Module 5: Stakeholders",
                     icon: "👥",
+                    purpose: "This presentation maps who actually does what across a drug discovery organization, from bench scientists to regulatory affairs. The activities check that you can match a role to its responsibility, since later modules reference these roles by name without re-explaining them.",
                     duration: 240,
                     lessons: [
                         {
@@ -3357,6 +3416,7 @@
                     id: 6,
                     title: "Module 6: Data Landscape",
                     icon: "🗃️",
+                    purpose: "This presentation surveys the different types of data — biological, pharmacological, ADMET, clinical — and how they differ. The activities test whether you can tell these categories apart, since the data-engineering topics later in the course depend on that distinction.",
                     duration: 300,
                     lessons: [
                         {
@@ -3446,6 +3506,7 @@
                     id: 7,
                     title: "Module 7: Industry Standards",
                     icon: "🏆",
+                    purpose: "This presentation covers the regulatory and data standards — GLP, CDISC, SDTM, and others — that keep drug discovery data usable and auditable. The activities check that you can tell one standard's purpose from another, since confusing them has real compliance consequences on the job.",
                     duration: 240,
                     lessons: [
                         {
@@ -3531,6 +3592,7 @@
                     id: 8,
                     title: "Module 8: Technology Ecosystem",
                     icon: "💻",
+                    purpose: "This presentation tours the software systems — LIMS, ELN, CTMS, and others — that run a modern discovery organization day to day. The activities test whether you know which system owns which job, which is the practical, everyday version of this knowledge.",
                     duration: 300,
                     lessons: [
                         {
@@ -3616,6 +3678,7 @@
                     id: 9,
                     title: "Module 9: Current Industry Challenges",
                     icon: "⚠️",
+                    purpose: "This presentation looks at where drug discovery still struggles today — cost, timelines, attrition, data silos. The activities check that you understand why these problems exist, not just that they do, since that reasoning is exactly what the AI-focused module right after this one builds on.",
                     duration: 240,
                     lessons: [
                         {
@@ -3720,6 +3783,7 @@
                     id: 10,
                     title: "Module 10: Role of Data Engineering & AI",
                     icon: "🤖",
+                    purpose: "This presentation shows concretely where data engineering and AI — tools like AlphaFold and generative molecule design — speed up each pipeline stage. The activities test whether you can connect a specific technology to the problem it actually solves, rather than treating \"AI\" as one generic idea.",
                     duration: 300,
                     lessons: [
                         {
@@ -3806,6 +3870,7 @@
                     id: 11,
                     title: "Module 11: Summary",
                     icon: "📝",
+                    purpose: "This presentation ties every earlier module back together into one coherent picture of the drug discovery process. The activities are a final check across the whole course — not new material, but proof the earlier modules actually connected — before you generate your certificate.",
                     duration: 180,
                     lessons: [
                         {
@@ -4515,8 +4580,25 @@
             if (modCountEl) modCountEl.textContent = courseData.modules.length;
         }
 
+        // Pauses whatever lesson media is currently active — the plain
+        // <video> element or a narrated presentation iframe — so it doesn't
+        // keep playing (video + narration audio) once it's no longer on
+        // screen. Hiding the lesson view only toggles CSS classes; the
+        // iframe/video themselves stay mounted and fully alive underneath
+        // unless explicitly told to stop, which is what used to let a
+        // module keep running in the background after navigating away.
+        function stopActiveLessonMedia() {
+            const video = document.getElementById('lessonVideo');
+            if (video) { try { video.pause(); } catch(e) {} }
+            const frame = document.getElementById('lessonPresentation');
+            if (frame && frame.contentWindow) {
+                try { frame.contentWindow.postMessage({ type: 'pause-presentation' }, '*'); } catch(e) {}
+            }
+        }
+
         // Shows the module-grid dashboard and hides the sidebar+lesson view.
         function showModuleDashboard() {
+            stopActiveLessonMedia();
             renderModuleDashboard();
             const dash = document.getElementById('moduleDashboard');
             const container = document.getElementById('courseContainer');
@@ -4741,7 +4823,27 @@
                 : hasReferences ? 'Browse the references above, then mark this lesson complete.'
                 : (lesson.videoUrl ? (isPresentation ? "You've watched this — mark it complete when you're ready." : "You've watched this — mark it complete when you're ready.") : "No video yet for this lesson — mark it complete once you've covered it another way.");
 
+            // Collapsible "why this activity" panel — explains what the
+            // narrated presentation (and the quiz/game after it) is for
+            // before the learner dives in. Collapsed/expanded state is
+            // remembered per module, defaulting to expanded the first time.
+            const currentModuleData = courseData.modules[currentModuleIndex];
+            const purposeCollapseKey = `modulePurposeCollapsed_${currentModuleIndex}`;
+            const purposeCollapsed = localStorage.getItem(purposeCollapseKey) === '1';
+            const purposeHTML = (isPresentation && currentModuleData && currentModuleData.purpose) ? `
+                <div class="module-purpose ${purposeCollapsed ? 'collapsed' : ''}" id="modulePurposePanel">
+                    <button type="button" class="module-purpose-toggle" onclick="toggleModulePurpose(${currentModuleIndex})" aria-expanded="${purposeCollapsed ? 'false' : 'true'}">
+                        <span class="module-purpose-toggle-icon">&#9656;</span>
+                        <span>Why this activity?</span>
+                    </button>
+                    <div class="module-purpose-body-wrap">
+                        <div class="module-purpose-body">${currentModuleData.purpose}</div>
+                    </div>
+                </div>
+            ` : '';
+
             const contentHTML = `
+                ${purposeHTML}
                 ${videoBlockHTML}
                 <div class="lesson-complete-bar">
                     <div class="lesson-complete-note" id="lessonCompleteNote">${noteText}</div>
@@ -4832,6 +4934,18 @@
             video.addEventListener('click', function() {
                 if (video.paused) video.play(); else video.pause();
             });
+        }
+
+        // Expands/collapses the "why this activity" panel shown above a
+        // module's presentation, remembering the choice per module so it
+        // doesn't reset every time the learner comes back to it.
+        function toggleModulePurpose(moduleIndex) {
+            const panel = document.getElementById('modulePurposePanel');
+            if (!panel) return;
+            const collapsed = panel.classList.toggle('collapsed');
+            const btn = panel.querySelector('.module-purpose-toggle');
+            if (btn) btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+            localStorage.setItem(`modulePurposeCollapsed_${moduleIndex}`, collapsed ? '1' : '0');
         }
 
         // Manually marks the current lesson complete (stand-in for the old
@@ -5006,6 +5120,9 @@
 
             // Stop any playing narration (and the avatar mouth) before opening the quiz
             if (isPlaying) stopNarration();
+            // Also stop the lesson video/presentation itself — otherwise it
+            // keeps playing behind the quiz modal.
+            stopActiveLessonMedia();
 
             // Do NOT auto-save/complete the lesson when quiz opens.
             // Lesson is only marked complete when narration finishes naturally.
@@ -5261,6 +5378,9 @@
 
             // Stop any playing narration (and the avatar mouth) before opening the game
             if (isPlaying) stopNarration();
+            // Also stop the lesson video/presentation itself — otherwise it
+            // keeps playing behind the game modal.
+            stopActiveLessonMedia();
 
             // Do NOT auto-complete the lesson just because the game opened.
             // Lessons are only marked complete when narration finishes naturally.
@@ -6453,6 +6573,18 @@
         var voiceStarting      = false;
         var voiceSupported     = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
 
+        // Timestamp of the last time the recognition engine proved it was
+        // actually alive (onstart/onresult/onerror/onend all count). A
+        // watchdog below uses this to catch the case where the browser
+        // just quietly stops delivering ANY event at all after the engine
+        // has been running for a long stretch — no error, no onend, it
+        // simply goes silent. That's the "works fine for a while, then the
+        // mic stops responding" failure mode: without a watchdog there is
+        // nothing to react to, since the whole restart machinery here is
+        // driven by onend/onerror firing.
+        var voiceLastActivity  = 0;
+        function markVoiceActivity() { voiceLastActivity = Date.now(); }
+
         function initVoiceControl() {
             var btn = document.getElementById('voiceBtn');
             if (!voiceSupported) {
@@ -6467,9 +6599,11 @@
 
             voiceRecognition.onstart = function() {
                 voiceStarting = false;
+                markVoiceActivity();
             };
 
             voiceRecognition.onresult = function(event) {
+                markVoiceActivity();
                 var last = event.results[event.results.length - 1];
                 var transcript = last[0].transcript.trim().toLowerCase();
 
@@ -6492,6 +6626,7 @@
 
             voiceRecognition.onerror = function(e) {
                 voiceStarting = false;
+                markVoiceActivity();
                 if (e.error === 'no-speech' || e.error === 'aborted') return;
 
                 // These are fatal — recognition cannot continue, so don't
@@ -6523,27 +6658,27 @@
             // Actually attempts to restart the engine, retrying itself with
             // backoff if the browser throws (rather than relying on onend
             // to fire again, which it won't if start() never succeeded).
+            //
+            // This used to give up permanently after 6 failed attempts
+            // (~7 seconds) and force the user to click the mic button again.
+            // Over a long training session that "give up" threshold was
+            // being hit by ordinary transient hiccups (a stretch of network
+            // trouble, the OS briefly reclaiming the mic, etc.), which is
+            // exactly the "works for a while, then just stops" complaint —
+            // so now it backs off to a steady 4s retry cadence and keeps
+            // trying indefinitely instead of ever fully giving up. Only a
+            // fatal permission/device error (handled in onerror above)
+            // actually stops the engine.
             function attemptVoiceRestart() {
                 if (!voiceEngineRunning) { voiceStarting = false; return; }
                 try {
                     voiceRecognition.start();
                     voiceStarting = false;
                     voiceRestartAttempts = 0;
+                    markVoiceActivity();
                 } catch (err) {
                     voiceRestartAttempts++;
-                    if (voiceRestartAttempts >= 6) {
-                        // Give up cleanly instead of leaving a phantom
-                        // "running" state — reflect the real state in the
-                        // UI so the user can just click the mic button
-                        // again to restart it fresh.
-                        voiceStarting = false;
-                        voiceEngineRunning = false;
-                        voiceRestartAttempts = 0;
-                        setVoiceListening(false, true);
-                        showVoiceToast('Voice control stopped unexpectedly — click the mic to restart it.');
-                        return;
-                    }
-                    var delay = Math.min(200 + voiceRestartAttempts * 300, 2000);
+                    var delay = Math.min(200 + voiceRestartAttempts * 300, 4000);
                     setTimeout(attemptVoiceRestart, delay);
                 }
             }
@@ -6565,10 +6700,42 @@
                 // Fix: retry on a short delay, and keep retrying with
                 // backoff (via attemptVoiceRestart) instead of giving up
                 // after one silent failure.
+                markVoiceActivity();
                 if (!voiceEngineRunning || voiceStarting) return;
                 voiceStarting = true;
                 setTimeout(attemptVoiceRestart, 200);
             };
+
+            // WATCHDOG — covers the failure mode where the browser stops
+            // delivering any event at all (no onend, no onerror) after the
+            // engine has been running a while, so the restart logic above
+            // never gets a chance to fire and the mic just silently goes
+            // dead while still showing as "on". If nothing has happened for
+            // longer than a real recognition session ever legitimately goes
+            // quiet, force a hard restart.
+            setInterval(function() {
+                if (!voiceEngineRunning || voiceStarting) return;
+                if (Date.now() - voiceLastActivity < 20000) return;
+                markVoiceActivity(); // reset before retrying so this can't re-fire every tick
+                try { voiceRecognition.abort(); } catch(e) {}
+                voiceStarting = true;
+                setTimeout(attemptVoiceRestart, 300);
+            }, 6000);
+
+            // Chrome/Edge frequently kill the mic stream outright when a tab
+            // is backgrounded for a while, without ever telling recognition
+            // (no onend/onerror) — so it comes back into view still "on"
+            // but dead. Force a fresh restart the moment the tab regains
+            // focus, rather than waiting on the slower watchdog interval.
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) return;
+                if (!voiceEngineRunning || voiceStarting) return;
+                if (Date.now() - voiceLastActivity < 5000) return;
+                markVoiceActivity();
+                try { voiceRecognition.abort(); } catch(e) {}
+                voiceStarting = true;
+                setTimeout(attemptVoiceRestart, 300);
+            });
         }
 
         // Turns full command-listening on/off. Does NOT stop/start the

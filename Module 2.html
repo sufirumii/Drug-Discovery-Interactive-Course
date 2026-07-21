@@ -410,6 +410,36 @@ loadVoices();
 const totalSections = slides.length + 2;
 let currentSection = 0;
 let currentSlide = 0;
+
+// ── Forward-seek guard ───────────────────────────────────────────
+// Learners can always scrub BACKWARD to replay anything already seen,
+// but dragging/clicking the progress bar past the furthest section
+// they've actually reached snaps back — same rule as the plain-video
+// lessons elsewhere in the course. Progress is remembered per module
+// (scoped by page title, which is unique per module) so it isn't lost
+// on revisiting later.
+const seekGuardKey = 'presentationMaxSection_' + document.title;
+let maxSectionReached = parseInt(localStorage.getItem(seekGuardKey), 10) || 0;
+function recordSectionReached(index) {
+  if (index > maxSectionReached) {
+    maxSectionReached = index;
+    try { localStorage.setItem(seekGuardKey, String(maxSectionReached)); } catch (e) {}
+  }
+}
+function showSeekBlockedHint() {
+  const old = document.getElementById('seekBlockedHint');
+  if (old) old.remove();
+  const hint = document.createElement('div');
+  hint.id = 'seekBlockedHint';
+  hint.textContent = "Keep watching to unlock further along.";
+  hint.style.cssText = 'position:fixed;left:50%;bottom:92px;transform:translateX(-50%);' +
+    'background:rgba(20,24,34,0.92);color:#fff;font-family:Inter,sans-serif;font-size:13px;' +
+    'font-weight:600;padding:10px 18px;border-radius:8px;z-index:50;pointer-events:none;' +
+    'box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity 0.2s ease;';
+  document.body.appendChild(hint);
+  requestAnimationFrame(() => { hint.style.opacity = '1'; });
+  setTimeout(() => { hint.style.opacity = '0'; setTimeout(() => hint.remove(), 250); }, 1600);
+}
 let isPlaying = false;
 let isMuted = false;
 let currentUtterance = null;
@@ -520,27 +550,17 @@ function showSegment(index) {
   }
 }
 function speakSegment(text) {
-  return new Promise(resolve => {
-    if (isMuted || !synth) {
-      segmentTimeout = setTimeout(resolve, estimateDuration(stripHTML(text)));
-      return;
-    }
-    synth.cancel();
-    const utter = new SpeechSynthesisUtterance(stripHTML(text));
-    if (selectedVoice) utter.voice = selectedVoice;
-    const delivery = window.presentationVoice.delivery;
-    utter.rate = delivery.rate;
-    utter.pitch = delivery.pitch;
-    utter.volume = 1;
-    currentUtterance = utter;
-    utter.onend = () => { currentUtterance = null; resolve(); };
-    utter.onerror = () => { currentUtterance = null; resolve(); };
-    synth.speak(utter);
-    const safeTimeout = setTimeout(() => {
-      if (currentUtterance === utter) { synth.cancel(); currentUtterance = null; resolve(); }
-    }, 30000);
-    utter.onend = () => { clearTimeout(safeTimeout); currentUtterance = null; resolve(); };
-  });
+  // Delegates to the shared voice engine (voice-engine.js), which picks
+  // the voice, applies pronunciation fixes, and — critically for Mac
+  // Chrome, where the preferred Google network voice can silently fail
+  // to produce any audio — automatically detects that and falls back to
+  // a working voice instead of leaving the narration mute.
+  const plain = stripHTML(text);
+  return window.presentationVoice.speak(plain, {
+    muted: isMuted,
+    fallbackDuration: estimateDuration(plain),
+    onUtterance: u => { currentUtterance = u; }
+  }).then(() => { currentUtterance = null; });
 }
 async function playCurrentSlide() {
   const myToken = ++genToken; // owns this run; any earlier run is now stale and will bail out
@@ -647,6 +667,7 @@ function goToSection(index, opts) {
   }
   setTimeout(() => {
     currentSection = index;
+    recordSectionReached(index);
     hideAllSectionViews();
     transOverlay.classList.remove('active');
     isTransitioning = false;
@@ -762,13 +783,18 @@ function pctFromPointer(clientX) {
   return Math.min(1, Math.max(0, pct));
 }
 function previewAt(pct) {
-  const target = Math.round(pct * (totalSections - 1));
-  progressFill.style.width = (pct * 100) + '%';
+  const rawTarget = Math.round(pct * (totalSections - 1));
+  const target = Math.min(rawTarget, maxSectionReached);
+  const clampedPct = (totalSections - 1) > 0 ? target / (totalSections - 1) : 0;
+  progressFill.style.width = (clampedPct * 100) + '%';
   counterCurrent.textContent = String(target + 1).padStart(2, '0');
+  if (rawTarget > maxSectionReached) showSeekBlockedHint();
 }
 function commitScrub(clientX) {
   const pct = pctFromPointer(clientX);
-  const target = Math.round(pct * (totalSections - 1));
+  const rawTarget = Math.round(pct * (totalSections - 1));
+  const target = Math.min(rawTarget, maxSectionReached);
+  if (rawTarget > maxSectionReached) showSeekBlockedHint();
   goToSection(target, { instant: true });
 }
 progressTrackEl.addEventListener('mousedown', e => { isScrubbing = true; progressFill.classList.add('scrubbing'); previewAt(pctFromPointer(e.clientX)); });
@@ -787,6 +813,16 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 window.addEventListener('beforeunload', () => { synth.cancel(); });
+
+// The parent course page can only hide this iframe with CSS (e.g. going
+// back to the dashboard, opening Course Relaxer, or a quiz/game modal) —
+// it can't reach into a same-origin iframe's own speechSynthesis/video
+// state directly. It posts this message instead so playback actually
+// pauses rather than continuing to talk/play in the background.
+window.addEventListener('message', event => {
+  if (!event.data || event.data.type !== 'pause-presentation') return;
+  if (isPlaying) togglePlay();
+});
 </script>
 </body>
 </html>
