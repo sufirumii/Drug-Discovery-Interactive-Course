@@ -4598,6 +4598,17 @@
             }
         }
 
+        // Switching to a different browser tab (or closing this one) needs
+        // the exact same treatment as navigating away inside the course —
+        // otherwise a lesson video or narrated presentation keeps playing
+        // audio in a backgrounded/closed tab. Deliberately does NOT resume
+        // anything when the tab becomes visible again: the learner presses
+        // play themselves, so nothing ever starts talking on its own.
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) stopActiveLessonMedia();
+        });
+        window.addEventListener('pagehide', stopActiveLessonMedia);
+
         // Shows the module-grid dashboard and hides the sidebar+lesson view.
         function showModuleDashboard() {
             stopActiveLessonMedia();

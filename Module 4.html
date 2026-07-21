@@ -812,13 +812,37 @@ progressTrackEl.addEventListener('touchstart', e => { isScrubbing = true; progre
 progressTrackEl.addEventListener('touchmove', e => { if (isScrubbing) previewAt(pctFromPointer(e.touches[0].clientX)); }, { passive: true });
 progressTrackEl.addEventListener('touchend', e => { if (!isScrubbing) return; isScrubbing = false; progressFill.classList.remove('scrubbing'); commitScrub(e.changedTouches[0].clientX); });
 
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { synth.pause(); }
-  else if (isPlaying && currentSection > 0 && currentSection < totalSections - 1) {
-    synth.resume();
-    if (synth.paused) { synth.cancel(); playCurrentSlide(); }
+// Unconditionally pauses whatever is actually playing — the intro/
+// outro video OR the narration speech, whichever section is active —
+// and never resumes it automatically. This one function is the single
+// source of truth for every "playback should stop now" trigger below:
+// switching to a different browser tab, switching to a different
+// module/dashboard/quiz/game inside the course, or closing the tab
+// entirely. Learners must always press play again themselves; nothing
+// should ever start talking on its own after being backgrounded.
+function pauseForBackground() {
+  if (isPlaying) {
+    if (currentSection === 0 || currentSection === totalSections - 1) {
+      const vid = currentSection === 0 ? introVideoEl : outroVideoEl;
+      try { vid.pause(); } catch (e) {}
+    } else {
+      stopSpeech();
+    }
+    isPlaying = false;
+    updatePlayBtn();
   }
+  // Belt-and-suspenders: cancel rather than merely pause the speech
+  // queue, so nothing stays alive to unexpectedly resume later.
+  try { synth.cancel(); } catch (e) {}
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pauseForBackground();
 });
+// 'pagehide' fires more reliably than 'beforeunload' when a tab is
+// actually closed (including for back/forward-cache navigations), so
+// both are covered rather than relying on just one.
+window.addEventListener('pagehide', pauseForBackground);
 window.addEventListener('beforeunload', () => { synth.cancel(); });
 
 // The parent course page can only hide this iframe with CSS (e.g. going
@@ -828,7 +852,7 @@ window.addEventListener('beforeunload', () => { synth.cancel(); });
 // pauses rather than continuing to talk/play in the background.
 window.addEventListener('message', event => {
   if (!event.data || event.data.type !== 'pause-presentation') return;
-  if (isPlaying) togglePlay();
+  pauseForBackground();
 });
 </script>
 </body>

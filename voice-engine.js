@@ -29,24 +29,31 @@
  * the chosen voice actually proves broken (see below), which is the
  * only case where switching mid-course is actually correct.
  *
- * SAME VOICE ON WINDOWS AND macOS
+ * VOICE QUALITY vs. SAME-ON-EVERY-OS
  * ----------------------------------------
  * Windows and macOS expose completely different local voice engines
- * (SAPI vs. the macOS speech engine), so two local voices can never
- * truly sound identical across the two. The one kind of voice that
- * DOES render identically on any OS is a network voice — Chrome/Edge
- * stream the audio from Google's TTS service rather than synthesizing
- * it on-device, so "Google UK English Female" sounds exactly the same
- * whether Chrome is running on a MacBook or a Windows laptop. That's
- * why it's first in the preference list below: as long as Chrome can
- * reach it, both platforms independently land on the exact same voice.
+ * (SAPI vs. the macOS speech engine). The one kind of voice that DOES
+ * render byte-for-byte identically on any OS is a network voice —
+ * Chrome/Edge stream the audio from Google's TTS service instead of
+ * synthesizing it on-device — but that particular voice ("Google UK
+ * English Female") is also the flattest, most obviously synthetic-
+ * sounding option available: fine for cross-OS sameness, not fine as
+ * "one beautiful voice". So the preference order below now leads with
+ * the genuinely warm, natural-sounding options first — Edge's neural
+ * "Online (Natural)" voices, then macOS's well-regarded built-in
+ * Samantha — and only falls back to the flatter Google voice where
+ * nothing better is available. In practice this means Windows and Mac
+ * can land on different (but both good) voices rather than an
+ * identical but robotic one; the "one voice, locked in, never changes
+ * mid-course" guarantee above still holds on each individual device.
  *
  * Why the female voice sometimes went silent specifically on Mac
- * Chrome: on some Mac + Chrome combinations, that network request
- * silently fails to produce audio (a long-standing Chromium bug),
- * while the exact same voice works fine on Windows Chrome. Because the
- * failure is silent — no error event, speechSynthesis just never
- * actually speaks — naive code has no way to notice and react.
+ * Chrome: on some Mac + Chrome combinations, Google's network voice
+ * request silently fails to produce audio (a long-standing Chromium
+ * bug), while the exact same voice works fine on Windows Chrome.
+ * Because the failure is silent — no error event, speechSynthesis
+ * just never actually speaks — naive code has no way to notice and
+ * react.
  *
  * The fix here: speak() verifies a voice actually started producing
  * audio (via the utterance's own onstart/onboundary events) within a
@@ -81,17 +88,19 @@
     }
   }
 
-  // Ordered by preference. Google's network voice comes first because it
-  // renders identically across operating systems in Chrome/Edge — see
-  // the header comment above for why that matters more than it might
-  // seem. Anything in this list that has previously failed to actually
-  // produce audio (markVoiceFailed above) is skipped.
+  // Ordered by preference, warmest/most natural-sounding first — see
+  // the header comment above for why the flatter Google network voice
+  // (still needed as a cross-platform fallback) now sits further down
+  // instead of leading. Anything in this list that has previously
+  // failed to actually produce audio (markVoiceFailed above) is skipped.
   const preferredVoices = [
-    'Google UK English Female',
-    'Google US English',
     'Microsoft Aria Online (Natural)',
     'Microsoft Jenny Online (Natural)',
+    'Microsoft Sonia Online (Natural)',
+    'Microsoft Libby Online (Natural)',
     'Samantha',
+    'Google UK English Female',
+    'Google US English',
     'Microsoft Zira',
     'Microsoft Hazel',
     'Microsoft Susan',
@@ -203,10 +212,14 @@
 
   // Shared, tuned delivery settings — softer and slightly slower than
   // a default robotic TTS read, aiming for a warmer, more natural tone.
+  // A raised pitch is one of the more common causes of a voice sounding
+  // artificial/"chipmunky", so this stays close to each voice's own
+  // natural register rather than pushing it up; the rate is slowed a
+  // little further for a calmer, less rushed delivery.
   // Change these two numbers here and every module updates together.
   const DELIVERY = {
-    rate: 0.94,
-    pitch: 1.08
+    rate: 0.92,
+    pitch: 1.0
   };
 
   // ── Pronunciation consistency ────────────────────────────────────
