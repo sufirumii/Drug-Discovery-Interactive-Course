@@ -417,15 +417,10 @@ const slides = [
   }
 ];
 
-let selectedVoice = null;
-let voicesLoaded = false;
+// Voice selection (including the Mac/Windows consistency and
+// mid-presentation-stability fixes) is fully owned by voice-engine.js
+// now — this page just needs `synth` for cancel/pause/resume calls.
 const synth = window.presentationVoice.synth;
-function loadVoices() {
-  selectedVoice = window.presentationVoice.getVoice();
-  voicesLoaded = !!selectedVoice;
-}
-synth.addEventListener('voiceschanged', loadVoices);
-loadVoices();
 
 // ── Section model: [0]=intro clip, [1..N]=slides, [N+1]=outro clip ──
 const totalSections = slides.length + 2;
