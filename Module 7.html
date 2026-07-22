@@ -784,7 +784,20 @@ btnRestart.addEventListener('click', () => { isPlaying = false; updatePlayBtn();
 document.addEventListener('keydown', e => {
   if (document.getElementById('startScreen').style.display !== 'none' && !document.getElementById('startScreen').classList.contains('hidden')) return;
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-  if (e.code === 'ArrowRight') { e.preventDefault(); goToSection(currentSection + 1); }
+  if (e.code === 'ArrowRight') {
+    e.preventDefault();
+    // Same forward-seek guard as the progress slider: the keyboard arrow
+    // must never be able to jump past the furthest section actually
+    // reached (that was the exact bug — the slider blocked skipping
+    // ahead, but ArrowRight called goToSection() directly with no clamp
+    // at all, bypassing the guard entirely).
+    const nextIndex = currentSection + 1;
+    if (nextIndex > maxSectionReached) {
+      showSeekBlockedHint();
+    } else {
+      goToSection(nextIndex);
+    }
+  }
   if (e.code === 'ArrowLeft') { e.preventDefault(); goToSection(currentSection - 1); }
   if (e.code === 'KeyM') { e.preventDefault(); toggleMute(); }
   if (e.code === 'KeyF') { e.preventDefault(); toggleFullscreen(); }

@@ -8,6 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
     <script src="devtools-guard.js"></script>
+    <!-- Same shared narration engine the modules use (voice-engine.js) —
+         this is what guarantees the tutorial guide's voice and the
+         in-module narrator's voice are the exact same locked-in choice,
+         instead of two independently-coded pickers that could land on
+         different voices (or a worse fallback) on the same machine. -->
+    <script src="voice-engine.js"></script>
     <style>
         :root {
             --primary: #4a6bff;
@@ -4101,38 +4107,54 @@
 
         // Speak a line of tutorial narration with lip-sync, and call
         // onDone() when speech finishes (or immediately if TTS unsupported).
+        //
+        // This used to build its own SpeechSynthesisUtterance with its own
+        // separate voice pick (window.bestVoice, from populateVoiceSelector
+        // below) — a second, independently-coded voice-selection path living
+        // alongside voice-engine.js's. Two separate pickers with different
+        // matching rules (exact-name vs. substring, different fallback
+        // order) can land on two *different* voices on the very same
+        // machine — which is exactly the "sweet tutorial voice, robotic
+        // module voice" inconsistency this course had. Delegating to
+        // window.presentationVoice.speak() (the same call every Module
+        // N.html narrator uses) makes it impossible for that to happen:
+        // there is now only one voice, chosen once, for the whole course.
         var _tutUtterance = null;
         function tutorialSpeak(text, onDone) {
-            try { speechSynthesis.cancel(); } catch(e) {}
             tutSetAvatarSpeaking(false);
 
-            if (!('speechSynthesis' in window)) {
+            if (!window.presentationVoice) {
                 if (onDone) onDone();
                 return;
             }
 
-            // Chrome has a known bug where calling speak() immediately after
-            // cancel() silently delays the actual audio start by a second or
-            // more. A very short delay here (instead of speaking in the same
-            // tick as cancel) reliably avoids that stall.
-            setTimeout(function() {
-                var utter = new SpeechSynthesisUtterance(text);
-                utter.rate = 1.02;
-                utter.pitch = 1.0;
-                if (window.bestVoice) utter.voice = window.bestVoice;
-
-                utter.onstart = function() { tutSetAvatarSpeaking(true); };
-                utter.onend   = function() { tutSetAvatarSpeaking(false); if (onDone) onDone(); };
-                utter.onerror = function() { tutSetAvatarSpeaking(false); if (onDone) onDone(); };
-                utter.onboundary = function(e) { if (!e.name || e.name === 'word') tutOnWordBoundary(); };
-
-                _tutUtterance = utter;
-                speechSynthesis.speak(utter);
-            }, 50);
+            window.presentationVoice.speak(text, {
+                onUtterance: function(utter) {
+                    _tutUtterance = utter;
+                    // Wrap (not replace) the engine's own onstart/onboundary —
+                    // it uses those to detect a silently-broken voice (the
+                    // Mac Chrome failure mode) and needs them to keep firing.
+                    var engineOnStart = utter.onstart;
+                    var engineOnBoundary = utter.onboundary;
+                    utter.onstart = function(e) {
+                        if (engineOnStart) engineOnStart(e);
+                        tutSetAvatarSpeaking(true);
+                    };
+                    utter.onboundary = function(e) {
+                        if (engineOnBoundary) engineOnBoundary(e);
+                        if (!e.name || e.name === 'word') tutOnWordBoundary();
+                    };
+                }
+            }).then(function() {
+                tutSetAvatarSpeaking(false);
+                if (onDone) onDone();
+            });
         }
 
         function tutorialStopSpeaking() {
-            try { speechSynthesis.cancel(); } catch(e) {}
+            if (window.presentationVoice && window.presentationVoice.synth) {
+                try { window.presentationVoice.synth.cancel(); } catch(e) {}
+            }
             tutSetAvatarSpeaking(false);
         }
 
@@ -4376,15 +4398,9 @@
             buildLoginBackground();
             checkLogin();
             initVoiceControl();
-
-            // Load voices for speech synthesis (used by the onboarding tutorial's speech)
-            if (speechSynthesis.onvoiceschanged !== undefined) {
-                speechSynthesis.onvoiceschanged = () => { populateVoiceSelector(); };
-            }
-            setTimeout(() => {
-                if (speechSynthesis.getVoices().length > 0) populateVoiceSelector();
-            }, 100);
-
+            // Voice selection for the tutorial's speech is now handled
+            // entirely by voice-engine.js (window.presentationVoice), the
+            // same engine every module narrator uses — see tutorialSpeak().
         });
 
         function buildLoginBackground() {
@@ -4639,58 +4655,6 @@
         function openModuleFromDashboard(moduleIndex) {
             showCourseContainer();
             goToLesson(moduleIndex, resumeLessonIndexForModule(moduleIndex));
-        }
-
-        function populateVoiceSelector() {
-            const voices = speechSynthesis.getVoices();
-            if (!voices || voices.length === 0) {
-                setTimeout(populateVoiceSelector, 300);
-                return;
-            }
-
-            // Preferred voices — prioritize the best-sounding natural/neural
-            // female voices available for free through each browser/OS.
-            // Edge's "Online (Natural)" voices are genuinely near-studio
-            // quality; the rest are the best fallback female voices on
-            // each platform, in rough quality order.
-            const preferredNames = [
-                'Microsoft Aria Online (Natural) - English (United States)',
-                'Microsoft Jenny Online (Natural) - English (United States)',
-                'Microsoft Ava Online (Natural) - English (United States)',
-                'Microsoft Sonia Online (Natural) - English (United Kingdom)',
-                'Microsoft Libby Online (Natural) - English (United Kingdom)',
-                'Microsoft Emma Online (Natural) - English (United States)',
-                'Google UK English Female',
-                'Google US English',
-                'Samantha',     // macOS/iOS — widely regarded as one of the best system voices
-                'Karen',        // macOS Australian female
-                'Moira',        // macOS Irish female
-                'Tessa',        // macOS South African female
-                'Victoria',     // macOS female
-            ];
-
-            let pick = null;
-            for (const name of preferredNames) {
-                pick = voices.find(v => v.name === name);
-                if (pick) break;
-            }
-
-            // Fallback 1: any voice with "female" in its name, English locale
-            if (!pick) pick = voices.find(v => /female/i.test(v.name) && v.lang.startsWith('en'));
-            // Fallback 2: any en-GB female-leaning voice (deliberately excludes
-            // older robotic-sounding system voices like Zira/Hazel)
-            if (!pick) pick = voices.find(v => v.lang === 'en-GB' && /female|samantha|victoria|karen|susan/i.test(v.name));
-            // Fallback 3: any en-US female-leaning voice
-            if (!pick) pick = voices.find(v => v.lang === 'en-US' && /female|samantha|victoria|karen/i.test(v.name));
-            // Fallback 4: any English voice at all
-            if (!pick) pick = voices.find(v => v.lang.startsWith('en'));
-            // Last resort
-            if (!pick && voices.length > 0) pick = voices[0];
-
-            if (pick) {
-                window.bestVoice = pick;
-                console.log('[TTS] Voice selected:', pick.name, pick.lang);
-            }
         }
 
         // ========== SIDEBAR RENDERING ==========

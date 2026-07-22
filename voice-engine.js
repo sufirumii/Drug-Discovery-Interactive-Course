@@ -123,9 +123,14 @@
       const found = usable.find(v => v.name.includes(pref) && v.lang.startsWith('en'));
       if (found) return found;
     }
+    // Deliberately excludes older robotic-sounding default system voices
+    // (Zira, Hazel) from this match — same rule the tutorial's own voice
+    // picker documents. Those are still reachable via the `preferredVoices`
+    // list above as an explicit last resort, but this generic "does the
+    // name look female" fallback shouldn't actively seek them out.
     const english = usable.filter(v => v.lang.startsWith('en'));
     return (
-      english.find(v => /female|woman|zira|samantha|karen|moira|fiona/i.test(v.name)) ||
+      english.find(v => /female|woman|samantha|karen|moira|fiona/i.test(v.name)) ||
       english[0] || usable[0] || voices[0] || null
     );
   }
