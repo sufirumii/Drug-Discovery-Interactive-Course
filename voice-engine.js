@@ -88,47 +88,27 @@
     }
   }
 
-  // Ordered by preference, warmest/most natural-sounding first — see
-  // the header comment above for why the flatter Google network voice
-  // (still needed as a cross-platform fallback) now sits further down
-  // instead of leading. Anything in this list that has previously
-  // failed to actually produce audio (markVoiceFailed above) is skipped.
+  // ONE small, curated shortlist — not a sprawling list of dozens of
+  // names. Each entry here covers one major real-world platform/browser
+  // case (Windows+Edge, any Chrome/Chromium via the network voice, macOS)
+  // so there's still a fallback if the very first choice genuinely isn't
+  // installed on a given machine — but every single entry is a definite,
+  // well-known, clearly-female voice. Nothing generic, nothing novelty,
+  // nothing male, ever.
   const preferredVoices = [
-    'Microsoft Aria Online (Natural)',
-    'Microsoft Jenny Online (Natural)',
-    'Microsoft Sonia Online (Natural)',
-    'Microsoft Libby Online (Natural)',
-    'Samantha',
-    'Google UK English Female',
-    'Google US English',
-    'Karen',
-    'Moira',
-    'Fiona',
-    'Tessa',
-    'Victoria',
-    'Samantha (Enhanced)',
-    'Female',
-    'Woman',
-    // Genuinely last-resort female-ish system voices — these ARE the
-    // "flatter/robotic" ones (Zira, Hazel, Susan), kept only as a floor
-    // above landing on a male voice by accident, never actively sought
-    // out ahead of anything better above.
-    'Microsoft Zira',
-    'Microsoft Hazel',
-    'Microsoft Susan',
-    'Zira'
+    'Microsoft Aria Online (Natural)',  // Windows + Edge — best available
+    'Google UK English Female',        // Any Chrome/Chromium, cross-OS
+    'Samantha',                        // macOS / iOS default
+    'Microsoft Zira'                   // Windows + plain Chrome, no network
   ];
 
-  // Common default MALE system/network voice names. This list exists for
-  // exactly one reason: the generic fallback below used to end with
-  // "whichever voice the browser happens to list first" with no gender
-  // check at all — and on stock Windows, the first local voice enumerated
-  // is very often "Microsoft David Desktop" (male, default, exactly the
-  // "generic robotic male voice" learners were hearing). Nothing above in
-  // preferredVoices will ever match a male name, but the *last-resort*
-  // fallback needs an explicit block on these or it can still fall
-  // straight into one.
-  const MALE_VOICE_PATTERN = /\b(david|mark|guy|ryan|daniel|james|george|alex|fred|male|man)\b/i;
+  // Short, explicit list of common default MALE voice names. This exists
+  // purely as a floor: if NONE of the four curated names above exist on a
+  // device (rare), this stops the very last "just take whatever's first"
+  // fallback from landing on a male voice like "Microsoft David Desktop"
+  // (a very common Windows default) or macOS's male "Alex"/"Daniel"/"Fred".
+  const AVOID_VOICE_PATTERN = /\b(david|mark|guy|ryan|daniel|james|george|alex|fred|male|man)\b/i;
+  const MALE_VOICE_PATTERN = AVOID_VOICE_PATTERN;
 
   function bestMatch(voices) {
     if (!voices.length) return null;
@@ -139,17 +119,22 @@
       if (found) return found;
     }
     const english = usable.filter(v => v.lang.startsWith('en'));
-    const englishNotMale = english.filter(v => !MALE_VOICE_PATTERN.test(v.name));
-    const usableNotMale = usable.filter(v => !MALE_VOICE_PATTERN.test(v.name));
-    // Never fall through to a male-named voice just because it happened to
-    // be first in the browser's list — only do that if truly nothing else
-    // (not even a non-English, non-preferred voice) is available at all.
-    return (
-      englishNotMale.find(v => /female|woman|samantha|karen|moira|fiona/i.test(v.name)) ||
-      englishNotMale[0] ||
-      usableNotMale[0] ||
+    const englishGood = english.filter(v => !AVOID_VOICE_PATTERN.test(v.name));
+    const usableGood = usable.filter(v => !AVOID_VOICE_PATTERN.test(v.name));
+    // Only reached if none of the 4 curated names above exist on this
+    // device at all — never take a male voice here unless literally
+    // nothing else (not even a non-English voice) is available.
+    const choice = (
+      englishGood.find(v => /female|woman|samantha|karen/i.test(v.name)) ||
+      englishGood[0] ||
+      usableGood[0] ||
       english[0] || usable[0] || voices[0] || null
     );
+    try {
+      console.log('[voice-engine] picked:', choice && choice.name, choice && choice.lang,
+        '— from', voices.length, 'available voices:', voices.map(v => v.name).join(', '));
+    } catch (e) {}
+    return choice;
   }
 
   // Gives the browser a moment to finish populating its voice list
@@ -289,9 +274,28 @@
   // SpeechSynthesisUtterance directly, which is what makes the single
   // locked-in voice (and its Mac/Google-voice fallback) possible
   // without touching all 11 module files every time this needs a tweak.
+  //
+  // hasFailedOverOnce guards the ONLY case where the voice is allowed to
+  // change after being locked in: this used to re-run its "is the voice
+  // actually alive" check on every single sentence, with only a 1.4s
+  // window to prove it. That's far too tight for a network voice under
+  // any real-world latency — a perfectly fine voice would occasionally
+  // miss that window, get permanently blacklisted, and get silently
+  // swapped for a different one right in the middle of a video. That is
+  // the exact bug behind "the narrator changes mid-video, sometimes to a
+  // different gender": it wasn't one bad decision, it was this check
+  // re-triggering over and over through a course, each swap landing on
+  // whatever was next in line. Two changes fix it: a much more generous
+  // window (5s, not 1.4s) so normal latency stops being mistaken for
+  // failure, and a hard cap of ONE failover for the entire course — once
+  // it has swapped a single time, it never re-evaluates again, so there
+  // is no possibility of a second, third, fourth swap cascading through
+  // later videos.
+  let hasFailedOverOnce = false;
+
   function speak(rawText, opts, retriesLeft) {
     opts = opts || {};
-    if (retriesLeft === undefined) retriesLeft = 2;
+    if (retriesLeft === undefined) retriesLeft = 1;
     const text = preprocessText(rawText);
 
     return new Promise(function (resolve) {
@@ -322,28 +326,36 @@
         utter.onstart = onProof;
         utter.onboundary = onProof;
 
-        // If the locked-in voice is genuinely broken on this device
-        // (the Mac/Google network-voice failure mode), the browser
-        // never fires onstart/onboundary at all. Give it a short
-        // window to prove it's alive; if it doesn't, blacklist it,
-        // re-lock to the next candidate, and retry THIS SAME line —
-        // the learner hears a beat of silence, never total silence.
+        // Only ever fires the fallback path once, ever, for the whole
+        // course (see hasFailedOverOnce above) — and only after a
+        // genuinely generous 5-second silent window, not a hair-trigger
+        // 1.4s one, to avoid mistaking ordinary network latency for a
+        // truly broken voice.
         const proofTimer = setTimeout(function () {
           if (started || settled) return;
+          if (hasFailedOverOnce || retriesLeft <= 0) { finish(); return; }
+          hasFailedOverOnce = true;
           try { synth.cancel(); } catch (e) {}
           if (voice) markVoiceFailed(voice.name);
-          if (retriesLeft <= 0) { finish(); return; }
           resolveVoice().then(function (nextVoice) {
             if (settled) return;
             if (nextVoice && voice && nextVoice.name === voice.name) { finish(); return; }
             speak(rawText, opts, retriesLeft - 1).then(finish);
           });
-        }, 1400);
+        }, 5000);
 
         utter.onend = function () { clearTimeout(proofTimer); finish(); };
         utter.onerror = function () {
           clearTimeout(proofTimer);
-          if (!started && voice) markVoiceFailed(voice.name);
+          // A real browser error event (unlike the timing-based proof
+          // check above) is a trustworthy signal, so this voice is
+          // blacklisted regardless — but whether the course actually
+          // switches to a different voice still respects the one-ever
+          // cap, so this can't cascade into repeated swaps either.
+          if (!started && voice) {
+            markVoiceFailed(voice.name);
+            hasFailedOverOnce = true;
+          }
           finish();
         };
 
