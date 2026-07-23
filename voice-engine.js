@@ -79,6 +79,27 @@
   const LOCK_KEY = 'courseNarratorVoiceName';
   const FAILED_VOICES_KEY = 'ttsBrokenVoices';
 
+  // ── One-time migration for devices that already hit the cancel/error
+  // bug described above ──────────────────────────────────────────────
+  // Before today's fix, an ordinary Pause/Next/Previous/Mute click could
+  // get a perfectly good voice wrongly blacklisted (in FAILED_VOICES_KEY)
+  // and the course permanently locked onto whatever fallback came next
+  // (in LOCK_KEY) — on a real device, that bad state is just sitting in
+  // localStorage and the fixed logic below would otherwise keep
+  // respecting it forever. This runs once per browser to wipe both keys
+  // so the very next resolveVoice() call below makes a completely fresh
+  // decision under the corrected rules, then remembers it's done so it
+  // never re-wipes a legitimate later blacklist/lock again.
+  const MIGRATION_KEY = 'courseNarratorVoiceEngineVersion';
+  const CURRENT_ENGINE_VERSION = '2';
+  try {
+    if (localStorage.getItem(MIGRATION_KEY) !== CURRENT_ENGINE_VERSION) {
+      localStorage.removeItem(LOCK_KEY);
+      localStorage.removeItem(FAILED_VOICES_KEY);
+      localStorage.setItem(MIGRATION_KEY, CURRENT_ENGINE_VERSION);
+    }
+  } catch (e) {}
+
   function getFailedVoiceNames() {
     try { return JSON.parse(localStorage.getItem(FAILED_VOICES_KEY)) || []; }
     catch (e) { return []; }
@@ -287,21 +308,33 @@
   // without touching all 11 module files every time this needs a tweak.
   //
   // hasFailedOverOnce guards the ONLY case where the voice is allowed to
-  // change after being locked in: this used to re-run its "is the voice
-  // actually alive" check on every single sentence, with only a 1.4s
-  // window to prove it. That's far too tight for a network voice under
-  // any real-world latency — a perfectly fine voice would occasionally
-  // miss that window, get permanently blacklisted, and get silently
-  // swapped for a different one right in the middle of a video. That is
-  // the exact bug behind "the narrator changes mid-video, sometimes to a
-  // different gender": it wasn't one bad decision, it was this check
-  // re-triggering over and over through a course, each swap landing on
-  // whatever was next in line. Two changes fix it: a much more generous
-  // window (5s, not 1.4s) so normal latency stops being mistaken for
-  // failure, and a hard cap of ONE failover for the entire course — once
-  // it has swapped a single time, it never re-evaluates again, so there
-  // is no possibility of a second, third, fourth swap cascading through
-  // later videos.
+  // change after being locked in. Two separate bugs used to cause
+  // "the narrator changes mid-video/mid-module, sometimes to a
+  // different gender", and both are now fixed:
+  //
+  // 1) The silent-failure check (proofTimer below) used to give a
+  //    voice only 1.4s to prove it was producing audio before being
+  //    blacklisted — far too tight for a network voice under any real
+  //    latency, so a perfectly fine voice could get swapped mid-video.
+  //    Fixed with a much more generous 5s window.
+  //
+  // 2) The bigger one: onerror() used to treat ANY error event as
+  //    proof the voice was broken. But every ordinary Pause / Next /
+  //    Previous / Mute / Restart click — and every normal auto-advance
+  //    from one line to the next — calls synth.cancel() to stop
+  //    whatever is currently talking, and cancelling fires this exact
+  //    'error' event (reason 'canceled' or 'interrupted'). That's just
+  //    routine playback control, not a broken voice — so completely
+  //    ordinary use of the player was silently blacklisting a perfectly
+  //    working voice and swapping the narrator, repeatedly, throughout
+  //    a module. onerror() now only treats a genuine (non-cancellation)
+  //    error as proof-of-breakage.
+  //
+  // On top of both fixes, a hard cap of ONE failover for the entire
+  // course still applies — once it has swapped a single time (for an
+  // actually broken voice), it never re-evaluates again, so there is no
+  // possibility of a second, third, fourth swap cascading through later
+  // videos either.
   let hasFailedOverOnce = false;
 
   function speak(rawText, opts, retriesLeft) {
@@ -356,14 +389,26 @@
         }, 5000);
 
         utter.onend = function () { clearTimeout(proofTimer); finish(); };
-        utter.onerror = function () {
+        utter.onerror = function (event) {
           clearTimeout(proofTimer);
-          // A real browser error event (unlike the timing-based proof
-          // check above) is a trustworthy signal, so this voice is
-          // blacklisted regardless — but whether the course actually
-          // switches to a different voice still respects the one-ever
-          // cap, so this can't cascade into repeated swaps either.
-          if (!started && voice) {
+          // THIS was the actual, most common cause of "the voice changes
+          // mid-module, sometimes several times in one video": every
+          // Pause / Next / Previous / Mute / Restart click (and every
+          // normal auto-advance to the next line) calls synth.cancel()
+          // to stop whatever is currently talking. Cancelling an
+          // utterance fires this exact 'error' event with
+          // event.error === 'canceled' (or 'interrupted' when a new
+          // speak() call pre-empts one still in flight) — that is
+          // completely normal, constant, expected behaviour, NOT a sign
+          // the voice itself is broken. The old code treated any error
+          // here as proof-of-breakage, so an ordinary click could
+          // permanently blacklist a perfectly working voice and
+          // silently swap the narrator for the rest of the course. Only
+          // a genuine, non-cancellation error (or total silence, via
+          // the proofTimer above) is allowed to trigger a voice change.
+          const reason = event && event.error;
+          const wasDeliberateCancel = reason === 'canceled' || reason === 'interrupted';
+          if (!started && voice && !wasDeliberateCancel) {
             markVoiceFailed(voice.name);
             hasFailedOverOnce = true;
           }

@@ -766,7 +766,18 @@ document.getElementById('presentation').addEventListener('click', function(e) {
 });
 btnMute.addEventListener('click', toggleMute);
 btnPrev.addEventListener('click', () => goToSection(currentSection - 1));
-btnNext.addEventListener('click', () => goToSection(currentSection + 1));
+btnNext.addEventListener('click', () => {
+  // Same forward-seek guard as the progress slider and the keyboard
+  // ArrowRight handler: the dedicated "Next" button must never be able
+  // to jump past the furthest section actually reached either — that
+  // was the actual gap letting learners bypass "no skipping ahead."
+  const nextIndex = currentSection + 1;
+  if (nextIndex > maxSectionReached) {
+    showSeekBlockedHint();
+  } else {
+    goToSection(nextIndex);
+  }
+});
 btnRestart.addEventListener('click', () => { isPlaying = false; updatePlayBtn(); goToSection(0); });
 document.addEventListener('keydown', e => {
   if (document.getElementById('startScreen').style.display !== 'none' && !document.getElementById('startScreen').classList.contains('hidden')) return;
