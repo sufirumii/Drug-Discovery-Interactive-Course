@@ -3,6 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Belt-and-suspenders alongside the Cache-Control headers in
+         render.yaml: some intermediate caches/proxies pay attention to
+         these, even though the real HTTP header is what regular browsers
+         mainly respect. -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Excelra Drug Discovery Interactive Course</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -5063,20 +5070,65 @@
             _origGoToLesson(mi, li);
         };
 
-        // ========== VIDEO PLACEHOLDER (stand-in until real videos are added) ==========
-        // The old narration/avatar engine has been removed. These are thin,
-        // safe stand-ins so any leftover callers (voice commands, guarded
-        // "if (isPlaying)" checks elsewhere) never throw — none of them
-        // actually play anything right now.
+        // ========== LESSON MEDIA CONTROL ==========
+        // Controls whichever lesson media is currently on screen — the
+        // narrated presentation (a same-origin iframe running its own
+        // Module N.html, so a command has to be posted across the frame
+        // boundary rather than called directly) or a native lesson
+        // <video>. These used to be no-op placeholder stubs left over
+        // from before either of those actually existed ("stand-in until
+        // real videos are added") — so voice commands like "play" /
+        // "pause" / "restart" / "mute" were silently doing nothing (or
+        // showing a stale "coming soon" toast) once the real players
+        // were built. isMuted below is a best-effort mirror of the
+        // iframe's own mute state, since the parent page can't read it
+        // directly — good enough to make "mute"/"unmute" behave
+        // correctly from voice.
         let isMuted = false;
 
-        function togglePlayPause() { showNotification('Video coming soon for this lesson.'); }
-        function playNarration()   { showNotification('Video coming soon for this lesson.'); }
-        function pauseNarration()  { isPlaying = false; }
-        function stopNarration()   { isPlaying = false; }
-        function restartNarration(){ showNotification('Video coming soon for this lesson.'); }
-        function resetNarration()  { isPlaying = false; }
-        function toggleMute()      { showNotification('Nothing to mute yet — video coming soon.'); }
+        function getPresentationFrame() {
+            const f = document.getElementById('lessonPresentation');
+            return (f && f.contentWindow) ? f : null;
+        }
+        function getLessonVideoEl() {
+            return document.getElementById('lessonVideo');
+        }
+        function togglePlayPause() { if (isPlaying) pauseNarration(); else playNarration(); }
+        function playNarration() {
+            const frame = getPresentationFrame();
+            if (frame) { isPlaying = true; frame.contentWindow.postMessage({ type: 'resume-presentation' }, '*'); return; }
+            const vid = getLessonVideoEl();
+            if (vid) { isPlaying = true; const p = vid.play(); if (p && p.catch) p.catch(() => {}); return; }
+            showNotification('Video coming soon for this lesson.');
+        }
+        function pauseNarration() {
+            const frame = getPresentationFrame();
+            if (frame) frame.contentWindow.postMessage({ type: 'pause-presentation' }, '*');
+            const vid = getLessonVideoEl();
+            if (vid) vid.pause();
+            isPlaying = false;
+        }
+        function stopNarration() { pauseNarration(); }
+        function restartNarration() {
+            // Mirrors the presentation's own Restart button / "R" shortcut:
+            // seeks back to the start but leaves it paused there, rather
+            // than assuming the learner wants it to immediately keep
+            // talking. A native lesson <video> has no such existing
+            // pattern to match, so that case restarts AND resumes playing.
+            const frame = getPresentationFrame();
+            if (frame) { frame.contentWindow.postMessage({ type: 'restart-presentation' }, '*'); isPlaying = false; return; }
+            const vid = getLessonVideoEl();
+            if (vid) { vid.currentTime = 0; const p = vid.play(); if (p && p.catch) p.catch(() => {}); isPlaying = true; return; }
+            showNotification('Video coming soon for this lesson.');
+        }
+        function resetNarration() { pauseNarration(); }
+        function toggleMute() {
+            const frame = getPresentationFrame();
+            if (frame) { isMuted = !isMuted; frame.contentWindow.postMessage({ type: 'toggle-mute-presentation' }, '*'); return; }
+            const vid = getLessonVideoEl();
+            if (vid) { vid.muted = !vid.muted; isMuted = vid.muted; return; }
+            showNotification('Nothing to mute yet — video coming soon.');
+        }
 
         // ========== QUIZ FUNCTIONS ==========
         function startModuleQuiz(moduleIndex) {
@@ -6816,16 +6868,26 @@
                 return;
             }
 
-            // Quiz answer by letter — only acts if a quiz modal is open
-            var quizModal = document.querySelector('.quiz-modal.active, #quizModal.active');
+            // Quiz answer by letter — targets whichever question is
+            // currently unanswered. This used to check for a
+            // "data-answered" attribute on the question, but nothing in
+            // the app ever actually sets that attribute (an answered
+            // question's options get a "disabled" class instead, added
+            // by selectQuizOption()) — so the old check never excluded
+            // anything, and saying e.g. "option B" past the first
+            // question silently clicked the FIRST question's option B
+            // every time, regardless of which question was on screen.
             var letterMatch = transcript.match(/\b(option |answer )?([a-d])\b/);
             if (letterMatch) {
                 var letterIdx = letterMatch[2].charCodeAt(0) - 97; // a=0,b=1,c=2,d=3
-                var activeOptions = document.querySelectorAll('.quiz-question:not([data-answered]) .option');
-                if (activeOptions.length === 0) {
-                    // try first unanswered question block
-                    activeOptions = document.querySelectorAll('.option:not(.disabled)');
+                var questionBlocks = document.querySelectorAll('.quiz-question');
+                var currentQuestion = null;
+                for (var qi = 0; qi < questionBlocks.length; qi++) {
+                    if (!questionBlocks[qi].querySelector('.option.disabled')) { currentQuestion = questionBlocks[qi]; break; }
                 }
+                var activeOptions = currentQuestion
+                    ? currentQuestion.querySelectorAll('.option')
+                    : document.querySelectorAll('.option:not(.disabled)');
                 if (activeOptions[letterIdx]) {
                     activeOptions[letterIdx].click();
                     return;

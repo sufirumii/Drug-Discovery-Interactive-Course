@@ -12,6 +12,26 @@ services:
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
+      # Regular Chrome/Edge windows keep reusing whatever copy of the
+      # site they already had cached, so after any update they can go on
+      # showing the OLD version indefinitely — while Incognito starts
+      # with an empty cache every time, so it always fetches (and shows)
+      # whatever is actually deployed right now. That's the entire
+      # difference; it isn't that Incognito is special, it's that the
+      # regular browser's cache was never being told to check back.
+      # These headers force every browser to revalidate the page/script
+      # files with the server on every load, so the next deployment (and
+      # every one after it) reaches everyone right away instead of only
+      # showing up for people with an empty cache.
+      - path: /*.html
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /*.js
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
     routes:
       - type: rewrite
         source: /

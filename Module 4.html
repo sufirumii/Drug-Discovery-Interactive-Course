@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <script src="devtools-guard.js"></script>
 <title>Module 4: Key Terminologies | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -35,6 +38,15 @@
     position:fixed; inset:0; z-index:100; display:flex; flex-direction:column;
     align-items:center; justify-content:center; background:var(--bg);
     transition: opacity 0.8s ease, transform 0.8s ease;
+    /* Was clipping/overlapping content on shorter or mid-size laptop
+       viewports — the badge/title/subtitle/button could take up more
+       vertical space than the viewport had, and the "Built by Excelra"
+       brand line (previously absolutely positioned at a fixed distance
+       from the bottom) would land right on top of the button instead of
+       the layout adapting. Letting this screen scroll internally, and
+       giving it its own top/bottom breathing room, means a cramped
+       viewport scrolls instead of stacking elements on top of each other. */
+    overflow-y:auto; padding:32px 20px;
   }
   #startScreen.hidden { opacity:0; transform:scale(1.05); pointer-events:none; }
   .start-badge {
@@ -59,7 +71,19 @@
   .start-btn:hover { transform:translateY(-1px); box-shadow: 0 8px 22px var(--accent-glow); }
   .start-btn:active { transform:scale(0.98); }
   .start-btn i { font-size:14px; }
-  .start-brand { position:absolute; bottom:36px; display:flex; align-items:center; gap:10px; color:var(--muted); font-size:13px; font-weight:500; }
+  .start-brand {
+    /* No longer absolutely positioned at a fixed distance from the
+       bottom of the screen (that's what let it land on top of the
+       "Begin Presentation" button whenever the centered content above
+       it grew taller than the available height). It now simply flows
+       in normal document order after the button, with its own margin —
+       so it always sits below the button with clear space, on any
+       screen size, and the pair scroll together if needed instead of
+       overlapping. */
+    position:static; margin-top:32px;
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
+    gap:10px; color:var(--muted); font-size:13px; font-weight:500; text-align:center;
+  }
 
   #presentation {
     position:fixed; inset:0; z-index:10; display:flex; align-items:center;
@@ -233,13 +257,26 @@
     .summary-grid { grid-template-columns:1fr; }
     .top-bar, .bottom-bar { padding-left:16px; padding-right:16px; }
     .bottom-bar { padding-bottom:16px; }
-    .start-brand { bottom:20px; }
+    .start-brand { margin-top:20px; }
     .diagram-node { width:78px; }
     .diagram-node-icon { width:42px; height:42px; font-size:15px; }
   }
   @media (max-width:480px) {
     .slide-num { display:none; }
     .slide-content { margin-left:0; }
+  }
+  /* Mid-size and smaller laptop screens are usually limited on *height*
+     (a browser window on a 1366x768 or similar display often has well
+     under 700px of usable viewport height once browser chrome is
+     accounted for) rather than width — this is the actual dimension
+     that was causing the start screen's content to grow taller than
+     the viewport and overlap the "Built by Excelra" brand line. */
+  @media (max-height:700px) {
+    .start-badge { margin-bottom:16px; }
+    .start-module { margin-bottom:8px; }
+    .start-title { margin-bottom:10px; font-size:clamp(24px,5vw,40px); }
+    .start-sub { margin-bottom:22px; }
+    .start-brand { margin-top:16px; font-size:12px; }
   }
   @media (prefers-reduced-motion:reduce) {
     *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
@@ -875,8 +912,14 @@ window.addEventListener('beforeunload', () => { synth.cancel(); });
 // state directly. It posts this message instead so playback actually
 // pauses rather than continuing to talk/play in the background.
 window.addEventListener('message', event => {
-  if (!event.data || event.data.type !== 'pause-presentation') return;
-  pauseForBackground();
+  if (!event.data || !event.data.type) return;
+  // Lets the parent course page (and, through it, voice commands like
+  // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
+  // own playback state, which it otherwise has no way to touch directly.
+  if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
+  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
+  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
 </body>
