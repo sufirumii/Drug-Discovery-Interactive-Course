@@ -2318,26 +2318,24 @@
          full prominence during Course Relaxer mode. Sits behind everything
          (z-index:0) so the header and content boxes are never affected. -->
     <div class="main-bgm" id="mainBgm"></div>
-    <!-- Login Modal -->
+    <!-- "Begin Your Journey" Modal (replaces the old name-entry login) -->
     <div class="login-modal" id="loginModal">
         <div class="login-bg" id="loginBg"></div>
-        <div class="login-container">
+
+        <!-- Prompt view: Yes / No -->
+        <div class="login-container" id="loginPrompt">
             <!-- Excelra Logo (image, served from repo root as Logo.png) -->
             <div style="margin-bottom:1.75rem;">
                 <img src="Logo.png" alt="Excelra" style="height:38px;width:auto;display:block;">
                 <div style="font-size:0.58rem;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:#9ca3af;margin-top:5px;padding-left:1px;">Knowledge Solutions</div>
             </div>
-            <div class="login-wordmark">Learning Repository · Secure Sign-in</div>
-            <div class="login-title">Drug Discovery<br>Interactive Course</div>
+            <div class="login-wordmark">Learning Repository</div>
+            <div class="login-title">Begin your Drug Discovery<br>Learning Journey</div>
             <div class="login-divider"></div>
-            <div class="login-subtitle">Enter your name to begin your learning journey</div>
+            <div class="login-subtitle">You're about to start an interactive, self-paced course on modern drug discovery. Ready to dive in?</div>
             <div class="login-form">
-                <div class="form-group">
-                    <label class="form-label" for="username">Full Name</label>
-                    <input type="text" id="username" class="form-input" placeholder="e.g. Rumi Sufi"
-                           onkeydown="if(event.key==='Enter') login()">
-                </div>
-                <button class="login-btn login-btn-primary" onclick="login()">Begin Course</button>
+                <button class="login-btn login-btn-primary" onclick="beginJourney()">Yes</button>
+                <button class="login-btn login-btn-guest" onclick="declineJourney()">No</button>
             </div>
             <div class="login-meta">
                 <div class="login-meta-item">
@@ -2353,6 +2351,14 @@
                     <div class="login-meta-lbl">Format</div>
                 </div>
             </div>
+        </div>
+
+        <!-- Goodbye view: shown only if the user clicks "No" -->
+        <div class="login-container" id="loginGoodbye" style="display:none; text-align:center;">
+            <div style="margin-bottom:1.75rem;">
+                <img src="Logo.png" alt="Excelra" style="height:38px;width:auto;display:block;margin:0 auto;">
+            </div>
+            <div class="login-title">We are sorry to see you leaving,<br>see you next time.</div>
         </div>
     </div>
 
@@ -2691,29 +2697,25 @@
 
         // Check if user is logged in
         function checkLogin() {
-            // Always show the login screen — never auto-skip into the course,
-            // even if a previous session exists in this browser.
+            // Always show the "Begin your journey" screen — never auto-skip
+            // into the course, even if a previous session exists in this browser.
+            resetLoginModalToPrompt();
             document.getElementById('loginModal').classList.remove('hidden');
 
-            // Populate the module count / estimated duration stats on the login card.
+            // Populate the module count / estimated duration stats on the card.
             const modulesEl = document.getElementById('loginMetaModules');
             const durationEl = document.getElementById('loginMetaDuration');
             if (modulesEl) modulesEl.textContent = courseData.modules.length;
             if (durationEl) durationEl.textContent = formatCourseDuration(getCourseTotalSeconds());
+        }
 
-            // Convenience only: pre-fill the last-used name so returning users
-            // just click "Begin Course" instead of retyping — but the login
-            // screen itself is never skipped.
-            const savedUser = localStorage.getItem('drugDiscoveryCurrentUser');
-            if (savedUser) {
-                try {
-                    const prev = JSON.parse(savedUser);
-                    const input = document.getElementById('username');
-                    if (input && prev.username && prev.username !== 'Guest') {
-                        input.value = prev.username;
-                    }
-                } catch(e) {}
-            }
+        // Makes sure the modal shows the Yes/No prompt (not the goodbye
+        // message left over from a prior "No" click) whenever it's revealed.
+        function resetLoginModalToPrompt() {
+            const prompt = document.getElementById('loginPrompt');
+            const goodbye = document.getElementById('loginGoodbye');
+            if (prompt) prompt.style.display = '';
+            if (goodbye) goodbye.style.display = 'none';
         }
 
         // Sums every lesson's duration (seconds) across every module.
@@ -2733,67 +2735,51 @@
             return `${hours}h ${minutes}m`;
         }
 
-        function login() {
-            const username = document.getElementById('username').value.trim();
-            if (!username) { showNotification('Please enter your name'); return; }
+        // Called when the learner clicks "Yes" on the "Begin your Drug
+        // Discovery Learning Journey" prompt. Replaces the old name-entry
+        // login() — there's no name field anymore, so a single consistent
+        // learner identity is used so progress still saves/resumes correctly
+        // between visits on the same browser.
+        function beginJourney() {
+            const savedUser = localStorage.getItem('drugDiscoveryCurrentUser');
+            const isReturning = !!savedUser;
 
-            // If different user, clear previous progress
-            const prevUser = localStorage.getItem('drugDiscoveryCurrentUser');
-            if (prevUser) {
+            currentUser = currentUser && currentUser.username
+                ? currentUser
+                : { username: 'Learner', joined: new Date().toISOString() };
+            if (savedUser) {
                 try {
-                    const prev = JSON.parse(prevUser);
-                    if (prev.username !== username) {
-                        // New user – clear old progress
-                        localStorage.removeItem('drugDiscoveryProgress_' + prev.username);
-                        localStorage.removeItem('ddSRS_' + prev.username);
-                        localStorage.removeItem('ddAdaptive_' + prev.username);
-                    }
+                    const prev = JSON.parse(savedUser);
+                    if (prev && prev.username) currentUser = prev;
                 } catch(e) {}
             }
-
-            currentUser = { username: username, joined: new Date().toISOString() };
             localStorage.setItem('drugDiscoveryCurrentUser', JSON.stringify(currentUser));
-
-            // Reset in-memory progress
-            userProgress = { points:0, badges:0, level:1,
-                completedLessons: new Set(), completedQuizzes: new Set(),
-                completedGames: new Set(), timeSpent:0, currentModuleTime:0 };
 
             renderUserAvatar(currentUser);
             adaptiveLoad();
             loadLessonUnlocked();
             initializeCourse();
 
-            // Hide the login screen (and clear the typed name) right away —
-            // before the transition fade even starts — so nothing from the
-            // login form can show through while "Where Data Means More" is
-            // fading in.
+            // Hide the modal right away — before the transition fade even
+            // starts — so nothing from the prompt can show through while
+            // "Where Data Means More" is fading in.
             document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('username').value = '';
 
             playLoginTransition(() => {
-                resumeOrShowDashboard('Welcome, ' + username + '! Your journey begins now.');
+                resumeOrShowDashboard(isReturning
+                    ? 'Welcome back! Your journey continues now.'
+                    : 'Welcome! Your journey begins now.');
                 showOnboardingPrompt();
             });
         }
 
-        function guestLogin() {
-            currentUser = {
-                username: 'Guest',
-                joined: new Date().toISOString()
-            };
-            localStorage.setItem('drugDiscoveryCurrentUser', JSON.stringify(currentUser));
-            renderUserAvatar(currentUser);
-            adaptiveLoad();
-            loadLessonUnlocked();
-            initializeCourse();
-
-            document.getElementById('loginModal').classList.add('hidden');
-
-            playLoginTransition(() => {
-                resumeOrShowDashboard('Welcome, Guest! Create an account to save your progress.');
-                showOnboardingPrompt();
-            });
+        // Called when the learner clicks "No" — shows a short goodbye
+        // message in place of the prompt and stops there.
+        function declineJourney() {
+            const prompt = document.getElementById('loginPrompt');
+            const goodbye = document.getElementById('loginGoodbye');
+            if (prompt) prompt.style.display = 'none';
+            if (goodbye) goodbye.style.display = '';
         }
 
         // After login, jump straight back into the last lesson the learner
@@ -2879,6 +2865,7 @@
 
             currentUser = null;
             localStorage.removeItem('drugDiscoveryCurrentUser');
+            resetLoginModalToPrompt();
             document.getElementById('loginModal').classList.remove('hidden');
             document.getElementById('userMenu').classList.remove('active');
             adaptiveStats = {};

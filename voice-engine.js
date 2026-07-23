@@ -29,23 +29,33 @@
  * the chosen voice actually proves broken (see below), which is the
  * only case where switching mid-course is actually correct.
  *
- * VOICE QUALITY vs. SAME-ON-EVERY-OS
+ * VOICE CONSISTENCY ACROSS DIFFERENT LAPTOPS/BROWSERS
  * ----------------------------------------
  * Windows and macOS expose completely different local voice engines
- * (SAPI vs. the macOS speech engine). The one kind of voice that DOES
- * render byte-for-byte identically on any OS is a network voice —
- * Chrome/Edge stream the audio from Google's TTS service instead of
- * synthesizing it on-device — but that particular voice ("Google UK
- * English Female") is also the flattest, most obviously synthetic-
- * sounding option available: fine for cross-OS sameness, not fine as
- * "one beautiful voice". So the preference order below now leads with
- * the genuinely warm, natural-sounding options first — Edge's neural
- * "Online (Natural)" voices, then macOS's well-regarded built-in
- * Samantha — and only falls back to the flatter Google voice where
- * nothing better is available. In practice this means Windows and Mac
- * can land on different (but both good) voices rather than an
- * identical but robotic one; the "one voice, locked in, never changes
- * mid-course" guarantee above still holds on each individual device.
+ * (SAPI vs. the macOS speech engine), which is exactly why the same
+ * course used to sound like a different narrator (sometimes even a
+ * different gender) depending on which laptop or browser opened it.
+ * The one kind of voice that DOES render byte-for-byte identically on
+ * any OS is a network voice — Chrome/Edge/Brave stream the audio from
+ * Google's TTS service instead of synthesizing it on-device — so
+ * "Google UK English Female" is listed FIRST below and is what should
+ * end up narrating on the large majority of machines (any Chromium-
+ * based browser, online, on Windows/Mac/Linux/ChromeOS all get this
+ * exact same voice). The delivery tuning further down (raised pitch,
+ * slightly slower rate) is what keeps this specific voice sounding
+ * warm and pleasant rather than flat/robotic.
+ *
+ * The remaining entries only exist as a fallback for the minority of
+ * cases where that first voice genuinely isn't available (offline, or
+ * a non-Chromium browser like Firefox/Safari that doesn't expose
+ * Google's network voice) — Edge's neural "Online (Natural)" voice,
+ * then macOS's Samantha, then a last-resort local Windows voice. Once
+ * ANY of these is locked in on a given device it is reused every time
+ * (see "ONE VOICE, LOCKED IN" above), so the only way to still see two
+ * different voices across two laptops is if one of them can't reach
+ * the network voice at all — a limitation of the Web Speech API itself
+ * (each browser only exposes the voices actually installed/reachable
+ * on that device), not something a page can fully override.
  *
  * Why the female voice sometimes went silent specifically on Mac
  * Chrome: on some Mac + Chrome combinations, Google's network voice
@@ -96,10 +106,10 @@
   // well-known, clearly-female voice. Nothing generic, nothing novelty,
   // nothing male, ever.
   const preferredVoices = [
-    'Microsoft Aria Online (Natural)',  // Windows + Edge — best available
-    'Google UK English Female',        // Any Chrome/Chromium, cross-OS
-    'Samantha',                        // macOS / iOS default
-    'Microsoft Zira'                   // Windows + plain Chrome, no network
+    'Google UK English Female',         // Any Chrome/Chromium, identical on every OS — tried FIRST for consistency
+    'Microsoft Aria Online (Natural)',  // Windows + Edge, network voice — fallback if Google's isn't reachable
+    'Samantha',                         // macOS / iOS default — fallback for non-Chromium browsers
+    'Microsoft Zira'                    // Windows + plain Chrome, no network — last resort
   ];
 
   // Short, explicit list of common default MALE voice names. This exists
@@ -237,14 +247,15 @@
 
   // Shared, tuned delivery settings — softer and slightly slower than
   // a default robotic TTS read, aiming for a warmer, more natural tone.
-  // A raised pitch is one of the more common causes of a voice sounding
-  // artificial/"chipmunky", so this stays close to each voice's own
-  // natural register rather than pushing it up; the rate is slowed a
-  // little further for a calmer, less rushed delivery.
+  // Pitch is nudged up from the voice's default register for a brighter,
+  // more pleasant sound (rather than a flat/low robotic read), while
+  // staying well short of the point where a raised pitch starts sounding
+  // artificial/"chipmunky"; the rate is kept slightly slow for a calmer,
+  // less rushed delivery.
   // Change these two numbers here and every module updates together.
   const DELIVERY = {
-    rate: 0.92,
-    pitch: 1.0
+    rate: 0.94,
+    pitch: 1.12
   };
 
   // ── Pronunciation consistency ────────────────────────────────────
