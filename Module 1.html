@@ -8,107 +8,113 @@
 <meta http-equiv="Expires" content="0">
 <script src="devtools-guard.js"></script>
 <title>Module 1: Introduction to Drug Discovery | Excelra</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
 <style>
   :root {
-    --bg: #0a0c14;
-    --bg-soft: #11141f;
-    --surface: rgba(255, 255, 255, 0.03);
-    --surface-hover: rgba(255, 255, 255, 0.06);
-    --accent: #4f8cff;
-    --accent-soft: rgba(79, 140, 255, 0.15);
-    --accent-glow: rgba(79, 140, 255, 0.4);
-    --highlight: #00d4ff;
+    --bg: #030508;
+    --bg-soft: #080c14;
+    --surface: rgba(12, 18, 28, 0.6);
+    --surface-hover: rgba(20, 28, 40, 0.8);
+    --accent: #00d4ff;
+    --accent-soft: rgba(0, 212, 255, 0.15);
+    --accent-glow: rgba(0, 212, 255, 0.4);
+    --highlight: #7000ff;
+    --highlight-glow: rgba(112, 0, 255, 0.4);
     --ink: #ffffff;
-    --ink-soft: #c9d1e0;
-    --muted: #6b7488;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-strong: rgba(255, 255, 255, 0.15);
+    --ink-soft: #a0b0c0;
+    --muted: #5a6578;
+    --border: rgba(0, 212, 255, 0.15);
+    --border-strong: rgba(0, 212, 255, 0.4);
   }
 
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; }
+  body { cursor: default; }
 
-  /* Ambient Background - Floating Grid & Glows */
-  #bgCanvas { 
-    position:fixed; inset:0; z-index:0; 
-    background: 
-      radial-gradient(circle at 15% 20%, rgba(79, 140, 255, 0.15) 0%, transparent 40%),
-      radial-gradient(circle at 85% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 45%),
-      var(--bg);
+  /* WebGL Canvas */
+  #webgl-canvas { 
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+    pointer-events: none;
   }
-  #bgGrid {
-    position: fixed; inset: 0; z-index: 0;
+  
+  /* Vignette and Grid Overlays */
+  #vignette {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    background: radial-gradient(circle at center, transparent 30%, rgba(3,5,8,0.8) 100%);
+  }
+  #hud-grid {
+    position: fixed; inset: 0; z-index: 1; pointer-events: none;
     background-image: 
-      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), 
-      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
-    animation: gridMove 40s linear infinite;
-  }
-  @keyframes gridMove { 
-    from { background-position: 0 0; } 
-    to { background-position: 60px 60px; } 
+      linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px), 
+      linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(circle at center, black 20%, transparent 70%);
   }
 
   /* Start Screen */
   #startScreen {
     position:fixed; inset:0; z-index:100; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; background:rgba(10, 12, 20, 0.9);
-    backdrop-filter: blur(20px);
+    align-items:center; justify-content:center; background:rgba(3, 5, 8, 0.85);
+    backdrop-filter: blur(15px);
     transition: opacity 0.8s ease, transform 0.8s ease;
     overflow-y:auto; padding:32px 20px;
   }
   #startScreen.hidden { opacity:0; transform:scale(1.05); pointer-events:none; }
   
   .start-badge {
-    display:inline-flex; align-items:center; gap:8px; padding:6px 18px;
+    display:inline-flex; align-items:center; gap:10px; padding:8px 20px;
     border:1px solid var(--border-strong); border-radius:100px; font-size:12px;
-    font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--highlight);
-    margin-bottom:32px; background:rgba(0, 212, 255, 0.05);
-    box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+    font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent);
+    margin-bottom:40px; background:rgba(0, 212, 255, 0.05);
+    box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
+    font-family: 'JetBrains Mono', monospace;
   }
-  .start-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--highlight); animation:pulse-dot 2s infinite; }
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1); box-shadow: 0 0 0 0 var(--highlight)} 50%{opacity:0.4;transform:scale(0.7); box-shadow: 0 0 0 8px transparent} }
+  .start-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow: 0 0 10px var(--accent); animation:pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.5)} }
   
-  .start-module { font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:600; color:var(--muted); letter-spacing:4px; text-transform:uppercase; margin-bottom:12px; }
-  .start-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(36px,6vw,68px); font-weight:700; line-height:1.1; text-align:center; max-width:900px; margin-bottom:20px; color:var(--ink); }
+  .start-module { font-family:'JetBrains Mono', monospace; font-size:14px; font-weight:500; color:var(--muted); letter-spacing:6px; text-transform:uppercase; margin-bottom:16px; }
+  .start-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(40px,7vw,80px); font-weight:700; line-height:1.1; text-align:center; max-width:1000px; margin-bottom:24px; color:var(--ink); text-transform: uppercase; letter-spacing: -2px; }
   .start-title .accent { 
     background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px var(--accent-glow));
   }
-  .start-sub { font-size:18px; color:var(--ink-soft); max-width:600px; text-align:center; line-height:1.6; margin-bottom:48px; font-weight:400; }
+  .start-sub { font-size:18px; color:var(--ink-soft); max-width:600px; text-align:center; line-height:1.6; margin-bottom:56px; font-weight:400; }
   
   .start-btn {
-    position:relative; display:inline-flex; align-items:center; gap:12px;
-    padding:18px 48px; border:none; border-radius:12px; cursor:pointer;
-    background: linear-gradient(135deg, var(--accent) 0%, #3061ff 100%);
-    color:#fff; font-family:'Inter',sans-serif; font-size:16px; font-weight:700; letter-spacing:0.5px;
+    position:relative; display:inline-flex; align-items:center; gap:14px;
+    padding:20px 50px; border:none; border-radius:4px; cursor:pointer;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
+    color:#fff; font-family:'Inter',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; text-transform: uppercase;
     transition: all 0.3s cubic-bezier(0.4,0,0.2,1); 
-    box-shadow: 0 10px 30px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow: 0 10px 40px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.3);
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
   }
-  .start-btn:hover { transform:translateY(-2px); box-shadow: 0 15px 40px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.3); }
+  .start-btn:hover { transform:translateY(-2px); box-shadow: 0 15px 50px var(--highlight-glow), inset 0 1px 0 rgba(255,255,255,0.4); }
   .start-btn:active { transform:scale(0.98); }
-  .start-btn i { font-size:14px; }
+  .start-btn i { font-size:12px; }
   
   .start-brand {
-    position:static; margin-top:40px;
+    position:static; margin-top:48px;
     display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
-    gap:10px; color:var(--muted); font-size:13px; font-weight:500; text-align:center;
+    gap:10px; color:var(--muted); font-size:12px; font-weight:500; text-align:center; font-family: 'JetBrains Mono', monospace;
   }
 
   /* Presentation Container */
   #presentation {
     position:fixed; inset:0; z-index:10; display:flex; align-items:center;
-    padding:0 8vw; opacity:0; transition:opacity 0.5s ease; pointer-events:none;
+    padding:0 10vw; opacity:0; transition:opacity 0.5s ease; pointer-events:none;
   }
   #presentation.active { opacity:1; pointer-events:auto; }
   
   .slide-num {
     position:absolute; left:4vw; top:50%; transform:translateY(-50%);
-    font-family:'Space Grotesk',sans-serif; font-size:clamp(100px,18vw,240px);
-    font-weight:800; color:transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.03);
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(120px,20vw,280px);
+    font-weight:800; color:transparent; -webkit-text-stroke: 1px rgba(0, 212, 255, 0.05);
     line-height:1; pointer-events:none; transition: opacity 0.5s ease; user-select:none;
   }
   .slide-num.fade-out { opacity:0; transform:translateY(-50%) scale(0.9); }
@@ -117,139 +123,154 @@
   
   /* Typography & Elements */
   .slide-label {
-    display:inline-flex; align-items:center; gap:10px; font-size:11px; font-weight:700;
-    letter-spacing:3px; text-transform:uppercase; color:var(--highlight); margin-bottom:24px;
-    opacity:0; transform:translateY(15px); transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+    display:inline-flex; align-items:center; gap:12px; font-size:11px; font-weight:600;
+    letter-spacing:4px; text-transform:uppercase; color:var(--accent); margin-bottom:32px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 6px 12px; border: 1px solid var(--border); background: rgba(0, 212, 255, 0.05);
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
   }
-  .slide-label.visible { opacity:1; transform:translateY(0); }
-  .slide-label .line { width:30px; height:2px; background:linear-gradient(90deg, var(--highlight), transparent); border-radius:2px; }
+  .slide-label .line { width:20px; height:1px; background:var(--accent); }
   
   .slide-title {
-    font-family:'Space Grotesk',sans-serif; font-size:clamp(32px,4vw,48px);
-    font-weight:700; line-height:1.2; margin-bottom:36px; color:var(--ink);
-    opacity:0; transform:translateY(20px); filter: blur(8px);
-    transition: all 0.8s cubic-bezier(0.4,0,0.2,1) 0.1s;
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(36px,4.5vw,56px);
+    font-weight:700; line-height:1.1; margin-bottom:40px; color:var(--ink);
+    text-transform: uppercase; letter-spacing: -1px;
   }
-  .slide-title.visible { opacity:1; transform:translateY(0); filter: blur(0); }
-  .slide-title .hl { background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .slide-title .hl { 
+    background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
 
-  /* Content Types */
+  /* Content Types - HUD Cards */
   .bullet {
-    display:flex; gap:16px; margin-bottom:14px; opacity:0; transform:translateX(-20px);
-    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
-    padding:18px 20px; border-radius:14px; border:1px solid var(--border);
-    background:var(--surface); backdrop-filter: blur(10px);
+    display:flex; gap:16px; margin-bottom:16px; 
+    padding:20px 24px; border-radius:0; 
+    border:1px solid var(--border);
+    background:var(--surface); backdrop-filter: blur(12px);
+    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+    position: relative;
   }
-  .bullet.visible { opacity:1; transform:translateX(0); }
+  .bullet::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); opacity: 0; transition: opacity 0.3s; }
+  .bullet:hover::before { opacity: 1; }
   .bullet:hover { background: var(--surface-hover); border-color: var(--border-strong); }
   
   .bullet-icon {
-    flex-shrink:0; width:32px; height:32px; border-radius:8px; background:var(--accent-soft);
+    flex-shrink:0; width:32px; height:32px; border-radius:0; background:rgba(0, 212, 255, 0.1);
     color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px;
-    margin-top:1px; box-shadow: inset 0 0 10px rgba(79,140,255,0.2);
+    margin-top:2px; border: 1px solid var(--border);
   }
   .bullet-text { font-size:clamp(15px,1.4vw,17px); line-height:1.6; color:var(--ink-soft); font-weight:400; }
-  .bullet-text .key { color:var(--highlight); font-weight:600; }
-  .bullet-text .em { color:var(--accent); font-weight:600; }
+  .bullet-text .key { color:var(--accent); font-weight:600; }
+  .bullet-text .em { color:var(--highlight); font-weight:600; filter: drop-shadow(0 0 5px var(--highlight-glow)); }
 
   /* Split Layout (Text + Diagram) */
-  .split-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+  .split-layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 80px; align-items: center; }
   .split-visual { 
-    opacity: 0; transform: scale(0.95); 
-    transition: all 0.8s cubic-bezier(0.4,0,0.2,1) 0.3s;
     display: flex; justify-content: center; align-items: center;
+    height: 400px; position: relative;
   }
-  .split-visual.visible { opacity: 1; transform: scale(1); }
+  .visual-container { width: 100%; height: 100%; position: relative; }
+  
+  /* Corner brackets for visuals */
+  .visual-container::before, .visual-container::after,
+  .visual-container .br-bl, .visual-container .br-br {
+    content: ''; position: absolute; width: 20px; height: 20px; border: 2px solid var(--accent); z-index: 2;
+  }
+  .visual-container::before { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .visual-container::after { top: 0; right: 0; border-left: none; border-bottom: none; }
+  .visual-container .br-bl { bottom: 0; left: 0; border-right: none; border-top: none; position: absolute; }
+  .visual-container .br-br { bottom: 0; right: 0; border-left: none; border-top: none; position: absolute; }
 
   /* Bento Box Summary */
   .bento-grid { 
     display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
-    gap: 16px; margin-top: 4px; height: 420px;
+    gap: 16px; margin-top: 4px; height: 450px;
   }
   .bento-card {
-    padding: 24px; border-radius: 16px; border: 1px solid var(--border);
-    background: var(--surface); backdrop-filter: blur(10px);
-    opacity: 0; transform: translateY(20px) scale(0.98);
-    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+    padding: 28px; border: 1px solid var(--border);
+    background: var(--surface); backdrop-filter: blur(12px);
     display: flex; flex-direction: column; justify-content: space-between;
     position: relative; overflow: hidden;
+    clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
   }
-  .bento-card.visible { opacity: 1; transform: translateY(0) scale(1); }
-  .bento-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0; transition: opacity 0.3s; }
-  .bento-card:hover::before { opacity: 1; }
+  .bento-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
   
-  .bento-card.large { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, rgba(79,140,255,0.1) 0%, rgba(0,212,255,0.05) 100%); border-color: rgba(79,140,255,0.2); }
-  .bento-card .sc-icon { font-size: 24px; color: var(--accent); margin-bottom: 12px; width: 48px; height: 48px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; }
-  .bento-card .sc-text { font-size: 14px; line-height: 1.5; color: var(--ink-soft); }
-  .bento-card.large .sc-text { font-size: 18px; }
-  .bento-card .sc-text .key { color: var(--highlight); font-weight: 600; }
+  .bento-card.large { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, rgba(112,0,255,0.05) 100%); border-color: var(--border-strong); }
+  .bento-card .sc-icon { font-size: 28px; color: var(--accent); margin-bottom: 16px; width: 56px; height: 56px; border-radius: 0; background: rgba(0, 212, 255, 0.1); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+  .bento-card .sc-text { font-size: 14px; line-height: 1.5; color: var(--ink-soft); font-family: 'JetBrains Mono', monospace; }
+  .bento-card.large .sc-text { font-size: 20px; font-family: 'Inter', sans-serif; }
+  .bento-card .sc-text .key { color: var(--accent); font-weight: 600; }
 
   /* Title & Closing */
   .title-slide .slide-content, .closing-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
-  .title-slide .slide-title { font-size:clamp(36px,5vw,56px); margin-bottom:16px; }
-  .title-slide .slide-subtitle { font-size:clamp(16px,1.8vw,20px); color:var(--ink-soft); font-weight:400; margin-bottom:12px; opacity:0; transform:translateY(15px); transition:all 0.6s ease 0.3s; }
-  .title-slide .slide-subtitle.visible { opacity:1; transform:translateY(0); }
-  .title-slide .slide-brand { font-size:13px; color:var(--highlight); font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0; transition:all 0.6s ease 0.5s; }
-  .title-slide .slide-brand.visible { opacity:1; }
+  .title-slide .slide-title { font-size:clamp(44px,6vw,72px); margin-bottom:24px; }
+  .title-slide .slide-subtitle { font-size:clamp(16px,1.8vw,22px); color:var(--ink-soft); font-weight:400; margin-bottom:16px; font-family: 'JetBrains Mono', monospace; }
+  .title-slide .slide-brand { font-size:12px; color:var(--accent); font-weight:600; letter-spacing:4px; text-transform:uppercase; font-family: 'JetBrains Mono', monospace; }
   .closing-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
 
-  /* UI Chrome */
+  /* UI Chrome - Top Bar */
   .top-bar {
     position:fixed; top:0; left:0; right:0; z-index:20; display:flex;
     align-items:center; justify-content:space-between; padding:24px 40px;
-    background:linear-gradient(180deg, rgba(10,12,20,0.8) 0%, transparent 100%);
-    backdrop-filter: blur(5px);
+    background:linear-gradient(180deg, rgba(3,5,8,0.9) 0%, transparent 100%);
+    backdrop-filter: blur(5px); border-bottom: 1px solid var(--border);
     opacity:0; transition:opacity 0.5s ease;
   }
   .top-bar.visible { opacity:1; }
-  .top-bar-left { display:flex; align-items:center; gap:10px; }
-  .top-bar-logo { font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; color:var(--ink); letter-spacing:0.5px; }
+  .top-bar-left { display:flex; align-items:center; gap:16px; }
+  .top-bar-logo { font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; color:var(--ink); letter-spacing:1px; text-transform: uppercase; }
   .top-bar-logo span { background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .top-bar-status { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .top-bar-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse-dot 2s infinite; }
   
   .module-chip {
-    padding:6px 16px; border-radius:100px; border:1px solid var(--accent); background:var(--accent-soft);
-    font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
+    padding:8px 16px; border:1px solid var(--border-strong); background:rgba(0, 212, 255, 0.05);
+    font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--accent);
+    font-family: 'JetBrains Mono', monospace; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
   }
   
+  /* Bottom Bar Controls */
   .bottom-bar {
-    position:fixed; bottom:0; left:0; right:0; z-index:20; padding:0 40px 28px;
-    background:linear-gradient(0deg, rgba(10,12,20,0.9) 0%, transparent 100%);
+    position:fixed; bottom:0; left:0; right:0; z-index:20; padding:0 40px 32px;
+    background:linear-gradient(0deg, rgba(3,5,8,0.95) 0%, transparent 100%);
     opacity:0; transition:opacity 0.5s ease;
   }
   .bottom-bar.visible { opacity:1; }
   
   .progress-track {
-    width:100%; height:6px; background:var(--border); border-radius:3px;
-    margin-bottom:20px; overflow:visible; cursor:pointer; position:relative;
+    width:100%; height:4px; background:rgba(255,255,255,0.05); 
+    margin-bottom:24px; overflow:visible; cursor:pointer; position:relative;
+    border-radius: 2px;
   }
   .progress-fill {
-    height:100%; width:0%; border-radius:3px; 
+    height:100%; width:0%; border-radius:2px; 
     background:linear-gradient(90deg, var(--accent) 0%, var(--highlight) 100%);
-    transition:width 0.4s ease; position:relative; box-shadow: 0 0 10px var(--accent-glow);
+    transition:width 0.4s ease; position:relative; box-shadow: 0 0 15px var(--accent-glow);
   }
   .progress-fill.scrubbing { transition:none; }
   .progress-fill::after {
-    content:''; position:absolute; right:-7px; top:50%; transform:translateY(-50%);
-    width:16px; height:16px; border-radius:50%; background:#fff; border:3px solid var(--accent);
-    box-shadow:0 0 10px var(--accent-glow);
+    content:''; position:absolute; right:-8px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; border-radius:50%; background:#030508; border:2px solid var(--accent);
+    box-shadow:0 0 12px var(--accent-glow);
   }
   
   .controls-row { display:flex; align-items:center; justify-content:space-between; }
   .controls-left, .controls-right { display:flex; align-items:center; gap:12px; }
   
   .ctrl-btn {
-    width:42px; height:42px; border:none; border-radius:12px; cursor:pointer;
+    width:44px; height:44px; border:none; border-radius:0; cursor:pointer;
     background:var(--surface); color:var(--ink-soft); font-size:14px;
     display:flex; align-items:center; justify-content:center;
     transition:all 0.2s ease; border:1px solid var(--border); backdrop-filter: blur(5px);
+    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
   }
-  .ctrl-btn:hover { background:var(--surface-hover); border-color:var(--accent); color:var(--accent); }
-  .ctrl-btn.active { color:var(--accent); background:var(--accent-soft); border-color:var(--accent); }
-  .ctrl-btn.play-btn { width:52px; height:52px; border-radius:16px; font-size:18px; background:var(--accent); color:#fff; border-color:transparent; box-shadow: 0 4px 20px var(--accent-glow); }
-  .ctrl-btn.play-btn:hover { background:#3061ff; transform: scale(1.05); }
+  .ctrl-btn:hover { background:var(--surface-hover); border-color:var(--border-strong); color:var(--accent); }
+  .ctrl-btn.active { color:var(--accent); background:rgba(0, 212, 255, 0.1); border-color:var(--border-strong); }
+  .ctrl-btn.play-btn { width:56px; height:56px; font-size:18px; background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); color:#fff; border-color:transparent; box-shadow: 0 4px 20px var(--accent-glow); }
+  .ctrl-btn.play-btn:hover { transform: scale(1.05); box-shadow: 0 6px 30px var(--highlight-glow); }
   
-  .audio-wave { display:flex; align-items:center; gap:3px; height:20px; margin-left:8px; }
-  .audio-wave .bar { width:3px; border-radius:3px; background:var(--accent); animation:wave 0.8s ease-in-out infinite; }
+  .audio-wave { display:flex; align-items:center; gap:3px; height:20px; margin-left:12px; }
+  .audio-wave .bar { width:3px; border-radius:3px; background:var(--accent); animation:wave 0.8s ease-in-out infinite; box-shadow: 0 0 5px var(--accent-glow); }
   .audio-wave .bar:nth-child(1) { height:8px; animation-delay:0s; }
   .audio-wave .bar:nth-child(2) { height:14px; animation-delay:0.15s; }
   .audio-wave .bar:nth-child(3) { height:10px; animation-delay:0.3s; }
@@ -258,8 +279,8 @@
   .audio-wave.paused .bar { animation-play-state:paused; height:4px !important; }
   @keyframes wave { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
   
-  .slide-counter { font-size:13px; font-weight:600; color:var(--muted); letter-spacing:1px; font-variant-numeric:tabular-nums; }
-  .slide-counter .current { color:var(--ink); font-size:15px; }
+  .slide-counter { font-family: 'JetBrains Mono', monospace; font-size:13px; font-weight:600; color:var(--muted); letter-spacing:1px; font-variant-numeric:tabular-nums; }
+  .slide-counter .current { color:var(--accent); font-size:16px; text-shadow: 0 0 10px var(--accent-glow); }
   
   .transition-overlay { position:fixed; inset:0; z-index:15; background:var(--bg); opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
   .transition-overlay.active { opacity:1; }
@@ -272,7 +293,7 @@
   /* Responsive */
   @media (max-width:1024px) {
     .split-layout { grid-template-columns: 1fr; gap: 40px; }
-    .split-visual { order: -1; }
+    .split-visual { order: -1; height: 250px; }
     .bento-grid { grid-template-columns: 1fr 1fr; height: auto; }
     .bento-card.large { grid-column: span 2; grid-row: span 1; }
   }
@@ -283,6 +304,7 @@
     .bento-card.large { grid-column: span 1; }
     .top-bar, .bottom-bar { padding-left:16px; padding-right:16px; }
     .bottom-bar { padding-bottom:16px; }
+    .visual-container { display: none; }
   }
   @media (max-height:700px) {
     .start-badge { margin-bottom:16px; }
@@ -297,19 +319,20 @@
 </head>
 <body>
 
-<div id="bgCanvas" aria-hidden="true"></div>
-<div id="bgGrid" aria-hidden="true"></div>
+<canvas id="webgl-canvas"></canvas>
+<div id="hud-grid"></div>
+<div id="vignette"></div>
 
 <div id="startScreen" role="dialog" aria-label="Start presentation">
-  <div class="start-badge"><div class="dot"></div> Drug Discovery Course</div>
+  <div class="start-badge"><div class="dot"></div> SYSTEM INITIALIZED</div>
   <div class="start-module">Module 01</div>
   <h1 class="start-title">Introduction to <span class="accent">Drug Discovery</span></h1>
   <p class="start-sub">How structured data and AI are transforming the journey from molecule to medicine.</p>
-  <button class="start-btn" id="startBtn" aria-label="Begin presentation"><i class="fas fa-play"></i> Begin Presentation</button>
+  <button class="start-btn" id="startBtn" aria-label="Begin presentation"><i class="fas fa-play"></i> Initialize Sequence</button>
   <div class="start-brand">
-    <span>Built by</span>
-    <span style="color:var(--ink);font-weight:700;">Excelra</span>
-    <span style="color:var(--muted);">— Where Data Means More</span>
+    <span>BUILT BY</span>
+    <span style="color:var(--ink);font-weight:700;">EXCELRA</span>
+    <span style="color:var(--muted);">— WHERE DATA MEANS MORE</span>
   </div>
 </div>
 
@@ -320,10 +343,11 @@
 
 <header class="top-bar" id="topBar">
   <div class="top-bar-left">
-    <div class="top-bar-logo">Excel<span>ra</span></div>
+    <div class="top-bar-logo">EXCEL<span>RA</span></div>
+    <div class="top-bar-status"><div class="dot"></div> LIVE_SESSION_ACTIVE</div>
   </div>
   <div class="top-bar-right">
-    <div class="module-chip">Module 01</div>
+    <div class="module-chip">MODULE 01</div>
   </div>
 </header>
 
@@ -356,6 +380,158 @@
 
 <script src="voice-engine.js"></script>
 <script>
+// =========================================================
+// THREE.JS BACKGROUND ENGINE
+// =========================================================
+let scene, camera, renderer, moleculeGroup, particleSystem;
+let current3DTheme = 'molecule';
+
+function initThreeJS() {
+  const canvas = document.getElementById('webgl-canvas');
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 30;
+
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0x404040, 2);
+  scene.add(ambientLight);
+  const pointLight1 = new THREE.PointLight(0x00d4ff, 2, 100);
+  pointLight1.position.set(20, 20, 20);
+  scene.add(pointLight1);
+  const pointLight2 = new THREE.PointLight(0x7000ff, 2, 100);
+  pointLight2.position.set(-20, -20, 10);
+  scene.add(pointLight2);
+
+  // Create Molecule Group
+  moleculeGroup = new THREE.Group();
+  scene.add(moleculeGroup);
+  createMolecule();
+
+  // Create Particles
+  createParticles();
+
+  window.addEventListener('resize', onWindowResize, false);
+  animate3D();
+}
+
+function createMolecule() {
+  // Clear previous
+  while(moleculeGroup.children.length > 0) moleculeGroup.remove(moleculeGroup.children[0]);
+
+  if (current3DTheme === 'molecule') {
+    const sphereGeo = new THREE.IcosahedronGeometry(2, 1);
+    const bondGeo = new THREE.CylinderGeometry(0.2, 0.2, 1, 8);
+    
+    const nodes = [
+      new THREE.Vector3(0, 5, 0),
+      new THREE.Vector3(4, 2, 3),
+      new THREE.Vector3(-4, 2, 3),
+      new THREE.Vector3(3, -3, -2),
+      new THREE.Vector3(-3, -3, -2),
+      new THREE.Vector3(0, 0, 5)
+    ];
+
+    const nodeMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
+    const bondMat = new THREE.MeshStandardMaterial({ color: 0x7000ff, emissive: 0x7000ff, emissiveIntensity: 0.3, transparent: true, opacity: 0.6 });
+
+    nodes.forEach(v => {
+      const s = new THREE.Mesh(sphereGeo, nodeMat);
+      s.position.copy(v);
+      moleculeGroup.add(s);
+    });
+
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        if (Math.random() > 0.5) {
+          const dir = new THREE.Vector3().subVectors(nodes[j], nodes[i]);
+          const len = dir.length();
+          const bond = new THREE.Mesh(bondGeo, bondMat);
+          bond.position.copy(nodes[i]).add(dir.multiplyScalar(0.5));
+          bond.scale.y = len;
+          bond.lookAt(nodes[j]);
+          bond.rotateX(Math.PI / 2);
+          moleculeGroup.add(bond);
+        }
+      }
+    }
+  } else if (current3DTheme === 'pillars') {
+    const tubeGeo = new THREE.CylinderGeometry(1.5, 1.5, 10, 32, 1, true);
+    const tubeMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.2, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
+    for(let i=0; i<3; i++) {
+      const tube = new THREE.Mesh(tubeGeo, tubeMat);
+      tube.position.x = (i - 1) * 6;
+      moleculeGroup.add(tube);
+    }
+  } else if (current3DTheme === 'pipeline') {
+    const curve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-15, 0, 0),
+      new THREE.Vector3(-5, 5, -5),
+      new THREE.Vector3(5, -5, 5),
+      new THREE.Vector3(15, 0, 0)
+    ]);
+    const pipeGeo = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
+    const pipeMat = new THREE.MeshStandardMaterial({ color: 0x7000ff, emissive: 0x7000ff, emissiveIntensity: 0.4, metalness: 0.8, roughness: 0.2 });
+    const pipe = new THREE.Mesh(pipeGeo, pipeMat);
+    moleculeGroup.add(pipe);
+  } else if (current3DTheme === 'network') {
+    const nodeMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.6 });
+    const bondMat = new THREE.MeshBasicMaterial({ color: 0x7000ff, transparent: true, opacity: 0.3 });
+    for(let i=0; i<15; i++) {
+      const s = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), nodeMat);
+      s.position.set((Math.random()-0.5)*20, (Math.random()-0.5)*15, (Math.random()-0.5)*10);
+      moleculeGroup.add(s);
+    }
+  }
+}
+
+function createParticles() {
+  const particleCount = 2000;
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+
+  for(let i=0; i<particleCount*3; i+=3) {
+    positions[i] = (Math.random()-0.5) * 100;
+    positions[i+1] = (Math.random()-0.5) * 60;
+    positions[i+2] = (Math.random()-0.5) * 50;
+
+    const color = new THREE.Color(Math.random() > 0.5 ? 0x00d4ff : 0x7000ff);
+    colors[i] = color.r; colors[i+1] = color.g; colors[i+2] = color.b;
+  }
+
+  const particleGeo = new THREE.BufferGeometry();
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const particleMat = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 0.6 });
+  particleSystem = new THREE.Points(particleGeo, particleMat);
+  scene.add(particleSystem);
+}
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate3D() {
+  requestAnimationFrame(animate3D);
+  if (moleculeGroup) {
+    moleculeGroup.rotation.y += 0.002;
+    moleculeGroup.rotation.x += 0.001;
+  }
+  if (particleSystem) {
+    particleSystem.rotation.y += 0.0005;
+  }
+  renderer.render(scene, camera);
+}
+
+// =========================================================
+// PRESENTATION DATA & LOGIC
+// =========================================================
 const slides = [
   {
     "type": "title",
@@ -363,6 +539,7 @@ const slides = [
     "title": "Introduction to <span class=\"hl\">Drug Discovery</span>",
     "subtitle": "How structured data accelerates modern medicine",
     "brand": "Excelra \u2014 Where Data Means More",
+    "theme": "molecule",
     "segments": [
       "Welcome to Module One, Introduction to Drug Discovery. Let's look at how modern medicine gets made, and the data behind it."
     ]
@@ -372,6 +549,7 @@ const slides = [
     "label": "The Shift",
     "title": "What Modern Discovery <span class=\"hl\">Relies On</span>",
     "visual": "molecule",
+    "theme": "molecule",
     "segments": [
       "Modern drug discovery increasingly relies on <span class=\"key\">large-scale, structured data</span>.",
       "It does not rely on manual paper records, it does not rely on marketing analytics, and it does not rely on word-of-mouth research sharing between labs.",
@@ -383,6 +561,7 @@ const slides = [
     "label": "What's Included",
     "title": "The Three Pillars of <span class=\"hl\">Discovery Data</span>",
     "visual": "pillars",
+    "theme": "pillars",
     "segments": [
       "These data resources typically include structured records on <span class=\"em\">chemical compounds</span> \u2014 their properties, their synthesis routes, their behavior.",
       "They include data on <span class=\"em\">biological targets</span> \u2014 the proteins and pathways a drug is designed to act on.",
@@ -393,6 +572,7 @@ const slides = [
     "type": "content",
     "label": "What's Not Included",
     "title": "What This Data <span class=\"hl\">Is Not</span>",
+    "theme": "network",
     "segments": [
       "To be clear, this is scientific and clinical data \u2014 not personal or administrative records.",
       "Something like a patient's <span class=\"key\">home address</span> is never part of this picture. That kind of detail plays no role in understanding a compound or a target.",
@@ -403,6 +583,7 @@ const slides = [
     "type": "content",
     "label": "Five Terms",
     "title": "Vocabulary You'll <span class=\"hl\">See Again</span>",
+    "theme": "network",
     "segments": [
       "A <span class=\"key\">TARGET</span> is the biological molecule responsible for a disease mechanism \u2014 usually a protein.",
       "<span class=\"key\">DISCOVERY</span> is the first stage of the pharmaceutical lifecycle, where that target and its matching molecule are found.",
@@ -415,6 +596,7 @@ const slides = [
     "label": "This Course",
     "title": "What You Will <span class=\"hl\">Learn</span>",
     "visual": "pipeline",
+    "theme": "pipeline",
     "segments": [
       "Across the next ten modules, you will walk through the <span class=\"key\">entire drug discovery process</span> \u2014 from target identification all the way to a filed IND.",
       "You will also see exactly how <span class=\"em\">data engineering and AI</span> accelerate every one of those stages, using real tools like AlphaFold and generative molecule design.",
@@ -425,24 +607,12 @@ const slides = [
     "type": "bento",
     "label": "Recap",
     "title": "Key <span class=\"hl\">Takeaways</span>",
+    "theme": "molecule",
     "cards": [
-      {
-        "icon": "fa-database",
-        "text": "Discovery runs on <span class=\"key\">structured data</span> \u2014 compounds, targets, and clinical trial outcomes.",
-        "large": true
-      },
-      {
-        "icon": "fa-user-shield",
-        "text": "Personal details like a <span class=\"key\">home address</span> are never part of this data."
-      },
-      {
-        "icon": "fa-spell-check",
-        "text": "Five core terms: <span class=\"key\">Target, Discovery, Pipeline, Molecule, Research</span>."
-      },
-      {
-        "icon": "fa-bolt",
-        "text": "This course covers the <span class=\"key\">full pipeline</span>, plus data engineering and AI."
-      }
+      { "icon": "fa-database", "text": "Discovery runs on <span class=\"key\">structured data</span> \u2014 compounds, targets, and clinical trial outcomes.", "large": true },
+      { "icon": "fa-user-shield", "text": "Personal details like a <span class=\"key\">home address</span> are never part of this data." },
+      { "icon": "fa-spell-check", "text": "Five core terms: <span class=\"key\">Target, Discovery, Pipeline, Molecule, Research</span>." },
+      { "icon": "fa-bolt", "text": "This course covers the <span class=\"key\">full pipeline</span>, plus data engineering and AI." }
     ],
     "segments": [
       "Let's recap. Modern drug discovery relies on large-scale, structured data \u2014 compounds, targets, and clinical outcomes \u2014 never personal details like a home address.",
@@ -456,6 +626,7 @@ const slides = [
     "title": "Ready for the <span class=\"hl\">Quiz</span>?",
     "subtitle": "Module 2: Business Overview",
     "brand": "You're ready for the quiz and the Term Scramble game. Good luck!",
+    "theme": "molecule",
     "segments": [
       "That completes Module One.",
       "Next, in Module Two, we look at drug discovery from a business perspective \u2014 the stages, the odds, and the timeline.",
@@ -464,152 +635,30 @@ const slides = [
   }
 ];
 
-// --- Visual Diagrams Generator ---
-function getVisualSVG(type) {
-  if (type === 'molecule') {
-    return `
-      <svg width="320" height="320" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="100" r="80" stroke="url(#grad1)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"/>
-        <g class="atom-group">
-          <circle cx="100" cy="60" r="12" fill="#4f8cff" opacity="0.8"/>
-          <circle cx="140" cy="120" r="8" fill="#00d4ff" opacity="0.8"/>
-          <circle cx="60" cy="120" r="8" fill="#00d4ff" opacity="0.8"/>
-          <circle cx="100" cy="140" r="10" fill="#4f8cff" opacity="0.8"/>
-          <line x1="100" y1="60" x2="140" y2="120" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-          <line x1="100" y1="60" x2="60" y2="120" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-          <line x1="140" y1="120" x2="100" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-          <line x1="60" y1="120" x2="100" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-        </g>
-        <defs>
-          <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#4f8cff"/>
-            <stop offset="100%" stop-color="#00d4ff"/>
-          </linearGradient>
-        </defs>
-        <style>
-          .atom-group { transform-origin: 100px 100px; animation: spin 20s linear infinite; }
-          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        </style>
-      </svg>
-    `;
-  }
-  if (type === 'pillars') {
-    return `
-      <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <g class="pillar-group">
-          <rect x="20" y="100" width="100" height="140" rx="8" fill="url(#pgrad1)" opacity="0.1" stroke="url(#pgrad1)" stroke-width="1"/>
-          <rect x="25" y="120" width="90" height="4" rx="2" fill="#4f8cff" opacity="0.5"/>
-          <rect x="25" y="130" width="60" height="4" rx="2" fill="#4f8cff" opacity="0.3"/>
-          <circle cx="70" cy="80" r="20" fill="rgba(79,140,255,0.1)" stroke="#4f8cff" stroke-width="1.5"/>
-          <path d="M60 80 L80 80 M70 70 L70 90" stroke="#4f8cff" stroke-width="2"/>
-          <text x="70" y="220" fill="#fff" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle">Compounds</text>
-
-          <rect x="150" y="80" width="100" height="160" rx="8" fill="url(#pgrad2)" opacity="0.1" stroke="url(#pgrad2)" stroke-width="1"/>
-          <rect x="155" y="100" width="90" height="4" rx="2" fill="#00d4ff" opacity="0.5"/>
-          <rect x="155" y="110" width="60" height="4" rx="2" fill="#00d4ff" opacity="0.3"/>
-          <circle cx="200" cy="60" r="22" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.5"/>
-          <path d="M190 60 Q200 45 210 60 Q200 75 190 60" stroke="#00d4ff" stroke-width="2" fill="none"/>
-          <text x="200" y="220" fill="#fff" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle">Targets</text>
-
-          <rect x="280" y="60" width="100" height="180" rx="8" fill="url(#pgrad3)" opacity="0.1" stroke="url(#pgrad3)" stroke-width="1"/>
-          <rect x="285" y="80" width="90" height="4" rx="2" fill="#fff" opacity="0.5"/>
-          <rect x="285" y="90" width="60" height="4" rx="2" fill="#fff" opacity="0.3"/>
-          <circle cx="330" cy="40" r="20" fill="rgba(255,255,255,0.05)" stroke="#fff" stroke-width="1.5"/>
-          <path d="M320 45 L325 35 L330 40 L335 30 L340 45" stroke="#fff" stroke-width="2" fill="none"/>
-          <text x="330" y="220" fill="#fff" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle">Clinical Data</text>
-        </g>
-        <defs>
-          <linearGradient id="pgrad1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f8cff"/><stop offset="100%" stop-color="transparent"/></linearGradient>
-          <linearGradient id="pgrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="transparent"/></linearGradient>
-          <linearGradient id="pgrad3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="transparent"/></linearGradient>
-        </defs>
-        <style>
-          .pillar-group { animation: rise 1.5s cubic-bezier(0.4,0,0.2,1) forwards; transform: translateY(20px); opacity: 0; }
-          @keyframes rise { to { transform: translateY(0); opacity: 1; } }
-        </style>
-      </svg>
-    `;
-  }
-  if (type === 'pipeline') {
-    return `
-      <svg width="450" height="300" viewBox="0 0 450 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 150 L430 150" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="4 4"/>
-        <path class="draw-line" d="M20 150 L430 150" stroke="url(#linegrad)" stroke-width="4" stroke-linecap="round"/>
-        
-        <g class="node node-1">
-          <circle cx="50" cy="150" r="8" fill="#0a0c14" stroke="#4f8cff" stroke-width="2"/>
-          <circle cx="50" cy="150" r="4" fill="#4f8cff"/>
-          <text x="50" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Target ID</text>
-        </g>
-        <g class="node node-2">
-          <circle cx="140" cy="150" r="8" fill="#0a0c14" stroke="#3061ff" stroke-width="2"/>
-          <circle cx="140" cy="150" r="4" fill="#3061ff"/>
-          <text x="140" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Hit to Lead</text>
-        </g>
-        <g class="node node-3">
-          <circle cx="230" cy="150" r="8" fill="#0a0c14" stroke="#1f7aff" stroke-width="2"/>
-          <circle cx="230" cy="150" r="4" fill="#1f7aff"/>
-          <text x="230" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Preclinical</text>
-        </g>
-        <g class="node node-4">
-          <circle cx="320" cy="150" r="8" fill="#0a0c14" stroke="#00d4ff" stroke-width="2"/>
-          <circle cx="320" cy="150" r="4" fill="#00d4ff"/>
-          <text x="320" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Clinical Trials</text>
-        </g>
-        <g class="node node-5">
-          <circle cx="410" cy="150" r="8" fill="#0a0c14" stroke="#00d4ff" stroke-width="2"/>
-          <circle cx="410" cy="150" r="4" fill="#00d4ff"/>
-          <text x="410" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Filed IND</text>
-        </g>
-
-        <defs>
-          <linearGradient id="linegrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#4f8cff"/>
-            <stop offset="100%" stop-color="#00d4ff"/>
-          </linearGradient>
-        </defs>
-        <style>
-          .draw-line { stroke-dasharray: 410; stroke-dashoffset: 410; animation: draw 3s ease-out forwards 0.5s; }
-          @keyframes draw { to { stroke-dashoffset: 0; } }
-          .node { opacity: 0; transform: scale(0); transform-origin: center; }
-          .node-1 { animation: pop 0.4s ease-out forwards 0.6s; transform-origin: 50px 150px; }
-          .node-2 { animation: pop 0.4s ease-out forwards 1.2s; transform-origin: 140px 150px; }
-          .node-3 { animation: pop 0.4s ease-out forwards 1.8s; transform-origin: 230px 150px; }
-          .node-4 { animation: pop 0.4s ease-out forwards 2.4s; transform-origin: 320px 150px; }
-          .node-5 { animation: pop 0.4s ease-out forwards 3.0s; transform-origin: 410px 150px; }
-          @keyframes pop { 0% { opacity: 0; transform: scale(0); } 70% { transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
-        </style>
-      </svg>
-    `;
-  }
-  return '';
-}
-
-// Voice selection is fully owned by voice-engine.js
 const synth = window.presentationVoice.synth;
-
 const totalSections = slides.length + 2;
 let currentSection = 0;
 let currentSlide = 0;
 
 const seekGuardKey = 'presentationMaxSection_' + document.title;
 let maxSectionReached = parseInt(localStorage.getItem(seekGuardKey), 10) || 0;
+
 function recordSectionReached(index) {
   if (index > maxSectionReached) {
     maxSectionReached = index;
     try { localStorage.setItem(seekGuardKey, String(maxSectionReached)); } catch (e) {}
   }
 }
+
 function showSeekBlockedHint() {
   const old = document.getElementById('seekBlockedHint');
   if (old) old.remove();
   const hint = document.createElement('div');
-  hint.id = 'seekBlockedHint';
-  hint.textContent = "Keep watching to unlock further along.";
-  hint.style.cssText = 'position:fixed;left:50%;bottom:92px;transform:translateX(-50%);' +
-    'background:rgba(20,24,34,0.92);color:#fff;font-family:Inter,sans-serif;font-size:13px;' +
-    'font-weight:600;padding:10px 18px;border-radius:8px;z-index:50;pointer-events:none;' +
-    'box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity 0.2s ease;';
+  hint.textContent = "KEEP WATCHING TO UNLOCK FURTHER ALONG.";
+  hint.style.cssText = 'position:fixed;left:50%;bottom:100px;transform:translateX(-50%);' +
+    'background:rgba(0, 212, 255, 0.1);color:#00d4ff;border:1px solid #00d4ff;font-family:JetBrains Mono,monospace;font-size:12px;' +
+    'font-weight:600;padding:10px 20px;border-radius:0;z-index:50;pointer-events:none;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);' +
+    'box-shadow:0 0 20px rgba(0,212,255,0.2);opacity:0;transition:opacity 0.2s ease;';
   document.body.appendChild(hint);
   requestAnimationFrame(() => { hint.style.opacity = '1'; });
   setTimeout(() => { hint.style.opacity = '0'; setTimeout(() => hint.remove(), 250); }, 1600);
@@ -655,6 +704,12 @@ function renderSlide(index) {
   slideNum.textContent = num;
   let html = '';
 
+  // Update 3D Background Theme
+  if (current3DTheme !== s.theme) {
+    current3DTheme = s.theme;
+    createMolecule();
+  }
+
   if (s.type === 'title' || s.type === 'closing') {
     html = `<div class="slide-label"><span class="line"></span>${s.label}<span class="line"></span></div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
@@ -679,9 +734,9 @@ function renderSlide(index) {
                <div class="slide-label"><span class="line"></span>${s.label}</div>
                <h2 class="slide-title">${s.title}</h2>
              </div>`;
-    html += `<div class="split-visual">${getVisualSVG(s.visual)}</div>`;
+    // Empty visual container, 3D is handled by background, but we show a HUD frame
+    html += `<div class="split-visual"><div class="visual-container"><div class="br-bl"></div><div class="br-br"></div></div></div>`;
     html += `</div>`;
-    // Inject bullets below the split layout container
     html += `<div class="split-bullets" style="margin-top: 30px; max-width: 600px;">`;
     s.segments.forEach((seg, i) => {
       html += `<div class="bullet" data-idx="${i}"><div class="bullet-icon"><i class="fas fa-chevron-right"></i></div><div class="bullet-text">${seg}</div></div>`;
@@ -702,33 +757,38 @@ function renderSlide(index) {
 function animateSlideIn(index) {
   const s = slides[index];
   slideNum.classList.remove('fade-out');
-  setTimeout(() => {
-    const label = slideContent.querySelector('.slide-label');
-    const title = slideContent.querySelector('.slide-title');
-    const visual = slideContent.querySelector('.split-visual');
-    if (label) label.classList.add('visible');
-    if (title) title.classList.add('visible');
-    if (visual) visual.classList.add('visible');
-  }, 100);
+  
+  // GSAP Animation Orchestrations
+  gsap.killTweensOf(".slide-label, .slide-title, .bullet, .bento-card, .split-visual, .slide-subtitle, .slide-brand");
+  
+  gsap.set([".slide-label", ".slide-title", ".bullet", ".bento-card", ".split-visual", ".slide-subtitle", ".slide-brand"], { opacity: 0, y: 20, filter: "blur(10px)" });
+  
+  gsap.to(".slide-label", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", delay: 0.1 });
+  gsap.to(".slide-title", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power3.out", delay: 0.2 });
+  
+  if (s.type === 'split') {
+    gsap.to(".split-visual", { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 1, ease: "power3.out", delay: 0.4 });
+  }
   if (s.type === 'title' || s.type === 'closing') {
-    setTimeout(() => {
-      const sub = slideContent.querySelector('.slide-subtitle');
-      const brand = slideContent.querySelector('.slide-brand');
-      if (sub) sub.classList.add('visible');
-      if (brand) brand.classList.add('visible');
-    }, 400);
+    gsap.to(".slide-subtitle", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", delay: 0.5 });
+    gsap.to(".slide-brand", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", delay: 0.7 });
   }
 }
 
 function showSegment(index) {
   const s = slides[currentSlide];
   if (s.type === 'title' || s.type === 'closing') return;
+  
   if (s.type === 'bento') {
     const cards = slideContent.querySelectorAll('.bento-card');
-    if (cards[index]) cards[index].classList.add('visible');
+    if (cards[index]) {
+      gsap.to(cards[index], { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "power3.out" });
+    }
   } else {
     const bullets = slideContent.querySelectorAll('.bullet');
-    if (bullets[index]) bullets[index].classList.add('visible');
+    if (bullets[index]) {
+      gsap.to(bullets[index], { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out" });
+    }
   }
 }
 
@@ -746,7 +806,7 @@ async function playCurrentSlide() {
   if (!isPlaying) return;
   const s = slides[currentSlide];
   animateSlideIn(currentSlide);
-  const introDelay = (s.type === 'title' || s.type === 'closing') ? 1200 : (s.type === 'split' ? 1000 : 800);
+  const introDelay = (s.type === 'title' || s.type === 'closing') ? 1200 : 800;
   await delay(introDelay);
   if (!isPlaying || myToken !== genToken) return;
   const segs = s.segments || [];
@@ -820,11 +880,11 @@ function enterSlideSection() {
     const s = slides[currentSlide];
     if (s.type === 'bento') {
       slideContent.querySelectorAll('.bento-card').forEach((c, i) => {
-        setTimeout(() => c.classList.add('visible'), 300 + i * 150);
+        setTimeout(() => showSegment(i), 300 + i * 150);
       });
     } else if (s.type !== 'title' && s.type !== 'closing') {
       slideContent.querySelectorAll('.bullet').forEach((b, i) => {
-        setTimeout(() => b.classList.add('visible'), 300 + i * 150);
+        setTimeout(() => showSegment(i), 300 + i * 150);
       });
     }
   }
@@ -1014,6 +1074,9 @@ window.addEventListener('message', event => {
   if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
+
+// Initialize WebGL Scene
+initThreeJS();
 </script>
 </body>
 </html>
