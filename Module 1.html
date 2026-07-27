@@ -8,269 +8,229 @@
 <meta http-equiv="Expires" content="0">
 <script src="devtools-guard.js"></script>
 <title>Module 1: Introduction to Drug Discovery | Excelra</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-
 <style>
   :root {
-    --bg: #030508;
-    --bg-soft: #080c14;
-    --surface: rgba(12, 18, 28, 0.6);
-    --surface-hover: rgba(20, 28, 40, 0.8);
-    --accent: #00d4ff;
-    --accent-soft: rgba(0, 212, 255, 0.15);
-    --accent-glow: rgba(0, 212, 255, 0.4);
-    --highlight: #7000ff;
-    --highlight-glow: rgba(112, 0, 255, 0.4);
-    --ink: #ffffff;
-    --ink-soft: #a0b0c0;
-    --muted: #5a6578;
-    --border: rgba(0, 212, 255, 0.15);
-    --border-strong: rgba(0, 212, 255, 0.4);
+    --bg: #ffffff;
+    --surface: #f6f8fb;
+    --accent: #2757d6;
+    --accent-soft: rgba(39,87,214,0.08);
+    --accent-glow: rgba(39,87,214,0.18);
+    --highlight: #c2410c;
+    --ink: #16181d;
+    --ink-soft: #3a4150;
+    --muted: #6b7280;
+    --border: #e5e9f0;
   }
-
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; }
-  body { cursor: default; }
 
-  /* WebGL Canvas */
-  #webgl-canvas { 
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-    pointer-events: none;
+  /* Quiet backdrop — a faint fixed grid instead of the old dark particle
+     animation, which read as generic "AI slide deck" rather than course material. */
+  #bgCanvas { position:fixed; inset:0; z-index:0;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 56px 56px; opacity:0.5;
   }
-  
-  /* Vignette and Grid Overlays */
-  #vignette {
-    position: fixed; inset: 0; z-index: 1; pointer-events: none;
-    background: radial-gradient(circle at center, transparent 30%, rgba(3,5,8,0.8) 100%);
-  }
-  #hud-grid {
-    position: fixed; inset: 0; z-index: 1; pointer-events: none;
-    background-image: 
-      linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px), 
-      linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-    background-size: 80px 80px;
-    mask-image: radial-gradient(circle at center, black 20%, transparent 70%);
-  }
+  .vignette { display:none; }
 
-  /* Start Screen */
   #startScreen {
     position:fixed; inset:0; z-index:100; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; background:rgba(3, 5, 8, 0.85);
-    backdrop-filter: blur(15px);
+    align-items:center; justify-content:center; background:var(--bg);
     transition: opacity 0.8s ease, transform 0.8s ease;
+    /* Was clipping/overlapping content on shorter or mid-size laptop
+       viewports — the badge/title/subtitle/button could take up more
+       vertical space than the viewport had, and the "Built by Excelra"
+       brand line (previously absolutely positioned at a fixed distance
+       from the bottom) would land right on top of the button instead of
+       the layout adapting. Letting this screen scroll internally, and
+       giving it its own top/bottom breathing room, means a cramped
+       viewport scrolls instead of stacking elements on top of each other. */
     overflow-y:auto; padding:32px 20px;
   }
   #startScreen.hidden { opacity:0; transform:scale(1.05); pointer-events:none; }
-  
   .start-badge {
-    display:inline-flex; align-items:center; gap:10px; padding:8px 20px;
-    border:1px solid var(--border-strong); border-radius:100px; font-size:12px;
-    font-weight:600; letter-spacing:3px; text-transform:uppercase; color:var(--accent);
-    margin-bottom:40px; background:rgba(0, 212, 255, 0.05);
-    box-shadow: 0 0 30px rgba(0, 212, 255, 0.1);
-    font-family: 'JetBrains Mono', monospace;
+    display:inline-flex; align-items:center; gap:8px; padding:6px 18px;
+    border:1px solid var(--border); border-radius:100px; font-size:12px;
+    font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
+    margin-bottom:32px; background:var(--accent-soft);
   }
-  .start-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); box-shadow: 0 0 10px var(--accent); animation:pulse-dot 2s infinite; }
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.5)} }
-  
-  .start-module { font-family:'JetBrains Mono', monospace; font-size:14px; font-weight:500; color:var(--muted); letter-spacing:6px; text-transform:uppercase; margin-bottom:16px; }
-  .start-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(40px,7vw,80px); font-weight:700; line-height:1.1; text-align:center; max-width:1000px; margin-bottom:24px; color:var(--ink); text-transform: uppercase; letter-spacing: -2px; }
-  .start-title .accent { 
-    background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    filter: drop-shadow(0 0 20px var(--accent-glow));
-  }
-  .start-sub { font-size:18px; color:var(--ink-soft); max-width:600px; text-align:center; line-height:1.6; margin-bottom:56px; font-weight:400; }
-  
+  .start-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+  .start-module { font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:600; color:var(--muted); letter-spacing:4px; text-transform:uppercase; margin-bottom:12px; }
+  .start-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(32px,5.5vw,60px); font-weight:700; line-height:1.15; text-align:center; max-width:800px; margin-bottom:16px; color:var(--ink); }
+  .start-title .accent { color:var(--accent); }
+  .start-sub { font-size:17px; color:var(--muted); max-width:520px; text-align:center; line-height:1.6; margin-bottom:44px; font-weight:400; }
   .start-btn {
-    position:relative; display:inline-flex; align-items:center; gap:14px;
-    padding:20px 50px; border:none; border-radius:4px; cursor:pointer;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
-    color:#fff; font-family:'Inter',sans-serif; font-size:14px; font-weight:700; letter-spacing:2px; text-transform: uppercase;
-    transition: all 0.3s cubic-bezier(0.4,0,0.2,1); 
-    box-shadow: 0 10px 40px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.3);
-    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    position:relative; display:inline-flex; align-items:center; gap:12px;
+    padding:16px 40px; border:none; border-radius:10px; cursor:pointer;
+    background: var(--accent); color:#fff;
+    font-family:'Inter',sans-serif; font-size:16px; font-weight:700; letter-spacing:0.3px;
+    transition: all 0.2s ease; box-shadow: 0 4px 16px var(--accent-glow);
   }
-  .start-btn:hover { transform:translateY(-2px); box-shadow: 0 15px 50px var(--highlight-glow), inset 0 1px 0 rgba(255,255,255,0.4); }
+  .start-btn:hover { transform:translateY(-1px); box-shadow: 0 8px 22px var(--accent-glow); }
   .start-btn:active { transform:scale(0.98); }
-  .start-btn i { font-size:12px; }
-  
+  .start-btn i { font-size:14px; }
   .start-brand {
-    position:static; margin-top:48px;
+    /* No longer absolutely positioned at a fixed distance from the
+       bottom of the screen (that's what let it land on top of the
+       "Begin Presentation" button whenever the centered content above
+       it grew taller than the available height). It now simply flows
+       in normal document order after the button, with its own margin —
+       so it always sits below the button with clear space, on any
+       screen size, and the pair scroll together if needed instead of
+       overlapping. */
+    position:static; margin-top:32px;
     display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
-    gap:10px; color:var(--muted); font-size:12px; font-weight:500; text-align:center; font-family: 'JetBrains Mono', monospace;
+    gap:10px; color:var(--muted); font-size:13px; font-weight:500; text-align:center;
   }
 
-  /* Presentation Container */
   #presentation {
     position:fixed; inset:0; z-index:10; display:flex; align-items:center;
-    padding:0 10vw; opacity:0; transition:opacity 0.5s ease; pointer-events:none;
+    padding:0 8vw; opacity:0; transition:opacity 0.5s ease; pointer-events:none;
+    background:var(--bg);
   }
   #presentation.active { opacity:1; pointer-events:auto; }
-  
   .slide-num {
-    position:absolute; left:4vw; top:50%; transform:translateY(-50%);
-    font-family:'Space Grotesk',sans-serif; font-size:clamp(120px,20vw,280px);
-    font-weight:800; color:transparent; -webkit-text-stroke: 1px rgba(0, 212, 255, 0.05);
-    line-height:1; pointer-events:none; transition: opacity 0.5s ease; user-select:none;
+    position:absolute; left:5vw; top:50%; transform:translateY(-50%);
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(90px,16vw,220px);
+    font-weight:800; color:var(--surface); line-height:1; pointer-events:none;
+    transition: opacity 0.5s ease, transform 0.5s ease; user-select:none;
   }
   .slide-num.fade-out { opacity:0; transform:translateY(-50%) scale(0.9); }
-  
-  .slide-content { position:relative; z-index:1; margin-left:clamp(80px,12vw,180px); max-width:820px; width:100%; }
-  
-  /* Typography & Elements */
+  .slide-content { position:relative; z-index:1; margin-left:clamp(80px,13vw,190px); max-width:720px; width:100%; }
   .slide-label {
-    display:inline-flex; align-items:center; gap:12px; font-size:11px; font-weight:600;
-    letter-spacing:4px; text-transform:uppercase; color:var(--accent); margin-bottom:32px;
-    font-family: 'JetBrains Mono', monospace;
-    padding: 6px 12px; border: 1px solid var(--border); background: rgba(0, 212, 255, 0.05);
-    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:700;
+    letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:20px;
+    opacity:0; transform:translateY(15px); transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
   }
-  .slide-label .line { width:20px; height:1px; background:var(--accent); }
-  
+  .slide-label.visible { opacity:1; transform:translateY(0); }
+  .slide-label .line { width:24px; height:2px; background:var(--accent); border-radius:2px; }
   .slide-title {
-    font-family:'Space Grotesk',sans-serif; font-size:clamp(36px,4.5vw,56px);
-    font-weight:700; line-height:1.1; margin-bottom:40px; color:var(--ink);
-    text-transform: uppercase; letter-spacing: -1px;
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(26px,3.4vw,42px);
+    font-weight:700; line-height:1.2; margin-bottom:30px; color:var(--ink);
+    opacity:0; transform:translateY(20px); transition: all 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s;
   }
-  .slide-title .hl { 
-    background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
+  .slide-title.visible { opacity:1; transform:translateY(0); }
+  .slide-title .hl { color:var(--highlight); }
 
-  /* Content Types - HUD Cards */
   .bullet {
-    display:flex; gap:16px; margin-bottom:16px; 
-    padding:20px 24px; border-radius:0; 
-    border:1px solid var(--border);
-    background:var(--surface); backdrop-filter: blur(12px);
-    clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
-    position: relative;
+    display:flex; gap:14px; margin-bottom:16px; opacity:0; transform:translateX(-16px);
+    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+    padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface);
   }
-  .bullet::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); opacity: 0; transition: opacity 0.3s; }
-  .bullet:hover::before { opacity: 1; }
-  .bullet:hover { background: var(--surface-hover); border-color: var(--border-strong); }
-  
+  .bullet.visible { opacity:1; transform:translateX(0); }
   .bullet-icon {
-    flex-shrink:0; width:32px; height:32px; border-radius:0; background:rgba(0, 212, 255, 0.1);
-    color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px;
-    margin-top:2px; border: 1px solid var(--border);
+    flex-shrink:0; width:28px; height:28px; border-radius:8px; background:var(--accent-soft);
+    color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px;
+    margin-top:1px;
   }
-  .bullet-text { font-size:clamp(15px,1.4vw,17px); line-height:1.6; color:var(--ink-soft); font-weight:400; }
-  .bullet-text .key { color:var(--accent); font-weight:600; }
-  .bullet-text .em { color:var(--highlight); font-weight:600; filter: drop-shadow(0 0 5px var(--highlight-glow)); }
+  .bullet-text { font-size:clamp(14px,1.4vw,16px); line-height:1.65; color:var(--ink-soft); font-weight:400; }
+  .bullet-text .key { color:var(--highlight); font-weight:600; }
+  .bullet-text .em { color:var(--accent); font-weight:600; }
 
-  /* Split Layout (Text + Diagram) */
-  .split-layout { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 80px; align-items: center; }
-  .split-visual { 
-    display: flex; justify-content: center; align-items: center;
-    height: 400px; position: relative;
-  }
-  .visual-container { width: 100%; height: 100%; position: relative; }
-  
-  /* Corner brackets for visuals */
-  .visual-container::before, .visual-container::after,
-  .visual-container .br-bl, .visual-container .br-br {
-    content: ''; position: absolute; width: 20px; height: 20px; border: 2px solid var(--accent); z-index: 2;
-  }
-  .visual-container::before { top: 0; left: 0; border-right: none; border-bottom: none; }
-  .visual-container::after { top: 0; right: 0; border-left: none; border-bottom: none; }
-  .visual-container .br-bl { bottom: 0; left: 0; border-right: none; border-top: none; position: absolute; }
-  .visual-container .br-br { bottom: 0; right: 0; border-left: none; border-top: none; position: absolute; }
+  .title-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .title-slide .slide-title { font-size:clamp(30px,4.4vw,52px); margin-bottom:12px; }
+  .title-slide .slide-subtitle { font-size:clamp(15px,1.8vw,20px); color:var(--muted); font-weight:400; margin-bottom:8px; opacity:0; transform:translateY(15px); transition:all 0.6s ease 0.3s; }
+  .title-slide .slide-subtitle.visible { opacity:1; transform:translateY(0); }
+  .title-slide .slide-brand { font-size:13px; color:var(--accent); font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0; transition:all 0.6s ease 0.5s; }
+  .title-slide .slide-brand.visible { opacity:1; }
 
-  /* Bento Box Summary */
-  .bento-grid { 
-    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
-    gap: 16px; margin-top: 4px; height: 450px;
+  .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px; }
+  .summary-card {
+    padding:16px 18px; border-radius:10px; border:1px solid var(--border);
+    background:var(--surface); opacity:0; transform:translateY(15px) scale(0.97);
+    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
   }
-  .bento-card {
-    padding: 28px; border: 1px solid var(--border);
-    background: var(--surface); backdrop-filter: blur(12px);
-    display: flex; flex-direction: column; justify-content: space-between;
-    position: relative; overflow: hidden;
-    clip-path: polygon(16px 0, 100% 0, calc(100% - 16px) 100%, 0 100%);
-  }
-  .bento-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); }
-  
-  .bento-card.large { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, rgba(0,212,255,0.05) 0%, rgba(112,0,255,0.05) 100%); border-color: var(--border-strong); }
-  .bento-card .sc-icon { font-size: 28px; color: var(--accent); margin-bottom: 16px; width: 56px; height: 56px; border-radius: 0; background: rgba(0, 212, 255, 0.1); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
-  .bento-card .sc-text { font-size: 14px; line-height: 1.5; color: var(--ink-soft); font-family: 'JetBrains Mono', monospace; }
-  .bento-card.large .sc-text { font-size: 20px; font-family: 'Inter', sans-serif; }
-  .bento-card .sc-text .key { color: var(--accent); font-weight: 600; }
+  .summary-card.visible { opacity:1; transform:translateY(0) scale(1); }
+  .summary-card .sc-icon { font-size:17px; color:var(--accent); margin-bottom:8px; }
+  .summary-card .sc-text { font-size:13px; line-height:1.6; color:var(--ink-soft); }
+  .summary-card .sc-text .key { color:var(--highlight); font-weight:600; }
 
-  /* Title & Closing */
-  .title-slide .slide-content, .closing-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
-  .title-slide .slide-title { font-size:clamp(44px,6vw,72px); margin-bottom:24px; }
-  .title-slide .slide-subtitle { font-size:clamp(16px,1.8vw,22px); color:var(--ink-soft); font-weight:400; margin-bottom:16px; font-family: 'JetBrains Mono', monospace; }
-  .title-slide .slide-brand { font-size:12px; color:var(--accent); font-weight:600; letter-spacing:4px; text-transform:uppercase; font-family: 'JetBrains Mono', monospace; }
   .closing-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
 
-  /* UI Chrome - Top Bar */
+  /* ── Diagram slide type: real pipeline / flow visual instead of bullets ── */
+  .slide-content.has-diagram { max-width:980px; }
+  .diagram-flow {
+    display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:nowrap;
+    gap:0; margin:8px 0 26px; overflow-x:auto; padding-bottom:6px;
+  }
+  .diagram-node {
+    display:flex; flex-direction:column; align-items:center; text-align:center;
+    flex:1 1 0; min-width:56px; max-width:120px;
+    opacity:0; transform:translateY(12px); transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
+  }
+  .diagram-node.visible { opacity:1; transform:translateY(0); }
+  .diagram-node-icon {
+    width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center;
+    background:var(--surface); border:1.5px solid var(--border); color:var(--muted); font-size:15px;
+    transition: all 0.3s ease; margin-bottom:8px; flex-shrink:0;
+  }
+  .diagram-node.current .diagram-node-icon { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 4px 14px var(--accent-glow); }
+  .diagram-node.done .diagram-node-icon { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .diagram-node-label { font-size:10px; font-weight:700; color:var(--ink-soft); line-height:1.3; }
+  .diagram-node.current .diagram-node-label { color:var(--accent); }
+  .diagram-arrow { color:var(--border); font-size:13px; margin:14px 1px 0; flex:0 0 auto; }
+  .diagram-arrow.done { color:var(--accent); }
+  .diagram-detail {
+    padding:16px 20px; border-radius:10px; background:var(--surface); border:1px solid var(--border);
+    border-left:3px solid var(--accent);
+  }
+  .diagram-detail-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
+  .diagram-detail-text { font-size:clamp(14px,1.4vw,16px); line-height:1.65; color:var(--ink-soft); }
+  .diagram-detail-text .key { color:var(--highlight); font-weight:600; }
+  .diagram-detail-text .em { color:var(--accent); font-weight:600; }
+
   .top-bar {
     position:fixed; top:0; left:0; right:0; z-index:20; display:flex;
-    align-items:center; justify-content:space-between; padding:24px 40px;
-    background:linear-gradient(180deg, rgba(3,5,8,0.9) 0%, transparent 100%);
-    backdrop-filter: blur(5px); border-bottom: 1px solid var(--border);
+    align-items:center; justify-content:space-between; padding:20px 32px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.75) 70%, transparent 100%);
     opacity:0; transition:opacity 0.5s ease;
   }
   .top-bar.visible { opacity:1; }
-  .top-bar-left { display:flex; align-items:center; gap:16px; }
-  .top-bar-logo { font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700; color:var(--ink); letter-spacing:1px; text-transform: uppercase; }
-  .top-bar-logo span { background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .top-bar-status { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-  .top-bar-status .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse-dot 2s infinite; }
-  
+  .top-bar-left { display:flex; align-items:center; gap:10px; }
+  .top-bar-logo { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:var(--ink); letter-spacing:0.5px; }
+  .top-bar-logo span { color:var(--accent); }
+  .top-bar-right { display:flex; align-items:center; gap:16px; }
   .module-chip {
-    padding:8px 16px; border:1px solid var(--border-strong); background:rgba(0, 212, 255, 0.05);
-    font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--accent);
-    font-family: 'JetBrains Mono', monospace; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    padding:5px 14px; border-radius:100px; border:1px solid var(--accent); background:var(--accent-soft);
+    font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
   }
-  
-  /* Bottom Bar Controls */
   .bottom-bar {
-    position:fixed; bottom:0; left:0; right:0; z-index:20; padding:0 40px 32px;
-    background:linear-gradient(0deg, rgba(3,5,8,0.95) 0%, transparent 100%);
+    position:fixed; bottom:0; left:0; right:0; z-index:20; padding:0 32px 24px;
+    background:linear-gradient(0deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.85) 65%, transparent 100%);
     opacity:0; transition:opacity 0.5s ease;
   }
   .bottom-bar.visible { opacity:1; }
-  
   .progress-track {
-    width:100%; height:4px; background:rgba(255,255,255,0.05); 
-    margin-bottom:24px; overflow:visible; cursor:pointer; position:relative;
-    border-radius: 2px;
+    width:100%; height:5px; background:var(--border); border-radius:3px;
+    margin-bottom:18px; overflow:visible; cursor:pointer; position:relative;
   }
   .progress-fill {
-    height:100%; width:0%; border-radius:2px; 
-    background:linear-gradient(90deg, var(--accent) 0%, var(--highlight) 100%);
-    transition:width 0.4s ease; position:relative; box-shadow: 0 0 15px var(--accent-glow);
+    height:100%; width:0%; border-radius:3px; background:var(--accent);
+    transition:width 0.4s ease; position:relative;
   }
   .progress-fill.scrubbing { transition:none; }
   .progress-fill::after {
-    content:''; position:absolute; right:-8px; top:50%; transform:translateY(-50%);
-    width:16px; height:16px; border-radius:50%; background:#030508; border:2px solid var(--accent);
-    box-shadow:0 0 12px var(--accent-glow);
+    content:''; position:absolute; right:-6px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; border-radius:50%; background:var(--accent); border:2.5px solid #fff;
+    box-shadow:0 1px 4px rgba(0,0,0,0.25);
   }
-  
   .controls-row { display:flex; align-items:center; justify-content:space-between; }
-  .controls-left, .controls-right { display:flex; align-items:center; gap:12px; }
-  
+  .controls-left { display:flex; align-items:center; gap:8px; }
+  .controls-right { display:flex; align-items:center; gap:12px; }
   .ctrl-btn {
-    width:44px; height:44px; border:none; border-radius:0; cursor:pointer;
+    width:40px; height:40px; border:none; border-radius:10px; cursor:pointer;
     background:var(--surface); color:var(--ink-soft); font-size:14px;
     display:flex; align-items:center; justify-content:center;
-    transition:all 0.2s ease; border:1px solid var(--border); backdrop-filter: blur(5px);
-    clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+    transition:all 0.2s ease; border:1px solid var(--border);
   }
-  .ctrl-btn:hover { background:var(--surface-hover); border-color:var(--border-strong); color:var(--accent); }
-  .ctrl-btn.active { color:var(--accent); background:rgba(0, 212, 255, 0.1); border-color:var(--border-strong); }
-  .ctrl-btn.play-btn { width:56px; height:56px; font-size:18px; background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); color:#fff; border-color:transparent; box-shadow: 0 4px 20px var(--accent-glow); }
-  .ctrl-btn.play-btn:hover { transform: scale(1.05); box-shadow: 0 6px 30px var(--highlight-glow); }
-  
-  .audio-wave { display:flex; align-items:center; gap:3px; height:20px; margin-left:12px; }
-  .audio-wave .bar { width:3px; border-radius:3px; background:var(--accent); animation:wave 0.8s ease-in-out infinite; box-shadow: 0 0 5px var(--accent-glow); }
+  .ctrl-btn:hover { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .ctrl-btn.active { color:var(--accent); background:var(--accent-soft); border-color:var(--accent); }
+  .ctrl-btn.play-btn { width:48px; height:48px; border-radius:14px; font-size:16px; background:var(--accent); color:#fff; border-color:var(--accent); }
+  .ctrl-btn.play-btn:hover { background:#1e46b8; color:#fff; }
+  .audio-wave { display:flex; align-items:center; gap:3px; height:20px; margin-left:8px; }
+  .audio-wave .bar { width:3px; border-radius:3px; background:var(--accent); animation:wave 0.8s ease-in-out infinite; }
   .audio-wave .bar:nth-child(1) { height:8px; animation-delay:0s; }
   .audio-wave .bar:nth-child(2) { height:14px; animation-delay:0.15s; }
   .audio-wave .bar:nth-child(3) { height:10px; animation-delay:0.3s; }
@@ -278,36 +238,42 @@
   .audio-wave .bar:nth-child(5) { height:6px; animation-delay:0.25s; }
   .audio-wave.paused .bar { animation-play-state:paused; height:4px !important; }
   @keyframes wave { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
-  
-  .slide-counter { font-family: 'JetBrains Mono', monospace; font-size:13px; font-weight:600; color:var(--muted); letter-spacing:1px; font-variant-numeric:tabular-nums; }
-  .slide-counter .current { color:var(--accent); font-size:16px; text-shadow: 0 0 10px var(--accent-glow); }
-  
-  .transition-overlay { position:fixed; inset:0; z-index:15; background:var(--bg); opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
+  .slide-counter { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:1px; font-variant-numeric:tabular-nums; }
+  .slide-counter .current { color:var(--accent); font-size:14px; }
+  .transition-overlay {
+    position:fixed; inset:0; z-index:15; background:var(--bg);
+    opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+  }
   .transition-overlay.active { opacity:1; }
 
   #introVideo, #outroVideo {
     position:fixed; inset:0; z-index:10; width:100%; height:100%;
-    object-fit:cover; background:#000; display:none;
+    object-fit:contain; background:#000; display:none;
   }
 
-  /* Responsive */
-  @media (max-width:1024px) {
-    .split-layout { grid-template-columns: 1fr; gap: 40px; }
-    .split-visual { order: -1; height: 250px; }
-    .bento-grid { grid-template-columns: 1fr 1fr; height: auto; }
-    .bento-card.large { grid-column: span 2; grid-row: span 1; }
-  }
   @media (max-width:768px) {
     .slide-num { font-size:80px; left:2vw; }
     .slide-content { margin-left:clamp(50px,11vw,120px); }
-    .bento-grid { grid-template-columns: 1fr; }
-    .bento-card.large { grid-column: span 1; }
+    .summary-grid { grid-template-columns:1fr; }
     .top-bar, .bottom-bar { padding-left:16px; padding-right:16px; }
     .bottom-bar { padding-bottom:16px; }
-    .visual-container { display: none; }
+    .start-brand { margin-top:20px; }
+    .diagram-node { width:78px; }
+    .diagram-node-icon { width:42px; height:42px; font-size:15px; }
   }
+  @media (max-width:480px) {
+    .slide-num { display:none; }
+    .slide-content { margin-left:0; }
+  }
+  /* Mid-size and smaller laptop screens are usually limited on *height*
+     (a browser window on a 1366x768 or similar display often has well
+     under 700px of usable viewport height once browser chrome is
+     accounted for) rather than width — this is the actual dimension
+     that was causing the start screen's content to grow taller than
+     the viewport and overlap the "Built by Excelra" brand line. */
   @media (max-height:700px) {
     .start-badge { margin-bottom:16px; }
+    .start-module { margin-bottom:8px; }
     .start-title { margin-bottom:10px; font-size:clamp(24px,5vw,40px); }
     .start-sub { margin-bottom:22px; }
     .start-brand { margin-top:16px; font-size:12px; }
@@ -319,20 +285,19 @@
 </head>
 <body>
 
-<canvas id="webgl-canvas"></canvas>
-<div id="hud-grid"></div>
-<div id="vignette"></div>
+<div id="bgCanvas" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
 
 <div id="startScreen" role="dialog" aria-label="Start presentation">
-  <div class="start-badge"><div class="dot"></div> SYSTEM INITIALIZED</div>
+  <div class="start-badge"><div class="dot"></div> Drug Discovery Course</div>
   <div class="start-module">Module 01</div>
   <h1 class="start-title">Introduction to <span class="accent">Drug Discovery</span></h1>
   <p class="start-sub">How structured data and AI are transforming the journey from molecule to medicine.</p>
-  <button class="start-btn" id="startBtn" aria-label="Begin presentation"><i class="fas fa-play"></i> Initialize Sequence</button>
+  <button class="start-btn" id="startBtn" aria-label="Begin presentation"><i class="fas fa-play"></i> Begin Presentation</button>
   <div class="start-brand">
-    <span>BUILT BY</span>
-    <span style="color:var(--ink);font-weight:700;">EXCELRA</span>
-    <span style="color:var(--muted);">— WHERE DATA MEANS MORE</span>
+    <span>Built by</span>
+    <span style="color:var(--ink);font-weight:700;">Excelra</span>
+    <span style="color:var(--muted);">— Where Data Means More</span>
   </div>
 </div>
 
@@ -343,11 +308,10 @@
 
 <header class="top-bar" id="topBar">
   <div class="top-bar-left">
-    <div class="top-bar-logo">EXCEL<span>RA</span></div>
-    <div class="top-bar-status"><div class="dot"></div> LIVE_SESSION_ACTIVE</div>
+    <div class="top-bar-logo">Excel<span>ra</span></div>
   </div>
   <div class="top-bar-right">
-    <div class="module-chip">MODULE 01</div>
+    <div class="module-chip">Module 01</div>
   </div>
 </header>
 
@@ -380,158 +344,6 @@
 
 <script src="voice-engine.js"></script>
 <script>
-// =========================================================
-// THREE.JS BACKGROUND ENGINE
-// =========================================================
-let scene, camera, renderer, moleculeGroup, particleSystem;
-let current3DTheme = 'molecule';
-
-function initThreeJS() {
-  const canvas = document.getElementById('webgl-canvas');
-  scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 30;
-
-  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  // Lighting
-  const ambientLight = new THREE.AmbientLight(0x404040, 2);
-  scene.add(ambientLight);
-  const pointLight1 = new THREE.PointLight(0x00d4ff, 2, 100);
-  pointLight1.position.set(20, 20, 20);
-  scene.add(pointLight1);
-  const pointLight2 = new THREE.PointLight(0x7000ff, 2, 100);
-  pointLight2.position.set(-20, -20, 10);
-  scene.add(pointLight2);
-
-  // Create Molecule Group
-  moleculeGroup = new THREE.Group();
-  scene.add(moleculeGroup);
-  createMolecule();
-
-  // Create Particles
-  createParticles();
-
-  window.addEventListener('resize', onWindowResize, false);
-  animate3D();
-}
-
-function createMolecule() {
-  // Clear previous
-  while(moleculeGroup.children.length > 0) moleculeGroup.remove(moleculeGroup.children[0]);
-
-  if (current3DTheme === 'molecule') {
-    const sphereGeo = new THREE.IcosahedronGeometry(2, 1);
-    const bondGeo = new THREE.CylinderGeometry(0.2, 0.2, 1, 8);
-    
-    const nodes = [
-      new THREE.Vector3(0, 5, 0),
-      new THREE.Vector3(4, 2, 3),
-      new THREE.Vector3(-4, 2, 3),
-      new THREE.Vector3(3, -3, -2),
-      new THREE.Vector3(-3, -3, -2),
-      new THREE.Vector3(0, 0, 5)
-    ];
-
-    const nodeMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.5, metalness: 0.8, roughness: 0.2 });
-    const bondMat = new THREE.MeshStandardMaterial({ color: 0x7000ff, emissive: 0x7000ff, emissiveIntensity: 0.3, transparent: true, opacity: 0.6 });
-
-    nodes.forEach(v => {
-      const s = new THREE.Mesh(sphereGeo, nodeMat);
-      s.position.copy(v);
-      moleculeGroup.add(s);
-    });
-
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        if (Math.random() > 0.5) {
-          const dir = new THREE.Vector3().subVectors(nodes[j], nodes[i]);
-          const len = dir.length();
-          const bond = new THREE.Mesh(bondGeo, bondMat);
-          bond.position.copy(nodes[i]).add(dir.multiplyScalar(0.5));
-          bond.scale.y = len;
-          bond.lookAt(nodes[j]);
-          bond.rotateX(Math.PI / 2);
-          moleculeGroup.add(bond);
-        }
-      }
-    }
-  } else if (current3DTheme === 'pillars') {
-    const tubeGeo = new THREE.CylinderGeometry(1.5, 1.5, 10, 32, 1, true);
-    const tubeMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.2, transparent: true, opacity: 0.2, side: THREE.DoubleSide });
-    for(let i=0; i<3; i++) {
-      const tube = new THREE.Mesh(tubeGeo, tubeMat);
-      tube.position.x = (i - 1) * 6;
-      moleculeGroup.add(tube);
-    }
-  } else if (current3DTheme === 'pipeline') {
-    const curve = new THREE.CatmullRomCurve3([
-      new THREE.Vector3(-15, 0, 0),
-      new THREE.Vector3(-5, 5, -5),
-      new THREE.Vector3(5, -5, 5),
-      new THREE.Vector3(15, 0, 0)
-    ]);
-    const pipeGeo = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
-    const pipeMat = new THREE.MeshStandardMaterial({ color: 0x7000ff, emissive: 0x7000ff, emissiveIntensity: 0.4, metalness: 0.8, roughness: 0.2 });
-    const pipe = new THREE.Mesh(pipeGeo, pipeMat);
-    moleculeGroup.add(pipe);
-  } else if (current3DTheme === 'network') {
-    const nodeMat = new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 0.6 });
-    const bondMat = new THREE.MeshBasicMaterial({ color: 0x7000ff, transparent: true, opacity: 0.3 });
-    for(let i=0; i<15; i++) {
-      const s = new THREE.Mesh(new THREE.SphereGeometry(0.8, 16, 16), nodeMat);
-      s.position.set((Math.random()-0.5)*20, (Math.random()-0.5)*15, (Math.random()-0.5)*10);
-      moleculeGroup.add(s);
-    }
-  }
-}
-
-function createParticles() {
-  const particleCount = 2000;
-  const positions = new Float32Array(particleCount * 3);
-  const colors = new Float32Array(particleCount * 3);
-
-  for(let i=0; i<particleCount*3; i+=3) {
-    positions[i] = (Math.random()-0.5) * 100;
-    positions[i+1] = (Math.random()-0.5) * 60;
-    positions[i+2] = (Math.random()-0.5) * 50;
-
-    const color = new THREE.Color(Math.random() > 0.5 ? 0x00d4ff : 0x7000ff);
-    colors[i] = color.r; colors[i+1] = color.g; colors[i+2] = color.b;
-  }
-
-  const particleGeo = new THREE.BufferGeometry();
-  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-  const particleMat = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 0.6 });
-  particleSystem = new THREE.Points(particleGeo, particleMat);
-  scene.add(particleSystem);
-}
-
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function animate3D() {
-  requestAnimationFrame(animate3D);
-  if (moleculeGroup) {
-    moleculeGroup.rotation.y += 0.002;
-    moleculeGroup.rotation.x += 0.001;
-  }
-  if (particleSystem) {
-    particleSystem.rotation.y += 0.0005;
-  }
-  renderer.render(scene, camera);
-}
-
-// =========================================================
-// PRESENTATION DATA & LOGIC
-// =========================================================
 const slides = [
   {
     "type": "title",
@@ -539,17 +351,14 @@ const slides = [
     "title": "Introduction to <span class=\"hl\">Drug Discovery</span>",
     "subtitle": "How structured data accelerates modern medicine",
     "brand": "Excelra \u2014 Where Data Means More",
-    "theme": "molecule",
     "segments": [
       "Welcome to Module One, Introduction to Drug Discovery. Let's look at how modern medicine gets made, and the data behind it."
     ]
   },
   {
-    "type": "split",
+    "type": "content",
     "label": "The Shift",
     "title": "What Modern Discovery <span class=\"hl\">Relies On</span>",
-    "visual": "molecule",
-    "theme": "molecule",
     "segments": [
       "Modern drug discovery increasingly relies on <span class=\"key\">large-scale, structured data</span>.",
       "It does not rely on manual paper records, it does not rely on marketing analytics, and it does not rely on word-of-mouth research sharing between labs.",
@@ -557,11 +366,9 @@ const slides = [
     ]
   },
   {
-    "type": "split",
+    "type": "content",
     "label": "What's Included",
     "title": "The Three Pillars of <span class=\"hl\">Discovery Data</span>",
-    "visual": "pillars",
-    "theme": "pillars",
     "segments": [
       "These data resources typically include structured records on <span class=\"em\">chemical compounds</span> \u2014 their properties, their synthesis routes, their behavior.",
       "They include data on <span class=\"em\">biological targets</span> \u2014 the proteins and pathways a drug is designed to act on.",
@@ -572,7 +379,6 @@ const slides = [
     "type": "content",
     "label": "What's Not Included",
     "title": "What This Data <span class=\"hl\">Is Not</span>",
-    "theme": "network",
     "segments": [
       "To be clear, this is scientific and clinical data \u2014 not personal or administrative records.",
       "Something like a patient's <span class=\"key\">home address</span> is never part of this picture. That kind of detail plays no role in understanding a compound or a target.",
@@ -583,7 +389,6 @@ const slides = [
     "type": "content",
     "label": "Five Terms",
     "title": "Vocabulary You'll <span class=\"hl\">See Again</span>",
-    "theme": "network",
     "segments": [
       "A <span class=\"key\">TARGET</span> is the biological molecule responsible for a disease mechanism \u2014 usually a protein.",
       "<span class=\"key\">DISCOVERY</span> is the first stage of the pharmaceutical lifecycle, where that target and its matching molecule are found.",
@@ -592,11 +397,9 @@ const slides = [
     ]
   },
   {
-    "type": "split",
+    "type": "content",
     "label": "This Course",
     "title": "What You Will <span class=\"hl\">Learn</span>",
-    "visual": "pipeline",
-    "theme": "pipeline",
     "segments": [
       "Across the next ten modules, you will walk through the <span class=\"key\">entire drug discovery process</span> \u2014 from target identification all the way to a filed IND.",
       "You will also see exactly how <span class=\"em\">data engineering and AI</span> accelerate every one of those stages, using real tools like AlphaFold and generative molecule design.",
@@ -604,15 +407,26 @@ const slides = [
     ]
   },
   {
-    "type": "bento",
+    "type": "summary",
     "label": "Recap",
     "title": "Key <span class=\"hl\">Takeaways</span>",
-    "theme": "molecule",
     "cards": [
-      { "icon": "fa-database", "text": "Discovery runs on <span class=\"key\">structured data</span> \u2014 compounds, targets, and clinical trial outcomes.", "large": true },
-      { "icon": "fa-user-shield", "text": "Personal details like a <span class=\"key\">home address</span> are never part of this data." },
-      { "icon": "fa-spell-check", "text": "Five core terms: <span class=\"key\">Target, Discovery, Pipeline, Molecule, Research</span>." },
-      { "icon": "fa-bolt", "text": "This course covers the <span class=\"key\">full pipeline</span>, plus data engineering and AI." }
+      {
+        "icon": "fa-database",
+        "text": "Discovery runs on <span class=\"key\">structured data</span> \u2014 compounds, targets, and clinical trial outcomes."
+      },
+      {
+        "icon": "fa-user-shield",
+        "text": "Personal details like a <span class=\"key\">home address</span> are never part of this data."
+      },
+      {
+        "icon": "fa-spell-check",
+        "text": "Five core terms: <span class=\"key\">Target, Discovery, Pipeline, Molecule, Research</span>."
+      },
+      {
+        "icon": "fa-bolt",
+        "text": "This course covers the <span class=\"key\">full pipeline</span>, plus the growing role of data engineering and AI."
+      }
     ],
     "segments": [
       "Let's recap. Modern drug discovery relies on large-scale, structured data \u2014 compounds, targets, and clinical outcomes \u2014 never personal details like a home address.",
@@ -626,7 +440,6 @@ const slides = [
     "title": "Ready for the <span class=\"hl\">Quiz</span>?",
     "subtitle": "Module 2: Business Overview",
     "brand": "You're ready for the quiz and the Term Scramble game. Good luck!",
-    "theme": "molecule",
     "segments": [
       "That completes Module One.",
       "Next, in Module Two, we look at drug discovery from a business perspective \u2014 the stages, the odds, and the timeline.",
@@ -635,41 +448,51 @@ const slides = [
   }
 ];
 
+// Voice selection (including the Mac/Windows consistency and
+// mid-presentation-stability fixes) is fully owned by voice-engine.js
+// now — this page just needs `synth` for cancel/pause/resume calls.
 const synth = window.presentationVoice.synth;
+
+// ── Section model: [0]=intro clip, [1..N]=slides, [N+1]=outro clip ──
 const totalSections = slides.length + 2;
 let currentSection = 0;
 let currentSlide = 0;
 
+// ── Forward-seek guard ───────────────────────────────────────────
+// Learners can always scrub BACKWARD to replay anything already seen,
+// but dragging/clicking the progress bar past the furthest section
+// they've actually reached snaps back — same rule as the plain-video
+// lessons elsewhere in the course. Progress is remembered per module
+// (scoped by page title, which is unique per module) so it isn't lost
+// on revisiting later.
 const seekGuardKey = 'presentationMaxSection_' + document.title;
 let maxSectionReached = parseInt(localStorage.getItem(seekGuardKey), 10) || 0;
-
 function recordSectionReached(index) {
   if (index > maxSectionReached) {
     maxSectionReached = index;
     try { localStorage.setItem(seekGuardKey, String(maxSectionReached)); } catch (e) {}
   }
 }
-
 function showSeekBlockedHint() {
   const old = document.getElementById('seekBlockedHint');
   if (old) old.remove();
   const hint = document.createElement('div');
-  hint.textContent = "KEEP WATCHING TO UNLOCK FURTHER ALONG.";
-  hint.style.cssText = 'position:fixed;left:50%;bottom:100px;transform:translateX(-50%);' +
-    'background:rgba(0, 212, 255, 0.1);color:#00d4ff;border:1px solid #00d4ff;font-family:JetBrains Mono,monospace;font-size:12px;' +
-    'font-weight:600;padding:10px 20px;border-radius:0;z-index:50;pointer-events:none;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);' +
-    'box-shadow:0 0 20px rgba(0,212,255,0.2);opacity:0;transition:opacity 0.2s ease;';
+  hint.id = 'seekBlockedHint';
+  hint.textContent = "Keep watching to unlock further along.";
+  hint.style.cssText = 'position:fixed;left:50%;bottom:92px;transform:translateX(-50%);' +
+    'background:rgba(20,24,34,0.92);color:#fff;font-family:Inter,sans-serif;font-size:13px;' +
+    'font-weight:600;padding:10px 18px;border-radius:8px;z-index:50;pointer-events:none;' +
+    'box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity 0.2s ease;';
   document.body.appendChild(hint);
   requestAnimationFrame(() => { hint.style.opacity = '1'; });
   setTimeout(() => { hint.style.opacity = '0'; setTimeout(() => hint.remove(), 250); }, 1600);
 }
-
 let isPlaying = false;
 let isMuted = false;
 let currentUtterance = null;
 let segmentTimeout = null;
 let isTransitioning = false;
-let genToken = 0; 
+let genToken = 0; // bumped on every stop/jump so a stale slide's speech callback can never affect whatever plays next
 
 const slideNum = document.getElementById('slideNum');
 const slideContent = document.getElementById('slideContent');
@@ -703,46 +526,33 @@ function renderSlide(index) {
   const num = String(index + 1).padStart(2, '0');
   slideNum.textContent = num;
   let html = '';
-
-  // Update 3D Background Theme
-  if (current3DTheme !== s.theme) {
-    current3DTheme = s.theme;
-    createMolecule();
-  }
-
   if (s.type === 'title' || s.type === 'closing') {
     html = `<div class="slide-label"><span class="line"></span>${s.label}<span class="line"></span></div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
     if (s.subtitle) html += `<div class="slide-subtitle">${s.subtitle}</div>`;
     if (s.brand) html += `<div class="slide-brand">${s.brand}</div>`;
     slideContent.className = 'slide-content ' + (s.type === 'title' ? 'title-slide' : 'closing-slide');
-  } else if (s.type === 'bento') {
+  } else if (s.type === 'summary') {
     html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
-    html += `<div class="bento-grid">`;
+    html += `<div class="summary-grid">`;
     s.cards.forEach((c, i) => {
-      html += `<div class="bento-card ${c.large ? 'large' : ''}" data-idx="${i}">
-        <div class="sc-icon"><i class="fas ${c.icon}"></i></div>
-        <div class="sc-text">${c.text}</div>
-      </div>`;
+      html += `<div class="summary-card" data-idx="${i}"><div class="sc-icon"><i class="fas ${c.icon}"></i></div><div class="sc-text">${c.text}</div></div>`;
     });
     html += `</div>`;
     slideContent.className = 'slide-content';
-  } else if (s.type === 'split') {
-    html = `<div class="split-layout">`;
-    html += `<div class="split-text">
-               <div class="slide-label"><span class="line"></span>${s.label}</div>
-               <h2 class="slide-title">${s.title}</h2>
-             </div>`;
-    // Empty visual container, 3D is handled by background, but we show a HUD frame
-    html += `<div class="split-visual"><div class="visual-container"><div class="br-bl"></div><div class="br-br"></div></div></div>`;
-    html += `</div>`;
-    html += `<div class="split-bullets" style="margin-top: 30px; max-width: 600px;">`;
-    s.segments.forEach((seg, i) => {
-      html += `<div class="bullet" data-idx="${i}"><div class="bullet-icon"><i class="fas fa-chevron-right"></i></div><div class="bullet-text">${seg}</div></div>`;
+  } else if (s.type === 'diagram') {
+    html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
+    html += `<h2 class="slide-title">${s.title}</h2>`;
+    html += `<div class="diagram-flow">`;
+    s.stages.forEach((st, i) => {
+      const stateClass = i < s.currentIndex ? 'done' : (i === s.currentIndex ? 'current' : '');
+      html += `<div class="diagram-node ${stateClass}" data-idx="${i}"><div class="diagram-node-icon"><i class="fas ${st.icon}"></i></div><div class="diagram-node-label">${st.label}</div></div>`;
+      if (i < s.stages.length - 1) html += `<div class="diagram-arrow ${i < s.currentIndex ? 'done' : ''}"><i class="fas fa-arrow-right"></i></div>`;
     });
     html += `</div>`;
-    slideContent.className = 'slide-content';
+    html += `<div class="diagram-detail"><div class="diagram-detail-label">${s.stages[s.currentIndex].label}</div><div class="diagram-detail-text">${s.detail}</div></div>`;
+    slideContent.className = 'slide-content has-diagram';
   } else {
     html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
@@ -753,46 +563,45 @@ function renderSlide(index) {
   }
   slideContent.innerHTML = html;
 }
-
 function animateSlideIn(index) {
   const s = slides[index];
   slideNum.classList.remove('fade-out');
-  
-  // GSAP Animation Orchestrations
-  gsap.killTweensOf(".slide-label, .slide-title, .bullet, .bento-card, .split-visual, .slide-subtitle, .slide-brand");
-  
-  gsap.set([".slide-label", ".slide-title", ".bullet", ".bento-card", ".split-visual", ".slide-subtitle", ".slide-brand"], { opacity: 0, y: 20, filter: "blur(10px)" });
-  
-  gsap.to(".slide-label", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", delay: 0.1 });
-  gsap.to(".slide-title", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.8, ease: "power3.out", delay: 0.2 });
-  
-  if (s.type === 'split') {
-    gsap.to(".split-visual", { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 1, ease: "power3.out", delay: 0.4 });
-  }
+  setTimeout(() => {
+    const label = slideContent.querySelector('.slide-label');
+    const title = slideContent.querySelector('.slide-title');
+    if (label) label.classList.add('visible');
+    if (title) title.classList.add('visible');
+    if (s.type === 'diagram') {
+      const nodes = slideContent.querySelectorAll('.diagram-node');
+      nodes.forEach((n, i) => setTimeout(() => n.classList.add('visible'), i * 90));
+    }
+  }, 100);
   if (s.type === 'title' || s.type === 'closing') {
-    gsap.to(".slide-subtitle", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", delay: 0.5 });
-    gsap.to(".slide-brand", { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out", delay: 0.7 });
+    setTimeout(() => {
+      const sub = slideContent.querySelector('.slide-subtitle');
+      const brand = slideContent.querySelector('.slide-brand');
+      if (sub) sub.classList.add('visible');
+      if (brand) brand.classList.add('visible');
+    }, 400);
   }
 }
-
 function showSegment(index) {
   const s = slides[currentSlide];
-  if (s.type === 'title' || s.type === 'closing') return;
-  
-  if (s.type === 'bento') {
-    const cards = slideContent.querySelectorAll('.bento-card');
-    if (cards[index]) {
-      gsap.to(cards[index], { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.6, ease: "power3.out" });
-    }
+  if (s.type === 'title' || s.type === 'closing' || s.type === 'diagram') return;
+  if (s.type === 'summary') {
+    const cards = slideContent.querySelectorAll('.summary-card');
+    if (cards[index]) cards[index].classList.add('visible');
   } else {
     const bullets = slideContent.querySelectorAll('.bullet');
-    if (bullets[index]) {
-      gsap.to(bullets[index], { opacity: 1, x: 0, filter: "blur(0px)", duration: 0.6, ease: "power3.out" });
-    }
+    if (bullets[index]) bullets[index].classList.add('visible');
   }
 }
-
 function speakSegment(text) {
+  // Delegates to the shared voice engine (voice-engine.js), which picks
+  // the voice, applies pronunciation fixes, and — critically for Mac
+  // Chrome, where the preferred Google network voice can silently fail
+  // to produce any audio — automatically detects that and falls back to
+  // a working voice instead of leaving the narration mute.
   const plain = stripHTML(text);
   return window.presentationVoice.speak(plain, {
     muted: isMuted,
@@ -800,13 +609,12 @@ function speakSegment(text) {
     onUtterance: u => { currentUtterance = u; }
   }).then(() => { currentUtterance = null; });
 }
-
 async function playCurrentSlide() {
-  const myToken = ++genToken; 
+  const myToken = ++genToken; // owns this run; any earlier run is now stale and will bail out
   if (!isPlaying) return;
   const s = slides[currentSlide];
   animateSlideIn(currentSlide);
-  const introDelay = (s.type === 'title' || s.type === 'closing') ? 1200 : 800;
+  const introDelay = (s.type === 'title' || s.type === 'closing') ? 1200 : (s.type === 'diagram' ? 900 : 800);
   await delay(introDelay);
   if (!isPlaying || myToken !== genToken) return;
   const segs = s.segments || [];
@@ -829,13 +637,16 @@ function stopSpeech() {
   synth.cancel();
   currentUtterance = null;
 }
-function delay(ms) { return new Promise(r => { segmentTimeout = setTimeout(r, ms); }); }
+function delay(ms) {
+  return new Promise(r => { segmentTimeout = setTimeout(r, ms); });
+}
 function updatePlayBtn() {
   btnPlay.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
   if (isPlaying) { audioWave.classList.remove('paused'); btnPlay.classList.add('active'); }
   else { audioWave.classList.add('paused'); btnPlay.classList.remove('active'); }
 }
 
+// ── Unified section navigation: intro clip → every slide → outro clip ──
 function updateProgressForSection(index, subProgress) {
   subProgress = subProgress || 0;
   const pct = (index + Math.min(1, Math.max(0, subProgress))) / totalSections;
@@ -878,13 +689,13 @@ function enterSlideSection() {
   } else {
     animateSlideIn(currentSlide);
     const s = slides[currentSlide];
-    if (s.type === 'bento') {
-      slideContent.querySelectorAll('.bento-card').forEach((c, i) => {
-        setTimeout(() => showSegment(i), 300 + i * 150);
+    if (s.type === 'summary') {
+      slideContent.querySelectorAll('.summary-card').forEach((c, i) => {
+        setTimeout(() => c.classList.add('visible'), 300 + i * 150);
       });
-    } else if (s.type !== 'title' && s.type !== 'closing') {
+    } else if (s.type !== 'title' && s.type !== 'closing' && s.type !== 'diagram') {
       slideContent.querySelectorAll('.bullet').forEach((b, i) => {
-        setTimeout(() => showSegment(i), 300 + i * 150);
+        setTimeout(() => b.classList.add('visible'), 300 + i * 150);
       });
     }
   }
@@ -930,6 +741,12 @@ introVideoEl.addEventListener('timeupdate', () => {
 outroVideoEl.addEventListener('timeupdate', () => {
   if (currentSection === totalSections - 1 && outroVideoEl.duration) updateProgressForSection(totalSections - 1, outroVideoEl.currentTime / outroVideoEl.duration);
 });
+// Deliberately NOT listening to introVideoEl/outroVideoEl's native 'play'/'pause'
+// events to drive isPlaying: a video firing 'pause' as part of naturally
+// reaching its end was being misread as a manual pause, which stopped the
+// presentation from auto-continuing into the next section. isPlaying is
+// now only ever set by our own explicit code below (togglePlay, start,
+// restart), never by incidental native media events.
 
 function togglePlay() {
   if (currentSection === 0 || currentSection === totalSections - 1) {
@@ -984,13 +801,20 @@ document.getElementById('startBtn').addEventListener('click', () => {
   }, 800);
 });
 btnPlay.addEventListener('click', togglePlay);
+// Clicking anywhere on the slide/video stage itself (not the control
+// bar or a link/button inside a slide) toggles play/pause too, so it
+// behaves like a normal video player — including while full-screen.
 document.getElementById('presentation').addEventListener('click', function(e) {
-  if (e.target.closest('a, button, svg')) return;
+  if (e.target.closest('a, button')) return;
   togglePlay();
 });
 btnMute.addEventListener('click', toggleMute);
 btnPrev.addEventListener('click', () => goToSection(currentSection - 1));
 btnNext.addEventListener('click', () => {
+  // Same forward-seek guard as the progress slider and the keyboard
+  // ArrowRight handler: the dedicated "Next" button must never be able
+  // to jump past the furthest section actually reached either — that
+  // was the actual gap letting learners bypass "no skipping ahead."
   const nextIndex = currentSection + 1;
   if (nextIndex > maxSectionReached) {
     showSeekBlockedHint();
@@ -1004,6 +828,11 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
   if (e.code === 'ArrowRight') {
     e.preventDefault();
+    // Same forward-seek guard as the progress slider: the keyboard arrow
+    // must never be able to jump past the furthest section actually
+    // reached (that was the exact bug — the slider blocked skipping
+    // ahead, but ArrowRight called goToSection() directly with no clamp
+    // at all, bypassing the guard entirely).
     const nextIndex = currentSection + 1;
     if (nextIndex > maxSectionReached) {
       showSeekBlockedHint();
@@ -1047,6 +876,14 @@ progressTrackEl.addEventListener('touchstart', e => { isScrubbing = true; progre
 progressTrackEl.addEventListener('touchmove', e => { if (isScrubbing) previewAt(pctFromPointer(e.touches[0].clientX)); }, { passive: true });
 progressTrackEl.addEventListener('touchend', e => { if (!isScrubbing) return; isScrubbing = false; progressFill.classList.remove('scrubbing'); commitScrub(e.changedTouches[0].clientX); });
 
+// Unconditionally pauses whatever is actually playing — the intro/
+// outro video OR the narration speech, whichever section is active —
+// and never resumes it automatically. This one function is the single
+// source of truth for every "playback should stop now" trigger below:
+// switching to a different browser tab, switching to a different
+// module/dashboard/quiz/game inside the course, or closing the tab
+// entirely. Learners must always press play again themselves; nothing
+// should ever start talking on its own after being backgrounded.
 function pauseForBackground() {
   if (isPlaying) {
     if (currentSection === 0 || currentSection === totalSections - 1) {
@@ -1058,25 +895,35 @@ function pauseForBackground() {
     isPlaying = false;
     updatePlayBtn();
   }
+  // Belt-and-suspenders: cancel rather than merely pause the speech
+  // queue, so nothing stays alive to unexpectedly resume later.
   try { synth.cancel(); } catch (e) {}
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pauseForBackground();
 });
+// 'pagehide' fires more reliably than 'beforeunload' when a tab is
+// actually closed (including for back/forward-cache navigations), so
+// both are covered rather than relying on just one.
 window.addEventListener('pagehide', pauseForBackground);
 window.addEventListener('beforeunload', () => { synth.cancel(); });
 
+// The parent course page can only hide this iframe with CSS (e.g. going
+// back to the dashboard, opening Course Relaxer, or a quiz/game modal) —
+// it can't reach into a same-origin iframe's own speechSynthesis/video
+// state directly. It posts this message instead so playback actually
+// pauses rather than continuing to talk/play in the background.
 window.addEventListener('message', event => {
   if (!event.data || !event.data.type) return;
+  // Lets the parent course page (and, through it, voice commands like
+  // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
+  // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
   if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
   if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
-
-// Initialize WebGL Scene
-initThreeJS();
 </script>
 </body>
 </html>
