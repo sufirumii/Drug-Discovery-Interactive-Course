@@ -12,223 +12,242 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
   :root {
-    --bg: #ffffff;
-    --surface: #f6f8fb;
-    --accent: #2757d6;
-    --accent-soft: rgba(39,87,214,0.08);
-    --accent-glow: rgba(39,87,214,0.18);
-    --highlight: #c2410c;
-    --ink: #16181d;
-    --ink-soft: #3a4150;
-    --muted: #6b7280;
-    --border: #e5e9f0;
+    --bg: #0a0c14;
+    --bg-soft: #11141f;
+    --surface: rgba(255, 255, 255, 0.03);
+    --surface-hover: rgba(255, 255, 255, 0.06);
+    --accent: #4f8cff;
+    --accent-soft: rgba(79, 140, 255, 0.15);
+    --accent-glow: rgba(79, 140, 255, 0.4);
+    --highlight: #00d4ff;
+    --ink: #ffffff;
+    --ink-soft: #c9d1e0;
+    --muted: #6b7488;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.15);
   }
+
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
   html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; }
 
-  /* Quiet backdrop — a faint fixed grid instead of the old dark particle
-     animation, which read as generic "AI slide deck" rather than course material. */
-  #bgCanvas { position:fixed; inset:0; z-index:0;
-    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 56px 56px; opacity:0.5;
+  /* Ambient Background - Floating Grid & Glows */
+  #bgCanvas { 
+    position:fixed; inset:0; z-index:0; 
+    background: 
+      radial-gradient(circle at 15% 20%, rgba(79, 140, 255, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(0, 212, 255, 0.1) 0%, transparent 45%),
+      var(--bg);
   }
-  .vignette { display:none; }
+  #bgGrid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), 
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+    animation: gridMove 40s linear infinite;
+  }
+  @keyframes gridMove { 
+    from { background-position: 0 0; } 
+    to { background-position: 60px 60px; } 
+  }
 
+  /* Start Screen */
   #startScreen {
     position:fixed; inset:0; z-index:100; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; background:var(--bg);
+    align-items:center; justify-content:center; background:rgba(10, 12, 20, 0.9);
+    backdrop-filter: blur(20px);
     transition: opacity 0.8s ease, transform 0.8s ease;
-    /* Was clipping/overlapping content on shorter or mid-size laptop
-       viewports — the badge/title/subtitle/button could take up more
-       vertical space than the viewport had, and the "Built by Excelra"
-       brand line (previously absolutely positioned at a fixed distance
-       from the bottom) would land right on top of the button instead of
-       the layout adapting. Letting this screen scroll internally, and
-       giving it its own top/bottom breathing room, means a cramped
-       viewport scrolls instead of stacking elements on top of each other. */
     overflow-y:auto; padding:32px 20px;
   }
   #startScreen.hidden { opacity:0; transform:scale(1.05); pointer-events:none; }
+  
   .start-badge {
     display:inline-flex; align-items:center; gap:8px; padding:6px 18px;
-    border:1px solid var(--border); border-radius:100px; font-size:12px;
-    font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
-    margin-bottom:32px; background:var(--accent-soft);
+    border:1px solid var(--border-strong); border-radius:100px; font-size:12px;
+    font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--highlight);
+    margin-bottom:32px; background:rgba(0, 212, 255, 0.05);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
   }
-  .start-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse-dot 2s infinite; }
-  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+  .start-badge .dot { width:6px; height:6px; border-radius:50%; background:var(--highlight); animation:pulse-dot 2s infinite; }
+  @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1); box-shadow: 0 0 0 0 var(--highlight)} 50%{opacity:0.4;transform:scale(0.7); box-shadow: 0 0 0 8px transparent} }
+  
   .start-module { font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:600; color:var(--muted); letter-spacing:4px; text-transform:uppercase; margin-bottom:12px; }
-  .start-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(32px,5.5vw,60px); font-weight:700; line-height:1.15; text-align:center; max-width:800px; margin-bottom:16px; color:var(--ink); }
-  .start-title .accent { color:var(--accent); }
-  .start-sub { font-size:17px; color:var(--muted); max-width:520px; text-align:center; line-height:1.6; margin-bottom:44px; font-weight:400; }
+  .start-title { font-family:'Space Grotesk',sans-serif; font-size:clamp(36px,6vw,68px); font-weight:700; line-height:1.1; text-align:center; max-width:900px; margin-bottom:20px; color:var(--ink); }
+  .start-title .accent { 
+    background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .start-sub { font-size:18px; color:var(--ink-soft); max-width:600px; text-align:center; line-height:1.6; margin-bottom:48px; font-weight:400; }
+  
   .start-btn {
     position:relative; display:inline-flex; align-items:center; gap:12px;
-    padding:16px 40px; border:none; border-radius:10px; cursor:pointer;
-    background: var(--accent); color:#fff;
-    font-family:'Inter',sans-serif; font-size:16px; font-weight:700; letter-spacing:0.3px;
-    transition: all 0.2s ease; box-shadow: 0 4px 16px var(--accent-glow);
+    padding:18px 48px; border:none; border-radius:12px; cursor:pointer;
+    background: linear-gradient(135deg, var(--accent) 0%, #3061ff 100%);
+    color:#fff; font-family:'Inter',sans-serif; font-size:16px; font-weight:700; letter-spacing:0.5px;
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1); 
+    box-shadow: 0 10px 30px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.2);
   }
-  .start-btn:hover { transform:translateY(-1px); box-shadow: 0 8px 22px var(--accent-glow); }
+  .start-btn:hover { transform:translateY(-2px); box-shadow: 0 15px 40px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,0.3); }
   .start-btn:active { transform:scale(0.98); }
   .start-btn i { font-size:14px; }
+  
   .start-brand {
-    /* No longer absolutely positioned at a fixed distance from the
-       bottom of the screen (that's what let it land on top of the
-       "Begin Presentation" button whenever the centered content above
-       it grew taller than the available height). It now simply flows
-       in normal document order after the button, with its own margin —
-       so it always sits below the button with clear space, on any
-       screen size, and the pair scroll together if needed instead of
-       overlapping. */
-    position:static; margin-top:32px;
+    position:static; margin-top:40px;
     display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
     gap:10px; color:var(--muted); font-size:13px; font-weight:500; text-align:center;
   }
 
+  /* Presentation Container */
   #presentation {
     position:fixed; inset:0; z-index:10; display:flex; align-items:center;
     padding:0 8vw; opacity:0; transition:opacity 0.5s ease; pointer-events:none;
-    background:var(--bg);
   }
   #presentation.active { opacity:1; pointer-events:auto; }
+  
   .slide-num {
-    position:absolute; left:5vw; top:50%; transform:translateY(-50%);
-    font-family:'Space Grotesk',sans-serif; font-size:clamp(90px,16vw,220px);
-    font-weight:800; color:var(--surface); line-height:1; pointer-events:none;
-    transition: opacity 0.5s ease, transform 0.5s ease; user-select:none;
+    position:absolute; left:4vw; top:50%; transform:translateY(-50%);
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(100px,18vw,240px);
+    font-weight:800; color:transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.03);
+    line-height:1; pointer-events:none; transition: opacity 0.5s ease; user-select:none;
   }
   .slide-num.fade-out { opacity:0; transform:translateY(-50%) scale(0.9); }
-  .slide-content { position:relative; z-index:1; margin-left:clamp(80px,13vw,190px); max-width:720px; width:100%; }
+  
+  .slide-content { position:relative; z-index:1; margin-left:clamp(80px,12vw,180px); max-width:820px; width:100%; }
+  
+  /* Typography & Elements */
   .slide-label {
-    display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:700;
-    letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:20px;
+    display:inline-flex; align-items:center; gap:10px; font-size:11px; font-weight:700;
+    letter-spacing:3px; text-transform:uppercase; color:var(--highlight); margin-bottom:24px;
     opacity:0; transform:translateY(15px); transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
   }
   .slide-label.visible { opacity:1; transform:translateY(0); }
-  .slide-label .line { width:24px; height:2px; background:var(--accent); border-radius:2px; }
+  .slide-label .line { width:30px; height:2px; background:linear-gradient(90deg, var(--highlight), transparent); border-radius:2px; }
+  
   .slide-title {
-    font-family:'Space Grotesk',sans-serif; font-size:clamp(26px,3.4vw,42px);
-    font-weight:700; line-height:1.2; margin-bottom:30px; color:var(--ink);
-    opacity:0; transform:translateY(20px); transition: all 0.7s cubic-bezier(0.4,0,0.2,1) 0.1s;
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(32px,4vw,48px);
+    font-weight:700; line-height:1.2; margin-bottom:36px; color:var(--ink);
+    opacity:0; transform:translateY(20px); filter: blur(8px);
+    transition: all 0.8s cubic-bezier(0.4,0,0.2,1) 0.1s;
   }
-  .slide-title.visible { opacity:1; transform:translateY(0); }
-  .slide-title .hl { color:var(--highlight); }
+  .slide-title.visible { opacity:1; transform:translateY(0); filter: blur(0); }
+  .slide-title .hl { background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
+  /* Content Types */
   .bullet {
-    display:flex; gap:14px; margin-bottom:16px; opacity:0; transform:translateX(-16px);
+    display:flex; gap:16px; margin-bottom:14px; opacity:0; transform:translateX(-20px);
     transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
-    padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface);
+    padding:18px 20px; border-radius:14px; border:1px solid var(--border);
+    background:var(--surface); backdrop-filter: blur(10px);
   }
   .bullet.visible { opacity:1; transform:translateX(0); }
+  .bullet:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+  
   .bullet-icon {
-    flex-shrink:0; width:28px; height:28px; border-radius:8px; background:var(--accent-soft);
-    color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:13px;
-    margin-top:1px;
+    flex-shrink:0; width:32px; height:32px; border-radius:8px; background:var(--accent-soft);
+    color:var(--accent); display:flex; align-items:center; justify-content:center; font-size:14px;
+    margin-top:1px; box-shadow: inset 0 0 10px rgba(79,140,255,0.2);
   }
-  .bullet-text { font-size:clamp(14px,1.4vw,16px); line-height:1.65; color:var(--ink-soft); font-weight:400; }
+  .bullet-text { font-size:clamp(15px,1.4vw,17px); line-height:1.6; color:var(--ink-soft); font-weight:400; }
   .bullet-text .key { color:var(--highlight); font-weight:600; }
   .bullet-text .em { color:var(--accent); font-weight:600; }
 
-  .title-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
-  .title-slide .slide-title { font-size:clamp(30px,4.4vw,52px); margin-bottom:12px; }
-  .title-slide .slide-subtitle { font-size:clamp(15px,1.8vw,20px); color:var(--muted); font-weight:400; margin-bottom:8px; opacity:0; transform:translateY(15px); transition:all 0.6s ease 0.3s; }
-  .title-slide .slide-subtitle.visible { opacity:1; transform:translateY(0); }
-  .title-slide .slide-brand { font-size:13px; color:var(--accent); font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0; transition:all 0.6s ease 0.5s; }
-  .title-slide .slide-brand.visible { opacity:1; }
-
-  .summary-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:4px; }
-  .summary-card {
-    padding:16px 18px; border-radius:10px; border:1px solid var(--border);
-    background:var(--surface); opacity:0; transform:translateY(15px) scale(0.97);
-    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+  /* Split Layout (Text + Diagram) */
+  .split-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+  .split-visual { 
+    opacity: 0; transform: scale(0.95); 
+    transition: all 0.8s cubic-bezier(0.4,0,0.2,1) 0.3s;
+    display: flex; justify-content: center; align-items: center;
   }
-  .summary-card.visible { opacity:1; transform:translateY(0) scale(1); }
-  .summary-card .sc-icon { font-size:17px; color:var(--accent); margin-bottom:8px; }
-  .summary-card .sc-text { font-size:13px; line-height:1.6; color:var(--ink-soft); }
-  .summary-card .sc-text .key { color:var(--highlight); font-weight:600; }
+  .split-visual.visible { opacity: 1; transform: scale(1); }
 
+  /* Bento Box Summary */
+  .bento-grid { 
+    display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, 1fr);
+    gap: 16px; margin-top: 4px; height: 420px;
+  }
+  .bento-card {
+    padding: 24px; border-radius: 16px; border: 1px solid var(--border);
+    background: var(--surface); backdrop-filter: blur(10px);
+    opacity: 0; transform: translateY(20px) scale(0.98);
+    transition: all 0.6s cubic-bezier(0.4,0,0.2,1);
+    display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; overflow: hidden;
+  }
+  .bento-card.visible { opacity: 1; transform: translateY(0) scale(1); }
+  .bento-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0; transition: opacity 0.3s; }
+  .bento-card:hover::before { opacity: 1; }
+  
+  .bento-card.large { grid-column: span 2; grid-row: span 2; background: linear-gradient(135deg, rgba(79,140,255,0.1) 0%, rgba(0,212,255,0.05) 100%); border-color: rgba(79,140,255,0.2); }
+  .bento-card .sc-icon { font-size: 24px; color: var(--accent); margin-bottom: 12px; width: 48px; height: 48px; border-radius: 12px; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; }
+  .bento-card .sc-text { font-size: 14px; line-height: 1.5; color: var(--ink-soft); }
+  .bento-card.large .sc-text { font-size: 18px; }
+  .bento-card .sc-text .key { color: var(--highlight); font-weight: 600; }
+
+  /* Title & Closing */
+  .title-slide .slide-content, .closing-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .title-slide .slide-title { font-size:clamp(36px,5vw,56px); margin-bottom:16px; }
+  .title-slide .slide-subtitle { font-size:clamp(16px,1.8vw,20px); color:var(--ink-soft); font-weight:400; margin-bottom:12px; opacity:0; transform:translateY(15px); transition:all 0.6s ease 0.3s; }
+  .title-slide .slide-subtitle.visible { opacity:1; transform:translateY(0); }
+  .title-slide .slide-brand { font-size:13px; color:var(--highlight); font-weight:600; letter-spacing:2px; text-transform:uppercase; opacity:0; transition:all 0.6s ease 0.5s; }
+  .title-slide .slide-brand.visible { opacity:1; }
   .closing-slide .slide-content { margin-left:0; text-align:center; display:flex; flex-direction:column; align-items:center; }
 
-  /* ── Diagram slide type: real pipeline / flow visual instead of bullets ── */
-  .slide-content.has-diagram { max-width:980px; }
-  .diagram-flow {
-    display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:nowrap;
-    gap:0; margin:8px 0 26px; overflow-x:auto; padding-bottom:6px;
-  }
-  .diagram-node {
-    display:flex; flex-direction:column; align-items:center; text-align:center;
-    flex:1 1 0; min-width:56px; max-width:120px;
-    opacity:0; transform:translateY(12px); transition: all 0.5s cubic-bezier(0.4,0,0.2,1);
-  }
-  .diagram-node.visible { opacity:1; transform:translateY(0); }
-  .diagram-node-icon {
-    width:44px; height:44px; border-radius:11px; display:flex; align-items:center; justify-content:center;
-    background:var(--surface); border:1.5px solid var(--border); color:var(--muted); font-size:15px;
-    transition: all 0.3s ease; margin-bottom:8px; flex-shrink:0;
-  }
-  .diagram-node.current .diagram-node-icon { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 4px 14px var(--accent-glow); }
-  .diagram-node.done .diagram-node-icon { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
-  .diagram-node-label { font-size:10px; font-weight:700; color:var(--ink-soft); line-height:1.3; }
-  .diagram-node.current .diagram-node-label { color:var(--accent); }
-  .diagram-arrow { color:var(--border); font-size:13px; margin:14px 1px 0; flex:0 0 auto; }
-  .diagram-arrow.done { color:var(--accent); }
-  .diagram-detail {
-    padding:16px 20px; border-radius:10px; background:var(--surface); border:1px solid var(--border);
-    border-left:3px solid var(--accent);
-  }
-  .diagram-detail-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
-  .diagram-detail-text { font-size:clamp(14px,1.4vw,16px); line-height:1.65; color:var(--ink-soft); }
-  .diagram-detail-text .key { color:var(--highlight); font-weight:600; }
-  .diagram-detail-text .em { color:var(--accent); font-weight:600; }
-
+  /* UI Chrome */
   .top-bar {
     position:fixed; top:0; left:0; right:0; z-index:20; display:flex;
-    align-items:center; justify-content:space-between; padding:20px 32px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.75) 70%, transparent 100%);
+    align-items:center; justify-content:space-between; padding:24px 40px;
+    background:linear-gradient(180deg, rgba(10,12,20,0.8) 0%, transparent 100%);
+    backdrop-filter: blur(5px);
     opacity:0; transition:opacity 0.5s ease;
   }
   .top-bar.visible { opacity:1; }
   .top-bar-left { display:flex; align-items:center; gap:10px; }
-  .top-bar-logo { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:var(--ink); letter-spacing:0.5px; }
-  .top-bar-logo span { color:var(--accent); }
-  .top-bar-right { display:flex; align-items:center; gap:16px; }
+  .top-bar-logo { font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; color:var(--ink); letter-spacing:0.5px; }
+  .top-bar-logo span { background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  
   .module-chip {
-    padding:5px 14px; border-radius:100px; border:1px solid var(--accent); background:var(--accent-soft);
+    padding:6px 16px; border-radius:100px; border:1px solid var(--accent); background:var(--accent-soft);
     font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent);
   }
+  
   .bottom-bar {
-    position:fixed; bottom:0; left:0; right:0; z-index:20; padding:0 32px 24px;
-    background:linear-gradient(0deg, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.85) 65%, transparent 100%);
+    position:fixed; bottom:0; left:0; right:0; z-index:20; padding:0 40px 28px;
+    background:linear-gradient(0deg, rgba(10,12,20,0.9) 0%, transparent 100%);
     opacity:0; transition:opacity 0.5s ease;
   }
   .bottom-bar.visible { opacity:1; }
+  
   .progress-track {
-    width:100%; height:5px; background:var(--border); border-radius:3px;
-    margin-bottom:18px; overflow:visible; cursor:pointer; position:relative;
+    width:100%; height:6px; background:var(--border); border-radius:3px;
+    margin-bottom:20px; overflow:visible; cursor:pointer; position:relative;
   }
   .progress-fill {
-    height:100%; width:0%; border-radius:3px; background:var(--accent);
-    transition:width 0.4s ease; position:relative;
+    height:100%; width:0%; border-radius:3px; 
+    background:linear-gradient(90deg, var(--accent) 0%, var(--highlight) 100%);
+    transition:width 0.4s ease; position:relative; box-shadow: 0 0 10px var(--accent-glow);
   }
   .progress-fill.scrubbing { transition:none; }
   .progress-fill::after {
-    content:''; position:absolute; right:-6px; top:50%; transform:translateY(-50%);
-    width:14px; height:14px; border-radius:50%; background:var(--accent); border:2.5px solid #fff;
-    box-shadow:0 1px 4px rgba(0,0,0,0.25);
+    content:''; position:absolute; right:-7px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px; border-radius:50%; background:#fff; border:3px solid var(--accent);
+    box-shadow:0 0 10px var(--accent-glow);
   }
+  
   .controls-row { display:flex; align-items:center; justify-content:space-between; }
-  .controls-left { display:flex; align-items:center; gap:8px; }
-  .controls-right { display:flex; align-items:center; gap:12px; }
+  .controls-left, .controls-right { display:flex; align-items:center; gap:12px; }
+  
   .ctrl-btn {
-    width:40px; height:40px; border:none; border-radius:10px; cursor:pointer;
+    width:42px; height:42px; border:none; border-radius:12px; cursor:pointer;
     background:var(--surface); color:var(--ink-soft); font-size:14px;
     display:flex; align-items:center; justify-content:center;
-    transition:all 0.2s ease; border:1px solid var(--border);
+    transition:all 0.2s ease; border:1px solid var(--border); backdrop-filter: blur(5px);
   }
-  .ctrl-btn:hover { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+  .ctrl-btn:hover { background:var(--surface-hover); border-color:var(--accent); color:var(--accent); }
   .ctrl-btn.active { color:var(--accent); background:var(--accent-soft); border-color:var(--accent); }
-  .ctrl-btn.play-btn { width:48px; height:48px; border-radius:14px; font-size:16px; background:var(--accent); color:#fff; border-color:var(--accent); }
-  .ctrl-btn.play-btn:hover { background:#1e46b8; color:#fff; }
+  .ctrl-btn.play-btn { width:52px; height:52px; border-radius:16px; font-size:18px; background:var(--accent); color:#fff; border-color:transparent; box-shadow: 0 4px 20px var(--accent-glow); }
+  .ctrl-btn.play-btn:hover { background:#3061ff; transform: scale(1.05); }
+  
   .audio-wave { display:flex; align-items:center; gap:3px; height:20px; margin-left:8px; }
   .audio-wave .bar { width:3px; border-radius:3px; background:var(--accent); animation:wave 0.8s ease-in-out infinite; }
   .audio-wave .bar:nth-child(1) { height:8px; animation-delay:0s; }
@@ -238,42 +257,35 @@
   .audio-wave .bar:nth-child(5) { height:6px; animation-delay:0.25s; }
   .audio-wave.paused .bar { animation-play-state:paused; height:4px !important; }
   @keyframes wave { 0%,100%{transform:scaleY(0.4)} 50%{transform:scaleY(1)} }
-  .slide-counter { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:1px; font-variant-numeric:tabular-nums; }
-  .slide-counter .current { color:var(--accent); font-size:14px; }
-  .transition-overlay {
-    position:fixed; inset:0; z-index:15; background:var(--bg);
-    opacity:0; pointer-events:none; transition:opacity 0.3s ease;
-  }
+  
+  .slide-counter { font-size:13px; font-weight:600; color:var(--muted); letter-spacing:1px; font-variant-numeric:tabular-nums; }
+  .slide-counter .current { color:var(--ink); font-size:15px; }
+  
+  .transition-overlay { position:fixed; inset:0; z-index:15; background:var(--bg); opacity:0; pointer-events:none; transition:opacity 0.3s ease; }
   .transition-overlay.active { opacity:1; }
 
   #introVideo, #outroVideo {
     position:fixed; inset:0; z-index:10; width:100%; height:100%;
-    object-fit:contain; background:#000; display:none;
+    object-fit:cover; background:#000; display:none;
   }
 
+  /* Responsive */
+  @media (max-width:1024px) {
+    .split-layout { grid-template-columns: 1fr; gap: 40px; }
+    .split-visual { order: -1; }
+    .bento-grid { grid-template-columns: 1fr 1fr; height: auto; }
+    .bento-card.large { grid-column: span 2; grid-row: span 1; }
+  }
   @media (max-width:768px) {
     .slide-num { font-size:80px; left:2vw; }
     .slide-content { margin-left:clamp(50px,11vw,120px); }
-    .summary-grid { grid-template-columns:1fr; }
+    .bento-grid { grid-template-columns: 1fr; }
+    .bento-card.large { grid-column: span 1; }
     .top-bar, .bottom-bar { padding-left:16px; padding-right:16px; }
     .bottom-bar { padding-bottom:16px; }
-    .start-brand { margin-top:20px; }
-    .diagram-node { width:78px; }
-    .diagram-node-icon { width:42px; height:42px; font-size:15px; }
   }
-  @media (max-width:480px) {
-    .slide-num { display:none; }
-    .slide-content { margin-left:0; }
-  }
-  /* Mid-size and smaller laptop screens are usually limited on *height*
-     (a browser window on a 1366x768 or similar display often has well
-     under 700px of usable viewport height once browser chrome is
-     accounted for) rather than width — this is the actual dimension
-     that was causing the start screen's content to grow taller than
-     the viewport and overlap the "Built by Excelra" brand line. */
   @media (max-height:700px) {
     .start-badge { margin-bottom:16px; }
-    .start-module { margin-bottom:8px; }
     .start-title { margin-bottom:10px; font-size:clamp(24px,5vw,40px); }
     .start-sub { margin-bottom:22px; }
     .start-brand { margin-top:16px; font-size:12px; }
@@ -286,7 +298,7 @@
 <body>
 
 <div id="bgCanvas" aria-hidden="true"></div>
-<div class="vignette" aria-hidden="true"></div>
+<div id="bgGrid" aria-hidden="true"></div>
 
 <div id="startScreen" role="dialog" aria-label="Start presentation">
   <div class="start-badge"><div class="dot"></div> Drug Discovery Course</div>
@@ -356,9 +368,10 @@ const slides = [
     ]
   },
   {
-    "type": "content",
+    "type": "split",
     "label": "The Shift",
     "title": "What Modern Discovery <span class=\"hl\">Relies On</span>",
+    "visual": "molecule",
     "segments": [
       "Modern drug discovery increasingly relies on <span class=\"key\">large-scale, structured data</span>.",
       "It does not rely on manual paper records, it does not rely on marketing analytics, and it does not rely on word-of-mouth research sharing between labs.",
@@ -366,9 +379,10 @@ const slides = [
     ]
   },
   {
-    "type": "content",
+    "type": "split",
     "label": "What's Included",
     "title": "The Three Pillars of <span class=\"hl\">Discovery Data</span>",
+    "visual": "pillars",
     "segments": [
       "These data resources typically include structured records on <span class=\"em\">chemical compounds</span> \u2014 their properties, their synthesis routes, their behavior.",
       "They include data on <span class=\"em\">biological targets</span> \u2014 the proteins and pathways a drug is designed to act on.",
@@ -397,9 +411,10 @@ const slides = [
     ]
   },
   {
-    "type": "content",
+    "type": "split",
     "label": "This Course",
     "title": "What You Will <span class=\"hl\">Learn</span>",
+    "visual": "pipeline",
     "segments": [
       "Across the next ten modules, you will walk through the <span class=\"key\">entire drug discovery process</span> \u2014 from target identification all the way to a filed IND.",
       "You will also see exactly how <span class=\"em\">data engineering and AI</span> accelerate every one of those stages, using real tools like AlphaFold and generative molecule design.",
@@ -407,13 +422,14 @@ const slides = [
     ]
   },
   {
-    "type": "summary",
+    "type": "bento",
     "label": "Recap",
     "title": "Key <span class=\"hl\">Takeaways</span>",
     "cards": [
       {
         "icon": "fa-database",
-        "text": "Discovery runs on <span class=\"key\">structured data</span> \u2014 compounds, targets, and clinical trial outcomes."
+        "text": "Discovery runs on <span class=\"key\">structured data</span> \u2014 compounds, targets, and clinical trial outcomes.",
+        "large": true
       },
       {
         "icon": "fa-user-shield",
@@ -425,7 +441,7 @@ const slides = [
       },
       {
         "icon": "fa-bolt",
-        "text": "This course covers the <span class=\"key\">full pipeline</span>, plus the growing role of data engineering and AI."
+        "text": "This course covers the <span class=\"key\">full pipeline</span>, plus data engineering and AI."
       }
     ],
     "segments": [
@@ -448,23 +464,134 @@ const slides = [
   }
 ];
 
-// Voice selection (including the Mac/Windows consistency and
-// mid-presentation-stability fixes) is fully owned by voice-engine.js
-// now — this page just needs `synth` for cancel/pause/resume calls.
+// --- Visual Diagrams Generator ---
+function getVisualSVG(type) {
+  if (type === 'molecule') {
+    return `
+      <svg width="320" height="320" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="80" stroke="url(#grad1)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"/>
+        <g class="atom-group">
+          <circle cx="100" cy="60" r="12" fill="#4f8cff" opacity="0.8"/>
+          <circle cx="140" cy="120" r="8" fill="#00d4ff" opacity="0.8"/>
+          <circle cx="60" cy="120" r="8" fill="#00d4ff" opacity="0.8"/>
+          <circle cx="100" cy="140" r="10" fill="#4f8cff" opacity="0.8"/>
+          <line x1="100" y1="60" x2="140" y2="120" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+          <line x1="100" y1="60" x2="60" y2="120" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+          <line x1="140" y1="120" x2="100" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+          <line x1="60" y1="120" x2="100" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+        </g>
+        <defs>
+          <linearGradient id="grad1" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#4f8cff"/>
+            <stop offset="100%" stop-color="#00d4ff"/>
+          </linearGradient>
+        </defs>
+        <style>
+          .atom-group { transform-origin: 100px 100px; animation: spin 20s linear infinite; }
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        </style>
+      </svg>
+    `;
+  }
+  if (type === 'pillars') {
+    return `
+      <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g class="pillar-group">
+          <rect x="20" y="100" width="100" height="140" rx="8" fill="url(#pgrad1)" opacity="0.1" stroke="url(#pgrad1)" stroke-width="1"/>
+          <rect x="25" y="120" width="90" height="4" rx="2" fill="#4f8cff" opacity="0.5"/>
+          <rect x="25" y="130" width="60" height="4" rx="2" fill="#4f8cff" opacity="0.3"/>
+          <circle cx="70" cy="80" r="20" fill="rgba(79,140,255,0.1)" stroke="#4f8cff" stroke-width="1.5"/>
+          <path d="M60 80 L80 80 M70 70 L70 90" stroke="#4f8cff" stroke-width="2"/>
+          <text x="70" y="220" fill="#fff" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle">Compounds</text>
+
+          <rect x="150" y="80" width="100" height="160" rx="8" fill="url(#pgrad2)" opacity="0.1" stroke="url(#pgrad2)" stroke-width="1"/>
+          <rect x="155" y="100" width="90" height="4" rx="2" fill="#00d4ff" opacity="0.5"/>
+          <rect x="155" y="110" width="60" height="4" rx="2" fill="#00d4ff" opacity="0.3"/>
+          <circle cx="200" cy="60" r="22" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="1.5"/>
+          <path d="M190 60 Q200 45 210 60 Q200 75 190 60" stroke="#00d4ff" stroke-width="2" fill="none"/>
+          <text x="200" y="220" fill="#fff" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle">Targets</text>
+
+          <rect x="280" y="60" width="100" height="180" rx="8" fill="url(#pgrad3)" opacity="0.1" stroke="url(#pgrad3)" stroke-width="1"/>
+          <rect x="285" y="80" width="90" height="4" rx="2" fill="#fff" opacity="0.5"/>
+          <rect x="285" y="90" width="60" height="4" rx="2" fill="#fff" opacity="0.3"/>
+          <circle cx="330" cy="40" r="20" fill="rgba(255,255,255,0.05)" stroke="#fff" stroke-width="1.5"/>
+          <path d="M320 45 L325 35 L330 40 L335 30 L340 45" stroke="#fff" stroke-width="2" fill="none"/>
+          <text x="330" y="220" fill="#fff" font-family="Inter" font-size="12" font-weight="600" text-anchor="middle">Clinical Data</text>
+        </g>
+        <defs>
+          <linearGradient id="pgrad1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4f8cff"/><stop offset="100%" stop-color="transparent"/></linearGradient>
+          <linearGradient id="pgrad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="transparent"/></linearGradient>
+          <linearGradient id="pgrad3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="transparent"/></linearGradient>
+        </defs>
+        <style>
+          .pillar-group { animation: rise 1.5s cubic-bezier(0.4,0,0.2,1) forwards; transform: translateY(20px); opacity: 0; }
+          @keyframes rise { to { transform: translateY(0); opacity: 1; } }
+        </style>
+      </svg>
+    `;
+  }
+  if (type === 'pipeline') {
+    return `
+      <svg width="450" height="300" viewBox="0 0 450 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 150 L430 150" stroke="rgba(255,255,255,0.1)" stroke-width="2" stroke-dasharray="4 4"/>
+        <path class="draw-line" d="M20 150 L430 150" stroke="url(#linegrad)" stroke-width="4" stroke-linecap="round"/>
+        
+        <g class="node node-1">
+          <circle cx="50" cy="150" r="8" fill="#0a0c14" stroke="#4f8cff" stroke-width="2"/>
+          <circle cx="50" cy="150" r="4" fill="#4f8cff"/>
+          <text x="50" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Target ID</text>
+        </g>
+        <g class="node node-2">
+          <circle cx="140" cy="150" r="8" fill="#0a0c14" stroke="#3061ff" stroke-width="2"/>
+          <circle cx="140" cy="150" r="4" fill="#3061ff"/>
+          <text x="140" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Hit to Lead</text>
+        </g>
+        <g class="node node-3">
+          <circle cx="230" cy="150" r="8" fill="#0a0c14" stroke="#1f7aff" stroke-width="2"/>
+          <circle cx="230" cy="150" r="4" fill="#1f7aff"/>
+          <text x="230" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Preclinical</text>
+        </g>
+        <g class="node node-4">
+          <circle cx="320" cy="150" r="8" fill="#0a0c14" stroke="#00d4ff" stroke-width="2"/>
+          <circle cx="320" cy="150" r="4" fill="#00d4ff"/>
+          <text x="320" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Clinical Trials</text>
+        </g>
+        <g class="node node-5">
+          <circle cx="410" cy="150" r="8" fill="#0a0c14" stroke="#00d4ff" stroke-width="2"/>
+          <circle cx="410" cy="150" r="4" fill="#00d4ff"/>
+          <text x="410" y="180" fill="#fff" font-size="10" font-family="Inter" font-weight="600" text-anchor="middle">Filed IND</text>
+        </g>
+
+        <defs>
+          <linearGradient id="linegrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#4f8cff"/>
+            <stop offset="100%" stop-color="#00d4ff"/>
+          </linearGradient>
+        </defs>
+        <style>
+          .draw-line { stroke-dasharray: 410; stroke-dashoffset: 410; animation: draw 3s ease-out forwards 0.5s; }
+          @keyframes draw { to { stroke-dashoffset: 0; } }
+          .node { opacity: 0; transform: scale(0); transform-origin: center; }
+          .node-1 { animation: pop 0.4s ease-out forwards 0.6s; transform-origin: 50px 150px; }
+          .node-2 { animation: pop 0.4s ease-out forwards 1.2s; transform-origin: 140px 150px; }
+          .node-3 { animation: pop 0.4s ease-out forwards 1.8s; transform-origin: 230px 150px; }
+          .node-4 { animation: pop 0.4s ease-out forwards 2.4s; transform-origin: 320px 150px; }
+          .node-5 { animation: pop 0.4s ease-out forwards 3.0s; transform-origin: 410px 150px; }
+          @keyframes pop { 0% { opacity: 0; transform: scale(0); } 70% { transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+        </style>
+      </svg>
+    `;
+  }
+  return '';
+}
+
+// Voice selection is fully owned by voice-engine.js
 const synth = window.presentationVoice.synth;
 
-// ── Section model: [0]=intro clip, [1..N]=slides, [N+1]=outro clip ──
 const totalSections = slides.length + 2;
 let currentSection = 0;
 let currentSlide = 0;
 
-// ── Forward-seek guard ───────────────────────────────────────────
-// Learners can always scrub BACKWARD to replay anything already seen,
-// but dragging/clicking the progress bar past the furthest section
-// they've actually reached snaps back — same rule as the plain-video
-// lessons elsewhere in the course. Progress is remembered per module
-// (scoped by page title, which is unique per module) so it isn't lost
-// on revisiting later.
 const seekGuardKey = 'presentationMaxSection_' + document.title;
 let maxSectionReached = parseInt(localStorage.getItem(seekGuardKey), 10) || 0;
 function recordSectionReached(index) {
@@ -487,12 +614,13 @@ function showSeekBlockedHint() {
   requestAnimationFrame(() => { hint.style.opacity = '1'; });
   setTimeout(() => { hint.style.opacity = '0'; setTimeout(() => hint.remove(), 250); }, 1600);
 }
+
 let isPlaying = false;
 let isMuted = false;
 let currentUtterance = null;
 let segmentTimeout = null;
 let isTransitioning = false;
-let genToken = 0; // bumped on every stop/jump so a stale slide's speech callback can never affect whatever plays next
+let genToken = 0; 
 
 const slideNum = document.getElementById('slideNum');
 const slideContent = document.getElementById('slideContent');
@@ -526,33 +654,40 @@ function renderSlide(index) {
   const num = String(index + 1).padStart(2, '0');
   slideNum.textContent = num;
   let html = '';
+
   if (s.type === 'title' || s.type === 'closing') {
     html = `<div class="slide-label"><span class="line"></span>${s.label}<span class="line"></span></div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
     if (s.subtitle) html += `<div class="slide-subtitle">${s.subtitle}</div>`;
     if (s.brand) html += `<div class="slide-brand">${s.brand}</div>`;
     slideContent.className = 'slide-content ' + (s.type === 'title' ? 'title-slide' : 'closing-slide');
-  } else if (s.type === 'summary') {
+  } else if (s.type === 'bento') {
     html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
-    html += `<div class="summary-grid">`;
+    html += `<div class="bento-grid">`;
     s.cards.forEach((c, i) => {
-      html += `<div class="summary-card" data-idx="${i}"><div class="sc-icon"><i class="fas ${c.icon}"></i></div><div class="sc-text">${c.text}</div></div>`;
+      html += `<div class="bento-card ${c.large ? 'large' : ''}" data-idx="${i}">
+        <div class="sc-icon"><i class="fas ${c.icon}"></i></div>
+        <div class="sc-text">${c.text}</div>
+      </div>`;
     });
     html += `</div>`;
     slideContent.className = 'slide-content';
-  } else if (s.type === 'diagram') {
-    html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
-    html += `<h2 class="slide-title">${s.title}</h2>`;
-    html += `<div class="diagram-flow">`;
-    s.stages.forEach((st, i) => {
-      const stateClass = i < s.currentIndex ? 'done' : (i === s.currentIndex ? 'current' : '');
-      html += `<div class="diagram-node ${stateClass}" data-idx="${i}"><div class="diagram-node-icon"><i class="fas ${st.icon}"></i></div><div class="diagram-node-label">${st.label}</div></div>`;
-      if (i < s.stages.length - 1) html += `<div class="diagram-arrow ${i < s.currentIndex ? 'done' : ''}"><i class="fas fa-arrow-right"></i></div>`;
+  } else if (s.type === 'split') {
+    html = `<div class="split-layout">`;
+    html += `<div class="split-text">
+               <div class="slide-label"><span class="line"></span>${s.label}</div>
+               <h2 class="slide-title">${s.title}</h2>
+             </div>`;
+    html += `<div class="split-visual">${getVisualSVG(s.visual)}</div>`;
+    html += `</div>`;
+    // Inject bullets below the split layout container
+    html += `<div class="split-bullets" style="margin-top: 30px; max-width: 600px;">`;
+    s.segments.forEach((seg, i) => {
+      html += `<div class="bullet" data-idx="${i}"><div class="bullet-icon"><i class="fas fa-chevron-right"></i></div><div class="bullet-text">${seg}</div></div>`;
     });
     html += `</div>`;
-    html += `<div class="diagram-detail"><div class="diagram-detail-label">${s.stages[s.currentIndex].label}</div><div class="diagram-detail-text">${s.detail}</div></div>`;
-    slideContent.className = 'slide-content has-diagram';
+    slideContent.className = 'slide-content';
   } else {
     html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
@@ -563,18 +698,17 @@ function renderSlide(index) {
   }
   slideContent.innerHTML = html;
 }
+
 function animateSlideIn(index) {
   const s = slides[index];
   slideNum.classList.remove('fade-out');
   setTimeout(() => {
     const label = slideContent.querySelector('.slide-label');
     const title = slideContent.querySelector('.slide-title');
+    const visual = slideContent.querySelector('.split-visual');
     if (label) label.classList.add('visible');
     if (title) title.classList.add('visible');
-    if (s.type === 'diagram') {
-      const nodes = slideContent.querySelectorAll('.diagram-node');
-      nodes.forEach((n, i) => setTimeout(() => n.classList.add('visible'), i * 90));
-    }
+    if (visual) visual.classList.add('visible');
   }, 100);
   if (s.type === 'title' || s.type === 'closing') {
     setTimeout(() => {
@@ -585,23 +719,20 @@ function animateSlideIn(index) {
     }, 400);
   }
 }
+
 function showSegment(index) {
   const s = slides[currentSlide];
-  if (s.type === 'title' || s.type === 'closing' || s.type === 'diagram') return;
-  if (s.type === 'summary') {
-    const cards = slideContent.querySelectorAll('.summary-card');
+  if (s.type === 'title' || s.type === 'closing') return;
+  if (s.type === 'bento') {
+    const cards = slideContent.querySelectorAll('.bento-card');
     if (cards[index]) cards[index].classList.add('visible');
   } else {
     const bullets = slideContent.querySelectorAll('.bullet');
     if (bullets[index]) bullets[index].classList.add('visible');
   }
 }
+
 function speakSegment(text) {
-  // Delegates to the shared voice engine (voice-engine.js), which picks
-  // the voice, applies pronunciation fixes, and — critically for Mac
-  // Chrome, where the preferred Google network voice can silently fail
-  // to produce any audio — automatically detects that and falls back to
-  // a working voice instead of leaving the narration mute.
   const plain = stripHTML(text);
   return window.presentationVoice.speak(plain, {
     muted: isMuted,
@@ -609,12 +740,13 @@ function speakSegment(text) {
     onUtterance: u => { currentUtterance = u; }
   }).then(() => { currentUtterance = null; });
 }
+
 async function playCurrentSlide() {
-  const myToken = ++genToken; // owns this run; any earlier run is now stale and will bail out
+  const myToken = ++genToken; 
   if (!isPlaying) return;
   const s = slides[currentSlide];
   animateSlideIn(currentSlide);
-  const introDelay = (s.type === 'title' || s.type === 'closing') ? 1200 : (s.type === 'diagram' ? 900 : 800);
+  const introDelay = (s.type === 'title' || s.type === 'closing') ? 1200 : (s.type === 'split' ? 1000 : 800);
   await delay(introDelay);
   if (!isPlaying || myToken !== genToken) return;
   const segs = s.segments || [];
@@ -637,16 +769,13 @@ function stopSpeech() {
   synth.cancel();
   currentUtterance = null;
 }
-function delay(ms) {
-  return new Promise(r => { segmentTimeout = setTimeout(r, ms); });
-}
+function delay(ms) { return new Promise(r => { segmentTimeout = setTimeout(r, ms); }); }
 function updatePlayBtn() {
   btnPlay.innerHTML = isPlaying ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play"></i>';
   if (isPlaying) { audioWave.classList.remove('paused'); btnPlay.classList.add('active'); }
   else { audioWave.classList.add('paused'); btnPlay.classList.remove('active'); }
 }
 
-// ── Unified section navigation: intro clip → every slide → outro clip ──
 function updateProgressForSection(index, subProgress) {
   subProgress = subProgress || 0;
   const pct = (index + Math.min(1, Math.max(0, subProgress))) / totalSections;
@@ -689,11 +818,11 @@ function enterSlideSection() {
   } else {
     animateSlideIn(currentSlide);
     const s = slides[currentSlide];
-    if (s.type === 'summary') {
-      slideContent.querySelectorAll('.summary-card').forEach((c, i) => {
+    if (s.type === 'bento') {
+      slideContent.querySelectorAll('.bento-card').forEach((c, i) => {
         setTimeout(() => c.classList.add('visible'), 300 + i * 150);
       });
-    } else if (s.type !== 'title' && s.type !== 'closing' && s.type !== 'diagram') {
+    } else if (s.type !== 'title' && s.type !== 'closing') {
       slideContent.querySelectorAll('.bullet').forEach((b, i) => {
         setTimeout(() => b.classList.add('visible'), 300 + i * 150);
       });
@@ -741,12 +870,6 @@ introVideoEl.addEventListener('timeupdate', () => {
 outroVideoEl.addEventListener('timeupdate', () => {
   if (currentSection === totalSections - 1 && outroVideoEl.duration) updateProgressForSection(totalSections - 1, outroVideoEl.currentTime / outroVideoEl.duration);
 });
-// Deliberately NOT listening to introVideoEl/outroVideoEl's native 'play'/'pause'
-// events to drive isPlaying: a video firing 'pause' as part of naturally
-// reaching its end was being misread as a manual pause, which stopped the
-// presentation from auto-continuing into the next section. isPlaying is
-// now only ever set by our own explicit code below (togglePlay, start,
-// restart), never by incidental native media events.
 
 function togglePlay() {
   if (currentSection === 0 || currentSection === totalSections - 1) {
@@ -801,20 +924,13 @@ document.getElementById('startBtn').addEventListener('click', () => {
   }, 800);
 });
 btnPlay.addEventListener('click', togglePlay);
-// Clicking anywhere on the slide/video stage itself (not the control
-// bar or a link/button inside a slide) toggles play/pause too, so it
-// behaves like a normal video player — including while full-screen.
 document.getElementById('presentation').addEventListener('click', function(e) {
-  if (e.target.closest('a, button')) return;
+  if (e.target.closest('a, button, svg')) return;
   togglePlay();
 });
 btnMute.addEventListener('click', toggleMute);
 btnPrev.addEventListener('click', () => goToSection(currentSection - 1));
 btnNext.addEventListener('click', () => {
-  // Same forward-seek guard as the progress slider and the keyboard
-  // ArrowRight handler: the dedicated "Next" button must never be able
-  // to jump past the furthest section actually reached either — that
-  // was the actual gap letting learners bypass "no skipping ahead."
   const nextIndex = currentSection + 1;
   if (nextIndex > maxSectionReached) {
     showSeekBlockedHint();
@@ -828,11 +944,6 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
   if (e.code === 'ArrowRight') {
     e.preventDefault();
-    // Same forward-seek guard as the progress slider: the keyboard arrow
-    // must never be able to jump past the furthest section actually
-    // reached (that was the exact bug — the slider blocked skipping
-    // ahead, but ArrowRight called goToSection() directly with no clamp
-    // at all, bypassing the guard entirely).
     const nextIndex = currentSection + 1;
     if (nextIndex > maxSectionReached) {
       showSeekBlockedHint();
@@ -876,14 +987,6 @@ progressTrackEl.addEventListener('touchstart', e => { isScrubbing = true; progre
 progressTrackEl.addEventListener('touchmove', e => { if (isScrubbing) previewAt(pctFromPointer(e.touches[0].clientX)); }, { passive: true });
 progressTrackEl.addEventListener('touchend', e => { if (!isScrubbing) return; isScrubbing = false; progressFill.classList.remove('scrubbing'); commitScrub(e.changedTouches[0].clientX); });
 
-// Unconditionally pauses whatever is actually playing — the intro/
-// outro video OR the narration speech, whichever section is active —
-// and never resumes it automatically. This one function is the single
-// source of truth for every "playback should stop now" trigger below:
-// switching to a different browser tab, switching to a different
-// module/dashboard/quiz/game inside the course, or closing the tab
-// entirely. Learners must always press play again themselves; nothing
-// should ever start talking on its own after being backgrounded.
 function pauseForBackground() {
   if (isPlaying) {
     if (currentSection === 0 || currentSection === totalSections - 1) {
@@ -895,30 +998,17 @@ function pauseForBackground() {
     isPlaying = false;
     updatePlayBtn();
   }
-  // Belt-and-suspenders: cancel rather than merely pause the speech
-  // queue, so nothing stays alive to unexpectedly resume later.
   try { synth.cancel(); } catch (e) {}
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pauseForBackground();
 });
-// 'pagehide' fires more reliably than 'beforeunload' when a tab is
-// actually closed (including for back/forward-cache navigations), so
-// both are covered rather than relying on just one.
 window.addEventListener('pagehide', pauseForBackground);
 window.addEventListener('beforeunload', () => { synth.cancel(); });
 
-// The parent course page can only hide this iframe with CSS (e.g. going
-// back to the dashboard, opening Course Relaxer, or a quiz/game modal) —
-// it can't reach into a same-origin iframe's own speechSynthesis/video
-// state directly. It posts this message instead so playback actually
-// pauses rather than continuing to talk/play in the background.
 window.addEventListener('message', event => {
   if (!event.data || !event.data.type) return;
-  // Lets the parent course page (and, through it, voice commands like
-  // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
-  // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
   if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
   if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
