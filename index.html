@@ -44,6 +44,13 @@
             --font-display: 'Fraunces', serif;
             --font-mono: 'JetBrains Mono', monospace;
             --ease-editorial: cubic-bezier(.22, 1, .36, 1);
+            
+            /* Dark Theme Variables for Dashboard */
+            --dash-bg: #0d1117;
+            --dash-card-bg: #161b22;
+            --dash-card-border: #30363d;
+            --dash-text: #ffffff;
+            --dash-text-muted: #8b949e;
         }
 
         .eyebrow {
@@ -749,7 +756,7 @@
             display: none;
             position: relative;
             z-index: 1;
-            background: var(--bg-subtle, #fafafa);
+            background: var(--dash-bg); /* Dark theme applied */
         }
         .module-dashboard.active { display: block; }
 
@@ -757,8 +764,8 @@
 
         .dashboard-header {
             padding: 3rem 2.75rem 1.75rem;
-            border-bottom: 1px solid var(--hairline);
-            background: #fff;
+            border-bottom: 1px solid var(--dash-card-border);
+            background: var(--dash-bg);
         }
         .dashboard-header-left { max-width: 720px; }
 
@@ -768,13 +775,13 @@
             font-size: clamp(2rem, 4vw, 3rem);
             line-height: 1.08;
             letter-spacing: -0.02em;
-            color: var(--ink);
+            color: var(--dash-text); /* White text */
             margin: 1.25rem 0 1.25rem;
         }
         .dashboard-title em { font-style: italic; font-weight: 400; color: var(--primary); }
 
         .dashboard-subtitle {
-            color: #5a6070;
+            color: var(--dash-text-muted); /* Lighter text for readability */
             font-size: 1rem;
             line-height: 1.6;
             max-width: 540px;
@@ -782,8 +789,8 @@
 
         .dashboard-cert-row {
             padding: 1.25rem 2.75rem;
-            border-bottom: 1px solid var(--hairline);
-            background: #fff;
+            border-bottom: 1px solid var(--dash-card-border);
+            background: var(--dash-bg);
             display: flex;
             justify-content: flex-end;
         }
@@ -800,39 +807,37 @@
             justify-content: space-between;
             margin-bottom: 2.5rem;
             padding-bottom: 1.25rem;
-            border-bottom: 1px solid var(--hairline);
+            border-bottom: 1px solid var(--dash-card-border);
         }
         .dashboard-section-title {
             font-family: var(--font-display);
             font-weight: 500;
             font-size: 1.45rem;
             letter-spacing: -0.01em;
-            color: var(--ink);
+            color: var(--dash-text); /* White text */
         }
         .dashboard-section-meta {
             font-family: var(--font-mono);
             font-size: 0.7rem;
-            color: var(--ink-muted);
+            color: var(--dash-text-muted);
             text-transform: uppercase;
             letter-spacing: 0.14em;
         }
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0;
-            border-top: 1px solid var(--hairline);
-            border-left: 1px solid var(--hairline);
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Dynamic layout */
+            gap: 1.5rem;
         }
 
         .module-card {
-            border-right: 1px solid var(--hairline);
-            border-bottom: 1px solid var(--hairline);
+            border: 1px solid var(--dash-card-border);
+            border-radius: 12px;
             padding: 2rem 1.75rem 1.75rem;
             cursor: pointer;
             position: relative;
-            background: #fff;
-            transition: background 0.4s var(--ease-editorial);
+            background: var(--dash-card-bg); /* Dark card background */
+            transition: background 0.4s var(--ease-editorial), border-color 0.4s var(--ease-editorial), transform 0.2s ease;
             min-height: 250px;
             display: flex;
             flex-direction: column;
@@ -847,12 +852,17 @@
             transition: width 0.6s var(--ease-editorial);
         }
         .module-card:hover::before { width: 100%; }
-        .module-card:hover { background: var(--bg-subtle, #fafafa); }
+        .module-card:hover { 
+            background: #1c2128; 
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        }
 
         .module-card-number {
             font-family: var(--font-mono);
             font-size: 0.7rem;
-            color: var(--ink-muted);
+            color: var(--dash-text-muted);
             letter-spacing: 0.14em;
             margin-bottom: 2rem;
             display: flex;
@@ -860,16 +870,17 @@
             justify-content: space-between;
             transition: color 0.3s var(--ease-editorial);
         }
-        .module-card:hover .module-card-number { color: var(--ink); }
+        .module-card:hover .module-card-number { color: var(--dash-text); }
 
         .module-card-status {
             font-size: 0.6rem;
             padding: 0.22rem 0.55rem;
-            border: 1px solid var(--hairline-strong);
+            border: 1px solid var(--dash-card-border);
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            color: #5a6070;
+            color: var(--dash-text-muted);
             white-space: nowrap;
+            border-radius: 4px;
         }
         .module-card-status.done {
             background: #16a34a; border-color: #16a34a; color: #fff; font-weight: 700;
@@ -884,12 +895,12 @@
             font-size: 1.32rem;
             line-height: 1.18;
             letter-spacing: -0.015em;
-            color: var(--ink);
+            color: var(--dash-text); /* White text */
             margin-bottom: 0.85rem;
         }
 
         .module-card-desc {
-            color: #6b7280;
+            color: var(--dash-text-muted); /* Lighter text for readability */
             font-size: 0.85rem;
             line-height: 1.55;
             margin-bottom: auto;
@@ -901,29 +912,30 @@
             justify-content: space-between;
             margin-top: 1.5rem;
             padding-top: 1.1rem;
-            border-top: 1px solid var(--hairline);
+            border-top: 1px solid var(--dash-card-border);
             font-family: var(--font-mono);
             font-size: 0.68rem;
-            color: var(--ink-muted);
+            color: var(--dash-text-muted);
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
         .module-card-footer-meta { display: flex; gap: 1rem; }
         .module-card-footer-meta span { display: flex; align-items: center; gap: 0.35rem; }
         .module-card-footer-meta span::before {
-            content: ''; width: 4px; height: 4px; background: var(--fg-faint, #c8c8c8); border-radius: 50%;
+            content: ''; width: 4px; height: 4px; background: var(--dash-text-muted); border-radius: 50%;
         }
 
         .module-card-arrow {
             width: 30px; height: 30px;
-            border: 1px solid var(--hairline-strong);
+            border: 1px solid var(--dash-card-border);
             display: flex; align-items: center; justify-content: center;
             transition: all 0.4s var(--ease-editorial);
             font-size: 0.9rem;
             flex-shrink: 0;
+            border-radius: 6px;
         }
         .module-card:hover .module-card-arrow {
-            background: var(--ink); color: #fff; border-color: var(--ink);
+            background: var(--primary); color: #fff; border-color: var(--primary);
             transform: rotate(-45deg);
         }
 
@@ -3644,7 +3656,7 @@
                             xp: 20
                         },
                         {
-                            question: "How does integrated drug discovery data platforms integrate with EDC systems?",
+                            question: "How does integrated drug discovery data platforms integrates with EDC systems?",
                             options: [
                                 "integrated drug discovery data platforms data can be imported into EDC systems for clinical trial design",
                                 "integrated drug discovery data platforms replaces EDC systems",
@@ -3719,7 +3731,7 @@
                             xp: 20
                         },
                         {
-                            question: "How does integrated drug discovery data platforms help with the challenge of interoperability?",
+                            question: "How does integrated drug discovery data platforms helps with the challenge of interoperability?",
                             options: [
                                 "By providing cloud-based access",
                                 "By using standardized formats for easy integration",
@@ -3741,7 +3753,7 @@
                             xp: 20
                         },
                         {
-                            question: "How does integrated drug discovery data platforms address the challenge of manual processes?",
+                            question: "How does integrated drug discovery data platforms addresses the challenge of manual processes?",
                             options: [
                                 "By providing curated data",
                                 "By using standardized formats",
@@ -3932,7 +3944,7 @@
                             xp: 20
                         },
                         {
-                            question: "How does integrated drug discovery data platforms contribute to improving success rates in drug discovery?",
+                            question: "How does integrated drug discovery data platforms contributes to improving success rates in drug discovery?",
                             options: [
                                 "By replacing the need for experiments",
                                 "By providing standardized, high-quality data that supports better decision-making",
@@ -6399,754 +6411,3 @@
         function updateProgress() {
             const totalLessons = courseData.modules.reduce((sum, module) => sum + (module.lessons ? module.lessons.length : 0), 0);
             const progressPercent = Math.round((userProgress.completedLessons.size / totalLessons) * 100);
-
-            const percentEl = document.getElementById('progressPercent');
-            const barEl = document.getElementById('progressBar');
-            const pointsEl = document.getElementById('pointsDisplay');
-            const badgesEl = document.getElementById('badgesDisplay');
-            const levelEl = document.getElementById('levelDisplay');
-            const timeEl = document.getElementById('timeDisplay');
-            if (percentEl) percentEl.textContent = `${progressPercent}%`;
-            if (barEl) barEl.style.width = `${progressPercent}%`;
-            if (pointsEl) pointsEl.textContent = userProgress.points;
-            if (badgesEl) badgesEl.textContent = userProgress.badges;
-            if (levelEl) levelEl.textContent = userProgress.level;
-            if (timeEl) timeEl.textContent = formatTime(userProgress.timeSpent);
-
-            // Update lesson completion status in sidebar
-            document.querySelectorAll('.lesson-item').forEach((item) => {
-                const onclickAttr = item.getAttribute('onclick');
-                if (onclickAttr) {
-                    const goToLessonMatch = onclickAttr.match(/goToLesson\((\d+),\s*(\d+)\)/);
-                    const startQuizMatch = onclickAttr.match(/startModuleQuiz\((\d+)\)/);
-                    const startGameMatch = onclickAttr.match(/startGame\((\d+)\)/);
-
-                    if (goToLessonMatch) {
-                        const [moduleIndex, lessonIndex] = goToLessonMatch.slice(1).map(Number);
-                        const key = `${moduleIndex}-${lessonIndex}`;
-                        if (userProgress.completedLessons.has(key)) {
-                            item.classList.add('completed');
-                        } else {
-                            item.classList.remove('completed');
-                        }
-                    } else if (startQuizMatch) {
-                        const moduleIndex = parseInt(startQuizMatch[1]);
-                        if (userProgress.completedQuizzes.has(`${moduleIndex}-quiz`)) {
-                            item.classList.add('completed');
-                        } else {
-                            item.classList.remove('completed');
-                        }
-                    } else if (startGameMatch) {
-                        const moduleIndex = parseInt(startGameMatch[1]);
-                        if (userProgress.completedGames.has(`${moduleIndex}-game`)) {
-                            item.classList.add('completed');
-                        } else {
-                            item.classList.remove('completed');
-                        }
-                    }
-                }
-            });
-        }
-
-        function startTimer() {
-            clearInterval(timerInterval);
-            timerInterval = setInterval(() => {
-                if (courseData.modules[currentModuleIndex] && courseData.modules[currentModuleIndex].lessons[currentLessonIndex]) {
-                    userProgress.timeSpent++;
-                    userProgress.currentModuleTime++;
-                    document.getElementById('moduleTimer').textContent = formatTime(userProgress.currentModuleTime);
-                }
-                updateProgress();
-            }, 1000);
-        }
-
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        // ========== CERTIFICATE GENERATION ==========
-        function generateCertificate() {
-            if (!currentUser) { showNotification('Please log in first'); return; }
-
-            var tL  = courseData.modules.reduce(function(s,m){return s+(m.lessons?m.lessons.length:0);},0);
-            var tQ  = courseData.modules.filter(function(m){return m.quizzes&&m.quizzes.length>0;}).length;
-            var tG  = courseData.modules.filter(function(m){return m.game;}).length;
-            var tot = tL + tQ + tG;
-            var done = userProgress.completedLessons.size + userProgress.completedQuizzes.size + userProgress.completedGames.size;
-            var pct = tot > 0 ? Math.round((done/tot)*100) : 0;
-
-            if (pct < 80) {
-                var needed = Math.ceil(tot * 0.8);
-                showNotification('Complete at least 80% of the course to earn your certificate. You have completed ' + done + ' of ' + tot + ' activities (' + pct + '%).');
-                return;
-            }
-            if (pct < 80) {
-                showNotification('Complete at least 80% of the course to earn your certificate. Current progress: ' + pct + '%.');
-                return;
-            }
-            var dt  = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-            var cid = 'EXC-DD-' + Date.now().toString(36).toUpperCase();
-            var name = currentUser.username;
-
-            var certHtml =
-              '<div id="certPrintArea" style="font-family:Segoe UI,Arial,sans-serif;background:white;">' +
-              '<div style="border:5px solid #1a1a6e;border-radius:10px;overflow:hidden;max-width:750px;margin:0 auto;">' +
-
-              '<div style="background:linear-gradient(90deg,#4a6bff,#6a5acd,#4a6bff);height:8px;"></div>' +
-
-              '<div style="padding:2.5rem 3rem;text-align:center;">' +
-
-              '<div style="font-size:0.65rem;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:#4a6bff;margin-bottom:0.5rem;">Excelra Knowledge Solutions</div>' +
-              '<div style="width:36px;height:2px;background:#4a6bff;margin:0.5rem auto 1.25rem;border-radius:2px;"></div>' +
-
-              '<div style="font-size:0.72rem;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.2rem;">Certificate of Completion</div>' +
-              '<h1 style="font-size:1.9rem;color:#1a1a2e;font-weight:800;margin:0 0 1.25rem;">Drug Discovery Interactive Course</h1>' +
-
-              '<p style="color:#777;margin-bottom:0.35rem;font-size:0.9rem;">This certifies that</p>' +
-              '<div style="border-bottom:2px solid #1a1a2e;display:inline-block;min-width:260px;padding:0.15rem 1.5rem 0.35rem;margin-bottom:0.6rem;">' +
-              '<span style="font-size:1.65rem;font-weight:700;color:#1a1a2e;">' + name + '</span>' +
-              '</div>' +
-
-              '<p style="color:#555;line-height:1.65;font-size:0.85rem;max-width:500px;margin:0.75rem auto 1.5rem;">' +
-              'has successfully completed the <strong>Drug Discovery Interactive Course</strong> by Excelra, ' +
-              'a programme spanning 12 modules covering drug discovery science, industry standards, ' +
-              'data landscape, technology ecosystem, and the role of AI in life sciences.' +
-              '</p>' +
-
-              '<div style="display:flex;justify-content:center;gap:1.25rem;margin:1.25rem 0;flex-wrap:wrap;">' +
-              '<div style="text-align:center;padding:0.6rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:8px;min-width:90px;">' +
-              '<div style="font-size:1.3rem;font-weight:800;color:#4a6bff;">' + pct + '%</div>' +
-              '<div style="font-size:0.62rem;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Completion</div>' +
-              '</div>' +
-              '<div style="text-align:center;padding:0.6rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:8px;min-width:90px;">' +
-              '<div style="font-size:1.3rem;font-weight:800;color:#6a5acd;">' + userProgress.points + '</div>' +
-              '<div style="font-size:0.62rem;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">XP Earned</div>' +
-              '</div>' +
-              '<div style="text-align:center;padding:0.6rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:8px;min-width:90px;">' +
-              '<div style="font-size:1.3rem;font-weight:800;color:#28a745;">Level ' + userProgress.level + '</div>' +
-              '<div style="font-size:0.62rem;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Achieved</div>' +
-              '</div>' +
-              '</div>' +
-
-              '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #f0f0f0;flex-wrap:wrap;gap:0.5rem;">' +
-              '<div style="text-align:left;"><div style="font-size:0.64rem;color:#bbb;text-transform:uppercase;letter-spacing:1px;">Date Issued</div>' +
-              '<div style="font-weight:600;color:#333;font-size:0.85rem;margin-top:2px;">' + dt + '</div></div>' +
-              '<div style="text-align:center;"><div style="font-size:0.58rem;color:#ccc;letter-spacing:1px;text-transform:uppercase;">Certificate ID</div>' +
-              '<div style="font-size:0.62rem;color:#bbb;font-family:monospace;margin-top:2px;">' + cid + '</div></div>' +
-              '<div style="text-align:right;"><div style="font-weight:600;color:#333;font-size:0.85rem;">Excelra Knowledge Solutions</div>' +
-              '<div style="font-size:0.72rem;color:#888;">Boston &middot; San Francisco &middot; Gent &middot; Hyderabad</div></div>' +
-              '</div>' +
-
-              '</div>' +
-              '<div style="background:linear-gradient(90deg,#4a6bff,#6a5acd,#4a6bff);height:5px;"></div>' +
-              '</div></div>';
-
-            var cc = document.getElementById('certificateContent');
-            cc.innerHTML = certHtml +
-              '<div style="text-align:center;margin-top:1.5rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">' +
-              '<button class="btn btn-primary" onclick="printCertificate()">Print / Download PDF</button>' +
-              '<button class="btn" style="background:#e5e7eb;color:#374151;" onclick="closeModal(\'certificateModal\')">Close</button>' +
-              '</div>';
-            document.getElementById('certificateModal').classList.add('active');
-        }
-
-
-        function printCertificate() {
-            const area = document.getElementById('certPrintArea');
-            if (!area) { window.print(); return; }
-            const pw = window.open('', '_blank');
-            pw.document.write('<html><head><title>Drug Discovery Certificate</title>' +
-                '<style>body{margin:0;padding:2rem;background:#f5f5f5;font-family:"Segoe UI",Arial,sans-serif;}' +
-                '@media print{body{padding:0;background:white;}}</style></head>' +
-                '<body>' + area.outerHTML + '</body></html>');
-            pw.document.close();
-            setTimeout(() => { pw.focus(); pw.print(); }, 600);
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        function showAboutExcelra() {
-            // Pause narration — it shouldn't keep talking behind the About page.
-            if (typeof isPlaying !== 'undefined' && isPlaying) pauseNarration();
-            document.getElementById('aboutExcelraPage').classList.add('active');
-            document.getElementById('aboutExcelraPage').scrollTop = 0;
-            // Close user menu if open
-            var um = document.getElementById('userMenu');
-            if (um) um.classList.remove('active');
-        }
-
-        function closeAboutExcelra() {
-            document.getElementById('aboutExcelraPage').classList.remove('active');
-        }
-
-        // ═══════════════════════════════════════════════════════════
-        // VOICE CONTROL ENGINE — Web Speech API (SpeechRecognition)
-        // Zero external dependency, runs entirely in-browser.
-        // ═══════════════════════════════════════════════════════════
-        var voiceRecognition   = null;
-        var voiceEngineRunning = false;  // underlying recognition engine is active
-        var voiceListening     = false;  // "awake" — actively acting on full commands
-        var voiceStarting      = false;
-        var voiceSupported     = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
-
-        // Timestamp of the last time the recognition engine proved it was
-        // actually alive (onstart/onresult/onerror/onend all count). A
-        // watchdog below uses this to catch the case where the browser
-        // just quietly stops delivering ANY event at all after the engine
-        // has been running for a long stretch — no error, no onend, it
-        // simply goes silent. That's the "works fine for a while, then the
-        // mic stops responding" failure mode: without a watchdog there is
-        // nothing to react to, since the whole restart machinery here is
-        // driven by onend/onerror firing.
-        var voiceLastActivity  = 0;
-        function markVoiceActivity() { voiceLastActivity = Date.now(); }
-
-        function initVoiceControl() {
-            var btn = document.getElementById('voiceBtn');
-            if (!voiceSupported) {
-                if (btn) { btn.classList.add('voice-unsupported'); btn.title = 'Voice control not supported in this browser'; }
-                return;
-            }
-            var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            voiceRecognition = new SR();
-            voiceRecognition.continuous     = true;
-            voiceRecognition.interimResults = false;
-            voiceRecognition.lang           = 'en-US';
-
-            voiceRecognition.onstart = function() {
-                voiceStarting = false;
-                markVoiceActivity();
-            };
-
-            voiceRecognition.onresult = function(event) {
-                markVoiceActivity();
-                var last = event.results[event.results.length - 1];
-                var transcript = last[0].transcript.trim().toLowerCase();
-
-                // "Switch on" / "switch off" work even while voice control is
-                // "asleep" — the engine keeps running continuously in the
-                // background once first activated, purely so it can hear
-                // these two wake/sleep phrases hands-free.
-                if (/\bswitch on\b/.test(transcript)) {
-                    if (!voiceListening) setVoiceListening(true);
-                    return;
-                }
-                if (/\bswitch off\b/.test(transcript)) {
-                    if (voiceListening) setVoiceListening(false);
-                    return;
-                }
-
-                if (!voiceListening) return; // asleep — ignore everything else
-                handleVoiceCommand(transcript);
-            };
-
-            voiceRecognition.onerror = function(e) {
-                voiceStarting = false;
-                markVoiceActivity();
-                if (e.error === 'no-speech' || e.error === 'aborted') return;
-
-                // These are fatal — recognition cannot continue, so don't
-                // leave the mic button showing "listening" when it silently
-                // isn't.
-                if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-                    voiceEngineRunning = false;
-                    setVoiceListening(false, true);
-                    showVoiceToast('Microphone access is blocked — allow it for this site in your browser\'s address-bar settings, then click the mic again.');
-                    return;
-                }
-                if (e.error === 'audio-capture') {
-                    voiceEngineRunning = false;
-                    setVoiceListening(false, true);
-                    showVoiceToast('No microphone was found on this device.');
-                    return;
-                }
-                // Transient errors (e.g. "network") still fire onend right
-                // after this, so the restart-with-backoff logic below
-                // handles recovering from them — nothing else to do here.
-                console.warn('Voice recognition error:', e.error);
-            };
-
-            // Counts consecutive failed restart attempts, purely to back off
-            // instead of hammering start() in a tight loop if the browser
-            // keeps refusing.
-            var voiceRestartAttempts = 0;
-
-            // Actually attempts to restart the engine, retrying itself with
-            // backoff if the browser throws (rather than relying on onend
-            // to fire again, which it won't if start() never succeeded).
-            //
-            // This used to give up permanently after 6 failed attempts
-            // (~7 seconds) and force the user to click the mic button again.
-            // Over a long training session that "give up" threshold was
-            // being hit by ordinary transient hiccups (a stretch of network
-            // trouble, the OS briefly reclaiming the mic, etc.), which is
-            // exactly the "works for a while, then just stops" complaint —
-            // so now it backs off to a steady 4s retry cadence and keeps
-            // trying indefinitely instead of ever fully giving up. Only a
-            // fatal permission/device error (handled in onerror above)
-            // actually stops the engine.
-            function attemptVoiceRestart() {
-                if (!voiceEngineRunning) { voiceStarting = false; return; }
-                try {
-                    voiceRecognition.start();
-                    voiceStarting = false;
-                    voiceRestartAttempts = 0;
-                    markVoiceActivity();
-                } catch (err) {
-                    voiceRestartAttempts++;
-                    var delay = Math.min(200 + voiceRestartAttempts * 300, 4000);
-                    setTimeout(attemptVoiceRestart, delay);
-                }
-            }
-
-            voiceRecognition.onend = function() {
-                // Keep the underlying engine alive continuously as long as
-                // it's supposed to be running — browsers stop it after a
-                // stretch of silence, and restarting it (rather than leaving
-                // it dead) is what makes "switch on" reliable hands-free.
-                //
-                // BUG FIX: calling recognition.start() synchronously inside
-                // onend can throw "InvalidStateError" if the browser hasn't
-                // fully torn down the previous session yet. That throw used
-                // to be swallowed silently, leaving voiceEngineRunning stuck
-                // at "true" with no engine actually running — so every
-                // future click on the mic button just toggled voiceListening
-                // without ever restarting recognition, i.e. the mic looked
-                // "on" but was permanently dead after the very first use.
-                // Fix: retry on a short delay, and keep retrying with
-                // backoff (via attemptVoiceRestart) instead of giving up
-                // after one silent failure.
-                markVoiceActivity();
-                if (!voiceEngineRunning || voiceStarting) return;
-                voiceStarting = true;
-                setTimeout(attemptVoiceRestart, 200);
-            };
-
-            // WATCHDOG — covers the failure mode where the browser stops
-            // delivering any event at all (no onend, no onerror) after the
-            // engine has been running a while, so the restart logic above
-            // never gets a chance to fire and the mic just silently goes
-            // dead while still showing as "on". If nothing has happened for
-            // longer than a real recognition session ever legitimately goes
-            // quiet, force a hard restart.
-            setInterval(function() {
-                if (!voiceEngineRunning || voiceStarting) return;
-                if (Date.now() - voiceLastActivity < 20000) return;
-                markVoiceActivity(); // reset before retrying so this can't re-fire every tick
-                try { voiceRecognition.abort(); } catch(e) {}
-                voiceStarting = true;
-                setTimeout(attemptVoiceRestart, 300);
-            }, 6000);
-
-            // Chrome/Edge frequently kill the mic stream outright when a tab
-            // is backgrounded for a while, without ever telling recognition
-            // (no onend/onerror) — so it comes back into view still "on"
-            // but dead. Force a fresh restart the moment the tab regains
-            // focus, rather than waiting on the slower watchdog interval.
-            document.addEventListener('visibilitychange', function() {
-                if (document.hidden) return;
-                if (!voiceEngineRunning || voiceStarting) return;
-                if (Date.now() - voiceLastActivity < 5000) return;
-                markVoiceActivity();
-                try { voiceRecognition.abort(); } catch(e) {}
-                voiceStarting = true;
-                setTimeout(attemptVoiceRestart, 300);
-            });
-        }
-
-        // Turns full command-listening on/off. Does NOT stop/start the
-        // underlying recognition engine — that keeps running continuously
-        // once activated, so "switch on"/"switch off" always work. This
-        // separation is also what fixes the mic getting stuck: previously,
-        // every toggle called recognition.start()/.stop(), and calling
-        // start() while a previous instance hadn't fully stopped yet was
-        // the main cause of it silently getting stuck "on".
-        function setVoiceListening(on, skipNarrationPause) {
-            voiceListening = on;
-            var btn = document.getElementById('voiceBtn');
-            if (btn) btn.classList.toggle('listening', on);
-
-            if (on) {
-                if (!skipNarrationPause && typeof isPlaying !== 'undefined' && isPlaying) pauseNarration();
-                showVoiceToast('Voice control ON — commands: next / previous / switch, play / pause / repeat, mute / unmute, open quiz / open game / certificate, go to module [number], option letter (a-d), relax, close, or say "switch off" to stop.');
-            } else {
-                showVoiceToast('Voice control OFF — say "switch on" any time to resume.');
-            }
-        }
-
-        function toggleVoiceControl() {
-            if (!voiceSupported) {
-                showNotification('Voice control is not supported in this browser. Try Chrome or Edge.');
-                return;
-            }
-            if (!voiceRecognition) initVoiceControl();
-
-            if (!voiceEngineRunning) {
-                // First-ever activation: browsers require a user gesture to
-                // grant mic access. After this one click, the engine keeps
-                // running in the background continuously, so saying
-                // "switch on"/"switch off" works hands-free from then on.
-                voiceEngineRunning = true;
-                voiceStarting = true;
-                try {
-                    voiceRecognition.start();
-                } catch(e) {
-                    voiceStarting = false;
-                    try { voiceRecognition.stop(); } catch(e2) {}
-                    setTimeout(function() {
-                        try { voiceRecognition.start(); } catch(e3) { console.warn('Voice start failed:', e3); }
-                    }, 250);
-                }
-                setVoiceListening(true);
-            } else {
-                setVoiceListening(!voiceListening);
-            }
-        }
-
-        function showVoiceToast(text) {
-            var old = document.querySelector('.voice-toast');
-            if (old) old.remove();
-            var t = document.createElement('div');
-            t.className = 'voice-toast';
-            t.innerHTML = '<span class="vt-dot"></span><span>' + text + '</span>';
-            document.body.appendChild(t);
-            setTimeout(function() { t.remove(); }, 3200);
-        }
-
-        function handleVoiceCommand(transcript) {
-            showVoiceToast('Heard: "' + transcript + '"');
-
-            // "Relax" opens Course Relaxer; "close" (only while it's open)
-            // returns to the main course UI. Checked first, before any other
-            // command, since both words are otherwise unclaimed.
-            if (/\brelax\b/.test(transcript)) {
-                if (!relaxerActive) toggleCourseRelaxer();
-                return;
-            }
-            if (/\bclose\b/.test(transcript)) {
-                if (relaxerActive) toggleCourseRelaxer();
-                return;
-            }
-
-            // "Switch" explicitly jumps to the NEXT module, skipping
-            // whatever is left of the current one. Checked first so
-            // phrases like "switch to next module" don't get caught
-            // by the plain "next" pattern below.
-            if (/\bswitch\b/.test(transcript)) {
-                _advanceToNextModule();
-                return;
-            }
-
-            // "Next" / "Previous" move within the CURRENT module only —
-            // video → quiz → game, one section at a time. They never
-            // jump straight to another module (use "switch" for that).
-            if (/\b(next|continue|forward)\b/.test(transcript)) { nextSection(); return; }
-            if (/\b(previous|back|go back)\b/.test(transcript)) { previousSection(); return; }
-
-            if (/\b(play|start|resume)\b/.test(transcript) && !/quiz|game/.test(transcript)) { playNarration(); return; }
-            if (/\b(pause|stop)\b/.test(transcript) && !/quiz|game/.test(transcript)) { pauseNarration(); return; }
-            if (/\b(repeat|restart|replay)\b/.test(transcript)) { restartNarration(); return; }
-            if (/\b(mute)\b/.test(transcript)) { if (!isMuted) toggleMute(); return; }
-            if (/\b(unmute)\b/.test(transcript)) { if (isMuted) toggleMute(); return; }
-            if (/\b(open quiz|start quiz|take quiz)\b/.test(transcript)) {
-                startModuleQuiz(currentModuleIndex);
-                return;
-            }
-            if (/\b(open game|start game|play game)\b/.test(transcript)) {
-                startGame(currentModuleIndex);
-                return;
-            }
-            if (/\b(certificate)\b/.test(transcript)) { generateCertificate(); return; }
-            if (/\bgo to module (\d+)\b/.test(transcript)) {
-                var m = transcript.match(/\bgo to module (\d+)\b/);
-                var idx = parseInt(m[1], 10) - 1;
-                if (idx >= 0 && idx < courseData.modules.length) goToLesson(idx, 0);
-                return;
-            }
-
-            // Quiz answer by letter — targets whichever question is
-            // currently unanswered. This used to check for a
-            // "data-answered" attribute on the question, but nothing in
-            // the app ever actually sets that attribute (an answered
-            // question's options get a "disabled" class instead, added
-            // by selectQuizOption()) — so the old check never excluded
-            // anything, and saying e.g. "option B" past the first
-            // question silently clicked the FIRST question's option B
-            // every time, regardless of which question was on screen.
-            var letterMatch = transcript.match(/\b(option |answer )?([a-d])\b/);
-            if (letterMatch) {
-                var letterIdx = letterMatch[2].charCodeAt(0) - 97; // a=0,b=1,c=2,d=3
-                var questionBlocks = document.querySelectorAll('.quiz-question');
-                var currentQuestion = null;
-                for (var qi = 0; qi < questionBlocks.length; qi++) {
-                    if (!questionBlocks[qi].querySelector('.option.disabled')) { currentQuestion = questionBlocks[qi]; break; }
-                }
-                var activeOptions = currentQuestion
-                    ? currentQuestion.querySelectorAll('.option')
-                    : document.querySelectorAll('.option:not(.disabled)');
-                if (activeOptions[letterIdx]) {
-                    activeOptions[letterIdx].click();
-                    return;
-                }
-            }
-
-            // True/False voice answers (for True or False game)
-            if (/\btrue\b/.test(transcript)) {
-                var trueBtn = document.querySelector('#gameBoard button');
-                var btns = document.querySelectorAll('#gameBoard button');
-                btns.forEach(function(b) { if (/true/i.test(b.textContent)) b.click(); });
-                return;
-            }
-            if (/\bfalse\b/.test(transcript)) {
-                var btns2 = document.querySelectorAll('#gameBoard button');
-                btns2.forEach(function(b) { if (/false/i.test(b.textContent)) b.click(); });
-                return;
-            }
-        }
-
-        // ─── ADAPTIVE DIFFICULTY ─────────────────────────────────────
-        // Tracks rolling accuracy per module and surfaces a mastery
-        // level the learner can see, plus nudges remedial review.
-        var adaptiveStats = {};  // moduleIndex -> { correct, total }
-
-        function adaptiveStorageKey() {
-            return currentUser ? ('ddAdaptive_' + currentUser.username) : null;
-        }
-
-        function adaptiveLoad() {
-            var key = adaptiveStorageKey();
-            if (!key) { adaptiveStats = {}; return; }
-            try {
-                var raw = localStorage.getItem(key);
-                adaptiveStats = raw ? JSON.parse(raw) : {};
-            } catch(e) { adaptiveStats = {}; }
-        }
-
-        function adaptiveSave() {
-            var key = adaptiveStorageKey();
-            if (!key) return;
-            localStorage.setItem(key, JSON.stringify(adaptiveStats));
-        }
-
-        function adaptiveRecordResult(moduleIndex, isCorrect) {
-            if (!adaptiveStats[moduleIndex]) adaptiveStats[moduleIndex] = { correct: 0, total: 0 };
-            adaptiveStats[moduleIndex].total++;
-            if (isCorrect) adaptiveStats[moduleIndex].correct++;
-            adaptiveSave();
-        }
-
-        function adaptiveMastery(moduleIndex) {
-            var s = adaptiveStats[moduleIndex];
-            if (!s || s.total === 0) return null;
-            return Math.round((s.correct / s.total) * 100);
-        }
-
-        function adaptiveMasteryLabel(pct) {
-            if (pct === null) return 'Not yet attempted';
-            if (pct >= 90) return 'Mastered';
-            if (pct >= 70) return 'Proficient';
-            if (pct >= 50) return 'Developing';
-            return 'Needs review';
-        }
-
-        // ========== UTILITY FUNCTIONS ==========
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            const notificationText = document.getElementById('notificationText');
-            notificationText.textContent = message;
-            notification.classList.add('active');
-
-            setTimeout(() => {
-                notification.classList.remove('active');
-            }, 3000);
-        }
-
-        function saveProgress() {
-            if (!currentUser) return;
-
-            const userKey = `drugDiscoveryProgress_${currentUser.username}`;
-            localStorage.setItem(userKey, JSON.stringify({
-                points: userProgress.points,
-                badges: userProgress.badges,
-                level: userProgress.level,
-                completedLessons: Array.from(userProgress.completedLessons),
-                completedQuizzes: Array.from(userProgress.completedQuizzes),
-                completedGames: Array.from(userProgress.completedGames),
-                timeSpent: userProgress.timeSpent
-            }));
-        }
-
-        function loadProgress() {
-            if (!currentUser) return;
-
-            const userKey = `drugDiscoveryProgress_${currentUser.username}`;
-            const savedProgress = localStorage.getItem(userKey);
-            if (savedProgress) {
-                try {
-                    const progress = JSON.parse(savedProgress);
-                    userProgress.points = progress.points || 0;
-                    userProgress.badges = progress.badges || 0;
-                    userProgress.level = progress.level || 1;
-                    userProgress.completedLessons = new Set(progress.completedLessons || []);
-                    userProgress.completedQuizzes = new Set(progress.completedQuizzes || []);
-                    userProgress.completedGames = new Set(progress.completedGames || []);
-                    userProgress.timeSpent = progress.timeSpent || 0;
-                } catch (e) {
-                    console.error("Error loading progress:", e);
-                }
-            }
-        }
-
-        // ─── RESUME FROM LAST POSITION ───────────────────────────────
-        // Remembers the last module/lesson the learner was viewing so a
-        // refresh, crash, or simply logging back in later picks up where
-        // they left off instead of restarting from the beginning.
-        function saveLastPosition() {
-            if (!currentUser) return;
-            localStorage.setItem('drugDiscoveryLastPosition_' + currentUser.username,
-                JSON.stringify({ m: currentModuleIndex, l: currentLessonIndex }));
-        }
-
-        function loadLastPosition() {
-            if (!currentUser) return null;
-            const raw = localStorage.getItem('drugDiscoveryLastPosition_' + currentUser.username);
-            if (!raw) return null;
-            try {
-                const pos = JSON.parse(raw);
-                if (courseData.modules[pos.m] && courseData.modules[pos.m].lessons[pos.l] !== undefined) return pos;
-            } catch (e) {}
-            return null;
-        }
-
-        // Picks where to resume inside a module opened from the dashboard:
-        // the saved position if it's within this module, otherwise the
-        // first lesson that isn't marked complete yet, otherwise lesson 0.
-        function resumeLessonIndexForModule(moduleIndex) {
-            const saved = loadLastPosition();
-            if (saved && saved.m === moduleIndex) return saved.l;
-            const mod = courseData.modules[moduleIndex];
-            if (mod) {
-                for (let i = 0; i < mod.lessons.length; i++) {
-                    if (!userProgress.completedLessons.has(`${moduleIndex}-${i}`)) return i;
-                }
-            }
-            return 0;
-        }
-
-        // ─── GENUINE LESSON-COMPLETION UNLOCK ────────────────────────
-        // "Mark lesson as complete" only becomes usable once the learner
-        // has actually watched the video/presentation (or immediately, for
-        // lessons that have no video to watch) — never on demand alone.
-        var lessonUnlocked = new Set();
-
-        function lessonUnlockedStorageKey() {
-            return currentUser ? ('drugDiscoveryUnlocked_' + currentUser.username) : null;
-        }
-
-        function loadLessonUnlocked() {
-            const key = lessonUnlockedStorageKey();
-            if (!key) { lessonUnlocked = new Set(); return; }
-            try {
-                const raw = localStorage.getItem(key);
-                lessonUnlocked = new Set(raw ? JSON.parse(raw) : []);
-            } catch (e) { lessonUnlocked = new Set(); }
-        }
-
-        function saveLessonUnlocked() {
-            const key = lessonUnlockedStorageKey();
-            if (!key) return;
-            localStorage.setItem(key, JSON.stringify(Array.from(lessonUnlocked)));
-        }
-
-        function unlockLesson(lessonKey) {
-            if (lessonUnlocked.has(lessonKey)) return;
-            lessonUnlocked.add(lessonKey);
-            saveLessonUnlocked();
-            // If the learner is still looking at this exact lesson, flip the
-            // button live instead of waiting for the next render.
-            if (lessonKey === `${currentModuleIndex}-${currentLessonIndex}`) {
-                const btn = document.getElementById('markCompleteBtn');
-                const note = document.getElementById('lessonCompleteNote');
-                if (btn && !btn.classList.contains('is-done')) {
-                    btn.disabled = false;
-                    btn.title = '';
-                }
-                if (note) note.textContent = "You've finished this — mark it complete whenever you're ready.";
-            }
-        }
-
-        // A lesson only needs to be "unlocked" by watching if it actually
-        // has something to watch — references-only or video-less lessons
-        // stay manually completable, exactly as before.
-        function lessonRequiresWatchToComplete(lesson, hasReferences) {
-            return !!(lesson.videoUrl && !hasReferences);
-        }
-
-        // Listen for the "finished" signal each narrated module presentation
-        // posts to its parent page when it plays through to the end.
-        window.addEventListener('message', function(event) {
-            if (!event.data || event.data.type !== 'presentation-complete') return;
-            unlockLesson(`${currentModuleIndex}-${currentLessonIndex}`);
-        });
-    </script>
-    <!-- Onboarding Tutorial -->
-
-    <!-- Persistent avatar companion — stays on screen through the whole tour -->
-    <div class="tutorial-avatar-bubble" id="tutorialAvatarBubble">
-        <div class="tutorial-avatar-bubble-bg">
-            <svg class="tutorial-avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                <g class="avatar-head" id="tutorialAvatarHead">
-                    <circle cx="50" cy="52" r="38" fill="#1e2d4a" stroke="#4a6bff" stroke-width="1.5"/>
-                    <ellipse cx="50" cy="18" rx="28" ry="10" fill="#2a3a5c"/>
-                    <rect x="22" y="14" width="56" height="14" rx="4" fill="#2a3a5c"/>
-                    <ellipse cx="12" cy="52" rx="5" ry="7" fill="#1e2d4a" stroke="#4a6bff" stroke-width="1"/>
-                    <ellipse cx="88" cy="52" rx="5" ry="7" fill="#1e2d4a" stroke="#4a6bff" stroke-width="1"/>
-                    <g class="eye-group">
-                        <ellipse cx="36" cy="48" rx="7" ry="8" fill="white"/>
-                        <circle  cx="37" cy="49" r="4" fill="#4a6bff"/>
-                        <circle  cx="38" cy="47" r="1.5" fill="white" opacity="0.7"/>
-                    </g>
-                    <g class="eye-group right">
-                        <ellipse cx="64" cy="48" rx="7" ry="8" fill="white"/>
-                        <circle  cx="65" cy="49" r="4" fill="#4a6bff"/>
-                        <circle  cx="66" cy="47" r="1.5" fill="white" opacity="0.7"/>
-                    </g>
-                    <path d="M29 38 Q36 34 43 37" stroke="#4a6bff" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <path d="M57 37 Q64 34 71 38" stroke="#4a6bff" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <path d="M48 54 Q50 60 52 54" stroke="#4a6bff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                    <path id="tutorialAvatarMouthIdle" class="mouth-path" d="M36 66 Q50 72 64 66" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                    <ellipse id="tutorialAvatarMouthOpen" cx="50" cy="67" rx="10" ry="5" fill="#0a0f1a" stroke="white" stroke-width="1.5" style="display:none;"/>
-                    <path d="M26 88 L50 78 L74 88" stroke="#4a6bff" stroke-width="1.5" fill="none"/>
-                </g>
-            </svg>
-        </div>
-    </div>
-
-    <!-- Centered card — used for the initial prompt and the closing messages -->
-    <div class="tutorial-overlay" id="tutorialOverlay">
-        <div class="tutorial-card">
-            <div class="tutorial-body">
-                <div class="tutorial-progress-dots" id="tutorialDots"></div>
-                <div class="tutorial-step-label" id="tutorialStepLabel">Welcome</div>
-                <div class="tutorial-text" id="tutorialText">Loading...</div>
-                <div class="tutorial-btn-row" id="tutorialBtnRow"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Element-pointing caption — used while walking through the interface -->
-    <div class="tutorial-caption-box" id="tutorialCaptionBox">
-        <div id="tutorialCaptionText"></div>
-        <div class="tutorial-caption-buttons">
-            <button class="tc-btn-skip" onclick="tutorialSkip()">Skip tour</button>
-            <button class="tc-btn-next" id="tutorialCaptionNextBtn" onclick="tutorialNext()">Next</button>
-        </div>
-    </div>
-
-
-</body>
-</html>
