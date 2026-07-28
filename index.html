@@ -817,6 +817,62 @@
             letter-spacing: 0.14em;
         }
 
+        /* ── Curriculum Rail — a slim architectural sequence-map sitting
+           above the module grid. It mirrors the grid's own status colors
+           (ink = done, primary = in progress, hairline = not started) so
+           the two read as one system, not decoration bolted on top. ── */
+        .curriculum-rail {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            padding: 0 2.75rem 2.25rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .curriculum-rail::-webkit-scrollbar { display: none; }
+        .rail-node {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .rail-node-dot {
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            border: 1.5px solid var(--hairline-strong);
+            background: #fff;
+            flex-shrink: 0;
+            transition: transform 0.3s var(--ease-editorial), background 0.3s, border-color 0.3s;
+        }
+        .rail-node.done .rail-node-dot { background: var(--ink); border-color: var(--ink); }
+        .rail-node.progress .rail-node-dot {
+            background: var(--primary); border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74,107,255,0.15);
+        }
+        .rail-node:hover .rail-node-dot { transform: scale(1.4); }
+        .rail-node-label {
+            font-family: var(--font-mono);
+            font-size: 0.62rem;
+            letter-spacing: 0.1em;
+            color: var(--ink-muted);
+            margin: 0 0.6rem;
+            white-space: nowrap;
+            transition: color 0.3s;
+        }
+        .rail-node:hover .rail-node-label,
+        .rail-node.progress .rail-node-label { color: var(--ink); }
+        .rail-connector {
+            width: 26px; height: 1px;
+            background: var(--hairline-strong);
+            flex-shrink: 0;
+            position: relative;
+        }
+        .rail-connector.filled::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: var(--ink);
+        }
+
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -825,29 +881,68 @@
             border-left: 1px solid var(--hairline);
         }
 
+        @keyframes cardRise {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .module-card { animation: none !important; }
+        }
+
         .module-card {
+            --accent: var(--hairline-strong);
             border-right: 1px solid var(--hairline);
             border-bottom: 1px solid var(--hairline);
-            padding: 2rem 1.75rem 1.75rem;
+            border-top: 2px solid transparent;
+            padding: 2.1rem 1.75rem 1.75rem;
             cursor: pointer;
             position: relative;
             background: #fff;
-            transition: background 0.4s var(--ease-editorial);
-            min-height: 250px;
+            transition: background 0.4s var(--ease-editorial), transform 0.4s var(--ease-editorial),
+                box-shadow 0.4s var(--ease-editorial), border-top-color 0.4s var(--ease-editorial);
+            min-height: 258px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            opacity: 0;
+            animation: cardRise 0.6s var(--ease-editorial) forwards;
+            animation-delay: calc(var(--i, 0) * 60ms);
         }
-        .module-card::before {
+        .module-card.done { --accent: #16a34a; }
+        .module-card.progress { --accent: var(--primary); }
+        .module-card::after {
+            /* faint architectural grid, visible only in the number zone,
+               fades in on hover — depth without a neon retro vibe */
             content: '';
-            position: absolute;
-            bottom: 0; left: 0;
-            height: 2px; width: 0;
-            background: var(--primary);
-            transition: width 0.6s var(--ease-editorial);
+            position: absolute; top: 0; left: 0; right: 0; height: 64px;
+            background-image: radial-gradient(circle, rgba(22,24,29,0.05) 1px, transparent 1px);
+            background-size: 12px 12px;
+            opacity: 0;
+            transition: opacity 0.5s var(--ease-editorial);
+            pointer-events: none;
         }
-        .module-card:hover::before { width: 100%; }
-        .module-card:hover { background: var(--bg-subtle, #fafafa); }
+        .module-card:hover::after { opacity: 1; }
+        .module-card:hover {
+            background: var(--bg-subtle, #fafafa);
+            transform: translateY(-5px);
+            box-shadow: 0 18px 30px -18px rgba(22,24,29,0.28);
+            border-top-color: var(--accent);
+        }
+
+        .module-card-ghost-num {
+            position: absolute;
+            top: -0.4rem; right: 1rem;
+            font-family: var(--font-display);
+            font-size: 5.5rem;
+            font-weight: 300;
+            color: var(--ink);
+            opacity: 0.045;
+            line-height: 1;
+            letter-spacing: -0.04em;
+            pointer-events: none;
+            transition: opacity 0.4s var(--ease-editorial), transform 0.5s var(--ease-editorial);
+        }
+        .module-card:hover .module-card-ghost-num { opacity: 0.09; transform: translateY(-4px); }
 
         .module-card-number {
             font-family: var(--font-mono);
@@ -858,11 +953,16 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
+            z-index: 1;
             transition: color 0.3s var(--ease-editorial);
         }
         .module-card:hover .module-card-number { color: var(--ink); }
 
         .module-card-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
             font-size: 0.6rem;
             padding: 0.22rem 0.55rem;
             border: 1px solid var(--hairline-strong);
@@ -871,11 +971,19 @@
             color: #5a6070;
             white-space: nowrap;
         }
+        .module-card-status::before {
+            content: ''; width: 5px; height: 5px; border-radius: 50%;
+            background: currentColor; flex-shrink: 0;
+        }
         .module-card-status.done {
             background: #16a34a; border-color: #16a34a; color: #fff; font-weight: 700;
         }
         .module-card-status.progress {
             background: rgba(74,107,255,0.1); border-color: rgba(74,107,255,0.3); color: var(--primary); font-weight: 700;
+        }
+        .module-card-status.progress::before { animation: statusPulse 1.6s ease-in-out infinite; }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; } 50% { opacity: 0.35; }
         }
 
         .module-card-title {
@@ -886,6 +994,8 @@
             letter-spacing: -0.015em;
             color: var(--ink);
             margin-bottom: 0.85rem;
+            position: relative;
+            z-index: 1;
         }
 
         .module-card-desc {
@@ -893,6 +1003,23 @@
             font-size: 0.85rem;
             line-height: 1.55;
             margin-bottom: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .module-card-progress-track {
+            height: 2px;
+            background: var(--hairline);
+            margin-top: 1.1rem;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+        .module-card-progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: var(--pct, 0%);
+            transition: width 0.8s var(--ease-editorial);
         }
 
         .module-card-footer {
@@ -907,6 +1034,8 @@
             color: var(--ink-muted);
             text-transform: uppercase;
             letter-spacing: 0.1em;
+            position: relative;
+            z-index: 1;
         }
         .module-card-footer-meta { display: flex; gap: 1rem; }
         .module-card-footer-meta span { display: flex; align-items: center; gap: 0.35rem; }
@@ -924,7 +1053,7 @@
         }
         .module-card:hover .module-card-arrow {
             background: var(--ink); color: #fff; border-color: var(--ink);
-            transform: rotate(-45deg);
+            transform: rotate(-45deg) scale(1.08);
         }
 
         @media (max-width: 1024px) {
@@ -934,6 +1063,8 @@
             .dashboard-header { padding: 2.5rem 1.5rem 2rem; }
             .dashboard-section { padding: 2rem 1.5rem 3rem; }
             .dashboard-grid { grid-template-columns: 1fr; }
+            .curriculum-rail { padding: 0 1.5rem 1.75rem; }
+            .module-card-ghost-num { font-size: 4rem; }
         }
 
         /* Main Layout */
@@ -2447,6 +2578,7 @@
                 <h3 class="dashboard-section-title">Curriculum</h3>
                 <div class="dashboard-section-meta">Sequence · Recommended order</div>
             </div>
+            <div class="curriculum-rail" id="curriculumRail"><!-- Sequence nodes injected by JS --></div>
             <div class="dashboard-grid" id="dashboardGrid">
                 <!-- Module cards injected by JS -->
             </div>
@@ -4530,8 +4662,10 @@
         // shown here always matches what the module accordion shows.
         function renderModuleDashboard() {
             const grid = document.getElementById('dashboardGrid');
+            const rail = document.getElementById('curriculumRail');
             if (!grid) return;
             grid.innerHTML = '';
+            if (rail) rail.innerHTML = '';
 
             let completedModules = 0;
 
@@ -4544,6 +4678,12 @@
                 const gameDone = !module.game ||
                     userProgress.completedGames.has(`${moduleIndex}-game`);
                 const isDone = allLessonsCompleted && quizDone && gameDone;
+
+                const completedSections = module.lessons.filter((_, lessonIndex) =>
+                    userProgress.completedLessons.has(`${moduleIndex}-${lessonIndex}`)
+                ).length +
+                    (quizDone && module.quizzes && module.quizzes.length ? 1 : 0) +
+                    (gameDone && module.game ? 1 : 0);
 
                 const anyProgress = !isDone && (
                     module.lessons.some((_, lessonIndex) => userProgress.completedLessons.has(`${moduleIndex}-${lessonIndex}`)) ||
@@ -4561,9 +4701,13 @@
                 const statusLabel = isDone ? 'Done' : (anyProgress ? 'In Progress' : 'Not Started');
                 const statusClass = isDone ? 'done' : (anyProgress ? 'progress' : '');
                 const firstLessonTitle = module.lessons[0] ? module.lessons[0].title : '';
+                const pct = isDone ? 100 : Math.round((completedSections / Math.max(sectionsCount, 1)) * 100);
+                const moduleNum = String(moduleIndex + 1).padStart(2, '0');
 
                 const card = document.createElement('article');
-                card.className = 'module-card';
+                card.className = `module-card ${statusClass}`.trim();
+                card.style.setProperty('--i', moduleIndex);
+                card.style.setProperty('--pct', pct + '%');
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('role', 'button');
                 card.onclick = () => openModuleFromDashboard(moduleIndex);
@@ -4575,12 +4719,16 @@
                 };
 
                 card.innerHTML = `
+                    <div class="module-card-ghost-num" aria-hidden="true">${moduleNum}</div>
                     <div class="module-card-number">
-                        <span>Module &middot; ${String(moduleIndex + 1).padStart(2, '0')}</span>
+                        <span>Module &middot; ${moduleNum}</span>
                         <span class="module-card-status ${statusClass}">${statusLabel}</span>
                     </div>
                     <h3 class="module-card-title">${module.title.replace(/^Module \d+: /, '')}</h3>
                     <p class="module-card-desc">Starts with &ldquo;${firstLessonTitle}.&rdquo;</p>
+                    <div class="module-card-progress-track" aria-hidden="true">
+                        <div class="module-card-progress-fill"></div>
+                    </div>
                     <div class="module-card-footer">
                         <div class="module-card-footer-meta">
                             <span>${sectionsCount} sections</span>
@@ -4590,6 +4738,20 @@
                     </div>
                 `;
                 grid.appendChild(card);
+
+                if (rail) {
+                    if (moduleIndex > 0) {
+                        const connector = document.createElement('div');
+                        connector.className = `rail-connector ${isDone || anyProgress ? 'filled' : ''}`.trim();
+                        rail.appendChild(connector);
+                    }
+                    const node = document.createElement('div');
+                    node.className = `rail-node ${statusClass}`.trim();
+                    node.title = `${module.title.replace(/^Module \d+: /, '')} — ${statusLabel}`;
+                    node.onclick = () => openModuleFromDashboard(moduleIndex);
+                    node.innerHTML = `<span class="rail-node-dot"></span><span class="rail-node-label">${moduleNum}</span>`;
+                    rail.appendChild(node);
+                }
             });
 
             const modCountEl = document.getElementById('dashModuleCount');
