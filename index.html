@@ -44,19 +44,6 @@
             --font-display: 'Fraunces', serif;
             --font-mono: 'JetBrains Mono', monospace;
             --ease-editorial: cubic-bezier(.22, 1, .36, 1);
-
-            /* Main-UI dark theme + module-card design tokens */
-            --void: #0a0b12;
-            --void-2: #12131f;
-            --panel-dark: #14151f;
-            --panel-border: rgba(154, 140, 255, 0.16);
-            --panel-border-strong: rgba(154, 140, 255, 0.28);
-            --dark-ink: #eceef3;
-            --dark-ink-muted: rgba(236, 238, 243, 0.6);
-            --card-glass: rgba(28, 22, 48, 0.78);
-            --neon-cyan: #00FFFF;
-            --neon-magenta: #FF00FF;
-            --neon-orange: #FF9900;
         }
 
         .eyebrow {
@@ -107,29 +94,11 @@
         }
 
         body {
-            background: var(--void);
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
-            position: relative;
-        }
-        /* Soft ambient glow behind the main app shell — subtle, no scanlines
-           or heavy texture, so it reads as "dark UI" rather than a themed
-           overlay sitting on top of the content. */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background:
-                radial-gradient(ellipse 900px 500px at 12% -10%, rgba(255,0,255,0.10), transparent 60%),
-                radial-gradient(ellipse 900px 500px at 88% 0%, rgba(0,255,255,0.08), transparent 60%);
-        }
-        header, .sidebar-wrap, .container, .module-dashboard, .login-modal, .transition-screen {
-            position: relative;
-            z-index: 1;
         }
 
         /* ========== PERMANENT MAIN-UI BACKGROUND / COURSE RELAXER ========== */
@@ -780,35 +749,41 @@
             display: none;
             position: relative;
             z-index: 1;
-            background: var(--void);
-            min-height: 100vh;
-            overflow: hidden;
+            background: var(--bg-subtle, #fafafa);
         }
         .module-dashboard.active { display: block; }
 
-        /* Reference's radiating conic rays from the top-center of the dashboard */
-        .module-dashboard::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: repeating-conic-gradient(
-                from 0deg at 50% 15%,
-                rgba(255, 0, 255, 0.05) 0deg 2deg,
-                transparent 2deg 10deg
-            );
-            z-index: 0;
-            pointer-events: none;
-        }
-        /* Reference's CRT scanlines overlay */
         .container.hidden { display: none; }
 
-        /* Cert row: transparent so the vaporwave stage shows through, right-aligned */
+        .dashboard-header {
+            padding: 3rem 2.75rem 1.75rem;
+            border-bottom: 1px solid var(--hairline);
+            background: #fff;
+        }
+        .dashboard-header-left { max-width: 720px; }
+
+        .dashboard-title {
+            font-family: var(--font-display);
+            font-weight: 300;
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.08;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            margin: 1.25rem 0 1.25rem;
+        }
+        .dashboard-title em { font-style: italic; font-weight: 400; color: var(--primary); }
+
+        .dashboard-subtitle {
+            color: #5a6070;
+            font-size: 1rem;
+            line-height: 1.6;
+            max-width: 540px;
+        }
+
         .dashboard-cert-row {
-            position: relative;
-            z-index: 10;
-            padding: 1.75rem 2.75rem 0;
-            background: transparent;
-            border: none;
+            padding: 1.25rem 2.75rem;
+            border-bottom: 1px solid var(--hairline);
+            background: #fff;
             display: flex;
             justify-content: flex-end;
         }
@@ -816,288 +791,149 @@
             padding: 0.65rem 1.3rem;
         }
 
-        /* Section: transparent, minimal padding — the stage does the work */
         .dashboard-section {
-            position: relative;
-            z-index: 10;
-            padding: 3rem 20px 5rem;
-            background: transparent;
+            padding: 2.5rem 2.75rem 5rem;
         }
         .dashboard-section-header {
-            display: none; /* Curriculum title bar removed — cards stand on their own on the stage */
-        }
-
-        /* Reference's exact stage layout: flex-wrap, centered, 56px gaps */
-        .dashboard-grid {
             display: flex;
-            flex-wrap: wrap;
-            gap: 56px;
-            perspective: 1800px;
-            justify-content: center;
-            max-width: 1500px;
-            margin: 0 auto;
-            padding: 0;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--hairline);
+        }
+        .dashboard-section-title {
+            font-family: var(--font-display);
+            font-weight: 500;
+            font-size: 1.45rem;
+            letter-spacing: -0.01em;
+            color: var(--ink);
+        }
+        .dashboard-section-meta {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
         }
 
-        .module-card-slot {
-            flex: 0 0 auto;
-            transform-style: preserve-3d;
-            transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
-        }
-        .module-card-slot.tilt-left { transform: rotateY(14deg) rotateX(2deg) rotateZ(-1deg); }
-        .module-card-slot.tilt-right { transform: rotateY(-14deg) rotateX(2deg) rotateZ(1deg); }
-        .module-card-slot.tilt-left:hover,
-        .module-card-slot.tilt-left.is-active {
-            transform: rotateY(5deg) rotateX(1deg) rotateZ(-0.5deg) translateY(-8px);
-        }
-        .module-card-slot.tilt-right:hover,
-        .module-card-slot.tilt-right.is-active {
-            transform: rotateY(-5deg) rotateX(1deg) rotateZ(0.5deg) translateY(-8px);
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border-top: 1px solid var(--hairline);
+            border-left: 1px solid var(--hairline);
         }
 
         .module-card {
-            width: 460px;
-            max-width: 82vw;
+            border-right: 1px solid var(--hairline);
+            border-bottom: 1px solid var(--hairline);
+            padding: 2rem 1.75rem 1.75rem;
             cursor: pointer;
             position: relative;
-            background: var(--card-glass);
-            backdrop-filter: blur(6px);
-            border: 1px solid var(--neon-cyan);
-            box-shadow: 0 0 30px rgba(0,255,255,0.18), 0 40px 60px rgba(0,0,0,0.5);
-            transition: border-color 0.25s ease-out, box-shadow 0.25s ease-out;
+            background: #fff;
+            transition: background 0.4s var(--ease-editorial);
+            min-height: 250px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-
-        /* Inner "preview" panel — matches reference's .card-preview with its
-           own background, border, 20px margin from card edge, 24px inner padding */
-        .module-card-preview {
-            margin: 20px 20px 0 20px;
-            background: #0d0620;
-            border: 1px solid #2D1B4E;
-            padding: 28px;
-            flex-grow: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-            position: relative;
-        }
-
-        /* Inner body — matches reference's .card-body */
-        .module-card-body {
-            padding: 28px;
-        }
-
-        /* Sunset gradient accent bar — a real element sitting above the
-           card (not an overlay), matching the reference's accent-rule. */
-        .module-card-accent {
-            height: 3px;
-            background: linear-gradient(to right, var(--neon-orange), var(--neon-magenta), var(--neon-cyan));
-            margin-bottom: 2px;
-            transition: box-shadow 0.25s ease-out, filter 0.25s ease-out;
-        }
-        .module-card-slot:hover .module-card-accent,
-        .module-card-slot.is-active .module-card-accent {
-            box-shadow: 0 0 12px rgba(255,0,255,0.8), 0 0 20px rgba(0,255,255,0.6);
-            filter: brightness(1.3);
-        }
-
-        /* Diagonal light sweep, triggered on hover — no scanlines, just a
-           single clean pass of light across the glass. */
         .module-card::before {
             content: '';
             position: absolute;
-            top: 0; left: -60%;
-            width: 40%; height: 100%;
-            background: linear-gradient(115deg, transparent, rgba(255,255,255,0.18), rgba(0,255,255,0.25), transparent);
-            transform: skewX(-18deg);
-            pointer-events: none;
-            z-index: 5;
+            bottom: 0; left: 0;
+            height: 2px; width: 0;
+            background: var(--primary);
+            transition: width 0.6s var(--ease-editorial);
         }
-        .module-card-slot:hover .module-card::before { animation: moduleCardShine 0.85s ease forwards; }
-        @keyframes moduleCardShine { from { left: -60%; } to { left: 130%; } }
-
-        .module-card-slot:hover .module-card,
-        .module-card-slot.is-active .module-card {
-            border-color: var(--neon-magenta);
-            box-shadow: 0 0 18px var(--neon-cyan), 0 0 40px rgba(255,0,255,0.45), 0 50px 70px rgba(0,0,0,0.6);
-        }
-
-        .module-card-logo {
-            position: absolute;
-            top: 12px; right: 12px;
-            height: 15px;
-            width: auto;
-            opacity: 0.75;
-            pointer-events: none;
-        }
+        .module-card:hover::before { width: 100%; }
+        .module-card:hover { background: var(--bg-subtle, #fafafa); }
 
         .module-card-number {
             font-family: var(--font-mono);
             font-size: 0.7rem;
-            color: var(--dark-ink-muted);
+            color: var(--ink-muted);
             letter-spacing: 0.14em;
+            margin-bottom: 2rem;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-right: 4.5rem;
             transition: color 0.3s var(--ease-editorial);
         }
-        .module-card:hover .module-card-number { color: var(--dark-ink); }
+        .module-card:hover .module-card-number { color: var(--ink); }
 
         .module-card-status {
             font-size: 0.6rem;
             padding: 0.22rem 0.55rem;
-            border: 1px solid var(--panel-border-strong);
+            border: 1px solid var(--hairline-strong);
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            color: var(--dark-ink-muted);
+            color: #5a6070;
             white-space: nowrap;
         }
         .module-card-status.done {
-            background: var(--neon-cyan); border-color: var(--neon-cyan); color: #05242b; font-weight: 700;
+            background: #16a34a; border-color: #16a34a; color: #fff; font-weight: 700;
         }
         .module-card-status.progress {
-            background: rgba(255,0,255,0.12); border-color: var(--neon-magenta); color: var(--neon-magenta); font-weight: 700;
+            background: rgba(74,107,255,0.1); border-color: rgba(74,107,255,0.3); color: var(--primary); font-weight: 700;
         }
 
         .module-card-title {
             font-family: var(--font-display);
-            font-weight: 500;
-            font-size: 1.28rem;
+            font-weight: 400;
+            font-size: 1.32rem;
             line-height: 1.18;
             letter-spacing: -0.015em;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 6px rgba(0,255,255,0.35);
-            margin: 0;
+            color: var(--ink);
+            margin-bottom: 0.85rem;
         }
 
         .module-card-desc {
-            color: var(--dark-ink-muted);
+            color: #6b7280;
             font-size: 0.85rem;
             line-height: 1.55;
-            margin: 0;
-        }
-
-        /* Quick stats row — Lessons / Quiz Qs / XP, a mini stat bar for
-           more visual weight and at-a-glance module scope */
-        .module-card-stats {
-            display: flex;
-            gap: 0;
-            border-top: 1px solid #2D1B4E;
-            border-bottom: 1px solid #2D1B4E;
-            padding: 0.9rem 0;
-        }
-        .module-card-stat {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.2rem;
-            border-right: 1px solid #2D1B4E;
-        }
-        .module-card-stat:last-child { border-right: none; }
-        .module-card-stat-value {
-            font-family: var(--font-display);
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--neon-cyan);
-            text-shadow: 0 0 6px rgba(0,255,255,0.35);
-        }
-        .module-card-stat-label {
-            font-family: var(--font-mono);
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: rgba(236,238,243,0.5);
-        }
-
-        /* Terminal-style line, matching reference's app-terminal exactly */
-        .module-card-terminal {
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            color: rgba(236,238,243,0.5);
-            margin: 0;
-        }
-        .module-card-terminal::before {
-            content: "> ";
-            color: var(--neon-cyan);
-        }
-
-        /* Lesson badge chips, matching reference's badges row exactly */
-        .module-card-badges {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 12px;
-            align-items: center;
-        }
-        .module-card-badge {
-            font-family: var(--font-mono);
-            font-size: 0.68rem;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            border: 1px solid rgba(236,238,243,0.35);
-            border-radius: 999px;
-            padding: 3px 10px;
-            color: rgba(236,238,243,0.7);
-            white-space: nowrap;
-            transition: border-color 0.2s ease-out, color 0.2s ease-out, box-shadow 0.2s ease-out;
-        }
-        .module-card-badge.accent {
-            border-color: rgba(255,0,255,0.4);
-            color: var(--neon-magenta);
-        }
-        .module-card-slot:hover .module-card-badge {
-            border-color: var(--neon-cyan);
-            color: var(--neon-cyan);
-            box-shadow: 0 0 8px rgba(0,255,255,0.4);
-        }
-
-        /* Body panel gets its own recap paragraph above the meta footer,
-           matching the reference's title+description weight in card-body */
-        .module-card-recap {
-            color: var(--dark-ink-muted);
-            font-size: 0.85rem;
-            line-height: 1.6;
-            margin: 0 0 1.1rem 0;
+            margin-bottom: auto;
         }
 
         .module-card-footer {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            margin-top: 1.5rem;
+            padding-top: 1.1rem;
+            border-top: 1px solid var(--hairline);
             font-family: var(--font-mono);
             font-size: 0.68rem;
-            color: var(--dark-ink-muted);
+            color: var(--ink-muted);
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
         .module-card-footer-meta { display: flex; gap: 1rem; }
         .module-card-footer-meta span { display: flex; align-items: center; gap: 0.35rem; }
         .module-card-footer-meta span::before {
-            content: ''; width: 4px; height: 4px; background: var(--neon-cyan); border-radius: 50%; opacity: 0.7;
+            content: ''; width: 4px; height: 4px; background: var(--fg-faint, #c8c8c8); border-radius: 50%;
         }
 
         .module-card-arrow {
             width: 30px; height: 30px;
-            border: 1px solid var(--panel-border-strong);
+            border: 1px solid var(--hairline-strong);
             display: flex; align-items: center; justify-content: center;
             transition: all 0.4s var(--ease-editorial);
             font-size: 0.9rem;
-            color: var(--dark-ink-muted);
             flex-shrink: 0;
         }
         .module-card:hover .module-card-arrow {
-            background: var(--neon-magenta); color: #fff; border-color: var(--neon-magenta);
-            box-shadow: 0 0 10px rgba(255,0,255,0.6);
+            background: var(--ink); color: #fff; border-color: var(--ink);
             transform: rotate(-45deg);
         }
 
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+        }
         @media (max-width: 700px) {
             .dashboard-header { padding: 2.5rem 1.5rem 2rem; }
             .dashboard-section { padding: 2rem 1.5rem 3rem; }
-            .dashboard-grid { justify-content: center; }
+            .dashboard-grid { grid-template-columns: 1fr; }
         }
 
         /* Main Layout */
@@ -1117,10 +953,9 @@
         /* Module navigation bar — horizontal, focused on the open module */
         .sidebar {
             width: 100%;
-            background: var(--void-2);
-            border: 1px solid var(--panel-border);
+            background: white;
             border-radius: 16px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(16,24,40,0.06);
             padding: 1.5rem 1.75rem;
         }
 
@@ -1131,7 +966,7 @@
             flex-wrap: wrap;
             margin-bottom: 1.25rem;
             padding-bottom: 1.1rem;
-            border-bottom: 1px solid var(--panel-border);
+            border-bottom: 1px solid var(--hairline);
         }
 
         .module-nav-back {
@@ -1140,9 +975,9 @@
             text-transform: uppercase;
             letter-spacing: 0.12em;
             font-weight: 700;
-            color: var(--dark-ink-muted);
+            color: var(--ink-muted);
             background: none;
-            border: 1px solid var(--panel-border-strong);
+            border: 1px solid var(--hairline-strong);
             border-radius: 20px;
             padding: 0.5rem 1rem;
             cursor: pointer;
@@ -1150,7 +985,7 @@
             transition: all 0.2s ease;
             flex-shrink: 0;
         }
-        .module-nav-back:hover { color: var(--neon-cyan); border-color: var(--neon-cyan); background: rgba(0,255,255,0.06); }
+        .module-nav-back:hover { color: var(--ink); border-color: var(--ink); background: #f8fafc; }
 
         .module-nav-heading { min-width: 0; }
 
@@ -1159,7 +994,7 @@
             font-size: 0.68rem;
             text-transform: uppercase;
             letter-spacing: 0.16em;
-            color: var(--neon-cyan);
+            color: var(--primary);
             margin-bottom: 0.3rem;
         }
 
@@ -1167,7 +1002,7 @@
             font-family: var(--font-display);
             font-weight: 500;
             font-size: 1.3rem;
-            color: var(--dark-ink);
+            color: var(--ink);
             letter-spacing: -0.01em;
         }
 
@@ -1187,14 +1022,12 @@
             display: flex;
             align-items: center;
             gap: 0.6rem;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--panel-border);
-            color: var(--dark-ink);
+            background: #f8fafc;
+            border: 1px solid #eef1f7;
         }
 
         .lesson-item:hover {
-            background: rgba(0,255,255,0.07);
-            border-color: var(--panel-border-strong);
+            background: #f0f3fa;
             transform: translateY(-1px);
         }
 
@@ -1225,11 +1058,11 @@
             width: 24px;
             height: 24px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.08);
+            background: #eef1f7;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--dark-ink-muted);
+            color: #7b8496;
             font-size: 0.7rem;
             font-weight: 700;
             flex-shrink: 0;
@@ -2597,6 +2430,14 @@
 
     <!-- ========== MODULE DASHBOARD (landing page after login) ========== -->
     <div class="module-dashboard" id="moduleDashboard">
+        <div class="dashboard-header">
+            <div class="dashboard-header-left">
+                <div class="eyebrow">Course Catalog · <span id="dashModuleCount">12</span> Modules</div>
+                <h1 class="dashboard-title">Drug Discovery Course<br>built by <em>Excelra</em></h1>
+                <p class="dashboard-subtitle">Each module builds on the last — covering the science, business context, and data systems behind modern drug discovery at Excelra. Pick up wherever you left off.</p>
+            </div>
+        </div>
+
         <div class="dashboard-cert-row">
             <button class="mark-complete-btn dashboard-cert-btn" onclick="generateCertificate()">Generate Certificate</button>
         </div>
@@ -4721,34 +4562,6 @@
                 const statusClass = isDone ? 'done' : (anyProgress ? 'progress' : '');
                 const firstLessonTitle = module.lessons[0] ? module.lessons[0].title : '';
 
-                // Total XP available across lessons, quiz questions, and the game
-                const lessonXp = module.lessons.reduce((sum, l) => sum + (l.xp || 0), 0);
-                const quizXp = (module.quizzes || []).reduce((sum, q) => sum + (q.xp || 0), 0);
-                const gameXp = (module.game && module.game.xp) || 0;
-                const totalXp = lessonXp + quizXp + gameXp;
-
-                // Lesson badges — real section names, matching the reference's badges row
-                const lessonBadges = module.lessons.slice(0, 5).map(l =>
-                    `<span class="module-card-badge">${l.title}</span>`
-                ).join('');
-                const quizBadge = (module.quizzes && module.quizzes.length)
-                    ? `<span class="module-card-badge accent">${module.quizzes.length}-Question Quiz</span>` : '';
-                const gameBadge = module.game
-                    ? `<span class="module-card-badge accent">${module.game.name || 'Game'}</span>` : '';
-
-                // Recap paragraph — the module's real purpose text, trimmed to a
-                // reasonable card-length excerpt (matches reference's card-body weight)
-                const rawPurpose = module.purpose || '';
-                const recapText = rawPurpose.length > 320
-                    ? rawPurpose.slice(0, 317).trim() + '\u2026'
-                    : rawPurpose;
-
-                const slot = document.createElement('div');
-                slot.className = 'module-card-slot ' + (moduleIndex % 2 === 0 ? 'tilt-left' : 'tilt-right');
-
-                const accent = document.createElement('div');
-                accent.className = 'module-card-accent';
-
                 const card = document.createElement('article');
                 card.className = 'module-card';
                 card.setAttribute('tabindex', '0');
@@ -4762,45 +4575,21 @@
                 };
 
                 card.innerHTML = `
-                    <div class="module-card-preview">
-                        <img src="Logo-light.png" alt="" class="module-card-logo">
-                        <div class="module-card-number">
-                            <span>Module &middot; ${String(moduleIndex + 1).padStart(2, '0')}</span>
-                            ${statusLabel === 'Not Started' ? '' : `<span class="module-card-status ${statusClass}">${statusLabel}</span>`}
-                        </div>
-                        <h3 class="module-card-title">${module.title.replace(/^Module \d+: /, '')}</h3>
-                        <p class="module-card-desc">${sectionsCount} sections &middot; ${formatCourseDuration(totalSeconds)} of content covering the material below.</p>
-                        <div class="module-card-stats">
-                            <div class="module-card-stat">
-                                <span class="module-card-stat-value">${module.lessons.length}</span>
-                                <span class="module-card-stat-label">Lessons</span>
-                            </div>
-                            <div class="module-card-stat">
-                                <span class="module-card-stat-value">${(module.quizzes || []).length}</span>
-                                <span class="module-card-stat-label">Quiz Qs</span>
-                            </div>
-                            <div class="module-card-stat">
-                                <span class="module-card-stat-value">${totalXp}</span>
-                                <span class="module-card-stat-label">XP</span>
-                            </div>
-                        </div>
-                        <p class="module-card-terminal">${firstLessonTitle}</p>
-                        <div class="module-card-badges">${lessonBadges}${quizBadge}${gameBadge}</div>
+                    <div class="module-card-number">
+                        <span>Module &middot; ${String(moduleIndex + 1).padStart(2, '0')}</span>
+                        <span class="module-card-status ${statusClass}">${statusLabel}</span>
                     </div>
-                    <div class="module-card-body">
-                        <p class="module-card-recap">${recapText}</p>
-                        <div class="module-card-footer">
-                            <div class="module-card-footer-meta">
-                                <span>${sectionsCount} sections</span>
-                                <span>${formatCourseDuration(totalSeconds)}</span>
-                            </div>
-                            <div class="module-card-arrow">&rarr;</div>
+                    <h3 class="module-card-title">${module.title.replace(/^Module \d+: /, '')}</h3>
+                    <p class="module-card-desc">Starts with &ldquo;${firstLessonTitle}.&rdquo;</p>
+                    <div class="module-card-footer">
+                        <div class="module-card-footer-meta">
+                            <span>${sectionsCount} sections</span>
+                            <span>${formatCourseDuration(totalSeconds)}</span>
                         </div>
+                        <div class="module-card-arrow">&rarr;</div>
                     </div>
                 `;
-                slot.appendChild(accent);
-                slot.appendChild(card);
-                grid.appendChild(slot);
+                grid.appendChild(card);
             });
 
             const modCountEl = document.getElementById('dashModuleCount');
