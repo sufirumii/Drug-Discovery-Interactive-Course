@@ -21,29 +21,96 @@
          instead of two independently-coded pickers that could land on
          different voices (or a worse fallback) on the same machine. -->
     <script src="voice-engine.js"></script>
+    <!-- jsPDF — used ONLY to generate per-module PDF study sheets fully
+         in-browser (Excelra logo + architectural diagram + timestamp +
+         learner name). No API key, no server: the PDF is built client-side
+         and downloaded directly. Loaded from a public CDN. -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Apply the saved theme on <html> BEFORE the body renders, so there
+         is no flash of the wrong theme on load. Reads nothing else, sets
+         only the data-theme attribute the CSS above keys off. -->
+    <script>
+        (function () {
+            try {
+                var t = localStorage.getItem('courseTheme');
+                if (t !== 'dark') t = 'light';
+                document.documentElement.setAttribute('data-theme', t);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <style>
         :root {
-            --primary: #4a6bff;
-            --secondary: #6a5acd;
+            /* ── Excelra light-purple brand system ───────────────────────
+               The whole course reads its accent colour from these tokens.
+               Light mode = whitish lavender surfaces + vivid (warm) purple
+               brand, with a pinkish-purple gradient reserved for the hero
+               text. Dark mode overrides the surface/ink tokens below on
+               body.theme-dark — the brand purple stays the same so the
+               identity is consistent across both themes. */
+            --primary: #7c5cff;          /* vivid Excelra purple (warm, not blue) */
+            --primary-hover: #6a3df0;   /* slightly deeper on hover */
+            --secondary: #b06bff;       /* pinkish-purple companion */
+            --brand-pink: #c77dff;      /* pinkish-purple for hero accents */
+            --hero-grad: linear-gradient(120deg, #7c5cff 0%, #c77dff 55%, #f0a6ff 100%);
+            --hero-grad-soft: linear-gradient(120deg, rgba(124,92,255,0.12), rgba(199,125,255,0.12));
             --accent: #ff6b6b;
             --dark: #1a1a2e;
             --light: #f8f9fa;
-            --success: #28a745;
-            --warning: #ffc107;
+            --success: #16a34a;
+            --warning: #f59e0b;
             --danger: #dc3545;
-            --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 20px rgba(91, 44, 145, 0.10);
             --transition: all 0.3s ease;
-            --player-bg: linear-gradient(160deg, #0d1117 0%, #161b22 100%);
+            --player-bg: linear-gradient(160deg, #1a1030 0%, #261a40 100%);
             --player-bullet-pending: #8899aa;
 
+            /* Surfaces / ink (light) */
+            --bg: linear-gradient(135deg, #fbf9ff 0%, #f1ebff 100%);
+            --bg-solid: #faf7ff;
+            --surface: #ffffff;
+            --surface-2: #f6f2ff;       /* whisper-lavender card tint */
+            --surface-3: #efe6ff;       /* slightly stronger lavender */
+            --ink: #21163a;             /* deep purple-ink for text */
+            --ink-soft: #3a3350;
+            --ink-muted: #7a7390;
+            --hairline: #ece4f7;
+            --hairline-strong: #dccfeb;
+            --brand-soft: rgba(124,92,255,0.10);
+            --brand-glow: rgba(124,92,255,0.30);
+            --brand-line: rgba(124,92,255,0.45);
+
             /* Editorial design tokens */
-            --hairline: #e9ecf2;
-            --hairline-strong: #d6dbe6;
-            --ink: #16181d;
-            --ink-muted: #8a90a0;
             --font-display: 'Fraunces', serif;
             --font-mono: 'JetBrains Mono', monospace;
             --ease-editorial: cubic-bezier(.22, 1, .36, 1);
+        }
+
+        /* ── Dark theme overrides ─────────────────────────────────────
+           Applied via [data-theme="dark"] on <html> (set by an early inline
+           head script from localStorage, so there's NO flash of the wrong
+           theme on load). Brand purple stays identical so the identity
+           holds; only surfaces/ink/lines flip. The element-level !important
+           guards further down stabilise legacy inline-styled panels
+           (certificate, about, tutorial) so nothing becomes invisible in
+           dark mode. */
+        [data-theme="dark"] {
+            --bg: linear-gradient(135deg, #110c1f 0%, #1a1030 100%);
+            --bg-solid: #130e22;
+            --surface: #1c1530;
+            --surface-2: #241a40;
+            --surface-3: #2c2150;
+            --ink: #f4f0ff;
+            --ink-soft: #d9d0f2;
+            --ink-muted: #a89fc4;
+            --hairline: #2e2350;
+            --hairline-strong: #3d2c66;
+            --brand-soft: rgba(124,92,255,0.16);
+            --brand-glow: rgba(124,92,255,0.40);
+            --brand-line: rgba(124,92,255,0.55);
+            --shadow: 0 4px 22px rgba(0, 0, 0, 0.45);
+            --player-bg: linear-gradient(160deg, #100a1f 0%, #1a1030 100%);
         }
 
         .eyebrow {
@@ -84,7 +151,7 @@
         .mouth-path.speaking { animation: mouthOpen 0.35s ease-in-out infinite; }
 
         /* Word Scramble tile hover lift */
-        .ws-tile:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 6px 14px rgba(74,107,255,0.5) !important; }
+        .ws-tile:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 6px 14px rgba(124,92,255,0.5) !important; }
 
         * {
             margin: 0;
@@ -94,11 +161,13 @@
         }
 
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            background: var(--bg);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            color: var(--ink);
+            transition: background 0.4s ease, color 0.3s ease;
         }
 
         /* ========== PERMANENT MAIN-UI BACKGROUND / COURSE RELAXER ========== */
@@ -137,9 +206,134 @@
         }
         .relaxer-btn:hover { background: rgba(0,0,0,0.09); }
         .relaxer-btn.active {
-            background: rgba(74,107,255,0.4);
-            border-color: rgba(74,107,255,0.7);
+            background: rgba(124,92,255,0.4);
+            border-color: rgba(124,92,255,0.7);
         }
+
+        /* ========== THEME SWITCH ========== */
+        /* Sits to the LEFT of Course Relaxer. Compact pill button + dropdown
+           with the two themes. Theme is applied via body.theme-dark (dark) and
+           the default :root tokens (light). A small live preview swatch sits
+           inside each option so the user sees exactly what they're picking. */
+        .theme-switch { position: relative; }
+        .theme-switch-btn {
+            background: var(--brand-soft);
+            border: 1.5px solid var(--brand-line);
+            color: var(--ink);
+            border-radius: 6px;
+            padding: 0.3rem 0.7rem 0.3rem 0.55rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+            white-space: nowrap;
+        }
+        .theme-switch-btn:hover { background: var(--brand-soft); border-color: var(--primary); transform: translateY(-1px); }
+        .theme-switch-btn .ts-sun, .theme-switch-btn .ts-moon { display: none; }
+        :root:not([data-theme="dark"]) .theme-switch-btn .ts-sun { display: inline-block; }
+        :root[data-theme="dark"] .theme-switch-btn .ts-moon { display: inline-block; }
+        .theme-switch-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            min-width: 188px;
+            background: var(--surface);
+            border: 1px solid var(--hairline-strong);
+            border-radius: 10px;
+            box-shadow: 0 14px 40px rgba(91,44,145,0.18);
+            padding: 0.4rem;
+            z-index: 1500;
+            display: none;
+            opacity: 0;
+            transform: translateY(-6px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+        .theme-switch-dropdown.open {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .theme-switch-dropdown .tsd-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--ink-muted);
+            padding: 0.35rem 0.6rem 0.45rem;
+        }
+        .theme-option {
+            display: flex; align-items: center; gap: 0.65rem;
+            padding: 0.55rem 0.6rem;
+            border-radius: 7px;
+            cursor: pointer;
+            color: var(--ink);
+            transition: background 0.15s;
+        }
+        .theme-option:hover { background: var(--surface-3); }
+        .theme-option.selected { background: var(--brand-soft); }
+        .theme-option .ts-swatch {
+            width: 26px; height: 26px; border-radius: 7px;
+            border: 1px solid var(--hairline-strong);
+            flex-shrink: 0;
+            position: relative; overflow: hidden;
+        }
+        .theme-option .ts-swatch.light { background: linear-gradient(135deg,#fbf9ff,#f1ebff); }
+        .theme-option .ts-swatch.light::after { content:''; position:absolute; right:0; top:0; width:50%; height:100%; background:linear-gradient(135deg,#7c5cff,#c77dff); }
+        .theme-option .ts-swatch.dark { background: linear-gradient(135deg,#110c1f,#1a1030); }
+        .theme-option .ts-swatch.dark::after { content:''; position:absolute; right:0; top:0; width:50%; height:100%; background:linear-gradient(135deg,#7c5cff,#c77dff); }
+        .theme-option .ts-meta { display: flex; flex-direction: column; line-height: 1.25; }
+        .theme-option .ts-name { font-size: 0.84rem; font-weight: 700; }
+        .theme-option .ts-sub { font-size: 0.66rem; color: var(--ink-muted); }
+        .theme-option .ts-check { margin-left: auto; color: var(--primary); font-weight: 800; opacity: 0; }
+        .theme-option.selected .ts-check { opacity: 1; }
+
+        /* ── DARK-MODE STABILITY OVERRIDES ──────────────────────────
+           Legacy inline-styled panels (about page, certificate, tutorial
+           caption, voice toast, module header, quiz/game) were written with
+           hard-coded light-theme colours. These rules flip the surfaces, text
+           and borders that matter so NOTHING becomes invisible in dark mode —
+           purple brand stays identical so the identity holds. */
+        body.theme-dark .about-page,
+        body.theme-dark .modal-content,
+        body.theme-dark .user-menu,
+        body.theme-dark .tutorial-card,
+        body.theme-dark .tutorial-caption-box,
+        body.theme-dark .voice-toast { background: var(--surface) !important; color: var(--ink) !important; }
+        body.theme-dark .about-text, body.theme-dark .about-text * { color: var(--ink-soft); }
+        body.theme-dark .about-eyebrow, body.theme-dark .about-page .about-text h3 { color: var(--ink) !important; }
+        body.theme-dark .about-text strong { color: var(--ink); }
+        body.theme-dark .about-page-topbar { background: var(--surface) !important; border-color: var(--hairline) !important; }
+        body.theme-dark .modal-header h2, body.theme-dark .modal-content h2 { color: var(--ink) !important; }
+        body.theme-dark .quiz-question, body.theme-dark .option,
+        body.theme-dark .game-board, body.theme-dark .game-card { color: var(--ink) !important; }
+        body.theme-dark .relaxer-btn,
+        body.theme-dark .voice-btn,
+        body.theme-dark .about-page-close { background: var(--brand-soft) !important; border-color: var(--brand-line) !important; color: var(--ink) !important; }
+        body.theme-dark .login-container { background: var(--surface) !important; color: var(--ink) !important; }
+        body.theme-dark .login-title, body.theme-dark .login-meta-val { color: var(--ink) !important; }
+        body.theme-dark .login-subtitle, body.theme-dark .login-meta-lbl, body.theme-dark .login-wordmark { color: var(--ink-muted) !important; }
+        body.theme-dark .form-input { background: var(--surface-2) !important; border-color: var(--hairline-strong) !important; color: var(--ink) !important; }
+        body.theme-dark .form-input::placeholder { color: var(--ink-muted) !important; }
+        body.theme-dark .login-btn-guest { color: var(--ink-muted) !important; border-color: var(--hairline-strong) !important; }
+        body.theme-dark .tutorial-text, body.theme-dark .tutorial-step-label { color: var(--ink) !important; }
+        body.theme-dark .tutorial-btn-no { background: var(--surface-3) !important; color: var(--ink-soft) !important; }
+        body.theme-dark .tutorial-dot { background: var(--hairline-strong) !important; }
+        body.theme-dark .user-menu-item { color: var(--ink) !important; }
+        body.theme-dark .user-menu-item:hover { background: var(--surface-3) !important; }
+        body.theme-dark .user-menu-header-name { color: var(--ink) !important; }
+        body.theme-dark .module-card-desc { color: var(--ink-muted) !important; }
+        body.theme-dark .module-card-title, body.theme-dark .dashboard-title,
+        body.theme-dark .dashboard-section-title { color: var(--ink) !important; }
+        body.theme-dark .module-card-status { color: var(--ink-soft) !important; border-color: var(--hairline-strong) !important; }
+        body.theme-dark .notification { background: var(--surface) !important; color: var(--ink) !important; border-color: var(--hairline) !important; }
+        body.theme-dark .content-title, body.theme-dark .nav-btn { color: var(--ink) !important; }
+        body.theme-dark .nav-btn { background: var(--surface-2) !important; border-color: var(--hairline-strong) !important; }
+        body.theme-dark .nav-btn:hover { background: var(--surface-3) !important; }
+        body.theme-dark .logo-text, body.theme-dark .logo-text span { color: var(--ink) !important; }
+
+        /* ========== END THEME SWITCH ========== */
 
         /* Sidebar + main content pop out/in like iOS home-screen icons.
            Different transition-delays on the base rule vs. the
@@ -213,13 +407,21 @@
         }
 
         /* ========== LOGIN MODAL — PROFESSIONAL ========== */
+        /* Centred + clamped so the card fits every laptop screen, from tiny
+           11" ultraportables to large desktops — it never overflows off the
+           viewport. padding, the card's own padding, and its font sizes all
+           scale smoothly with the viewport via clamp(), and the card itself
+           is capped to 92vh with internal scrolling as a last-resort safety
+           net so no part is ever clipped. */
         .login-modal {
             position: fixed; top: 0; left: 0;
             width: 100%; height: 100%;
-            display: flex; justify-content: flex-start; align-items: flex-start;
-            padding: 6vh 5vw;
+            /* Box sits on the LEFT so the full Background.jpg photo is visible
+               to the right of it — the background is part of the experience. */
+            display: flex; justify-content: flex-start; align-items: center;
+            padding: clamp(1.5rem, 6vh, 4rem) clamp(1.5rem, 5vw, 4.5rem);
             box-sizing: border-box;
-            z-index: 10000; overflow: hidden;
+            z-index: 10000; overflow: auto;
             background-color: #1e2d4a;
         }
         .login-modal.hidden { display: none; }
@@ -336,8 +538,14 @@
             background: #ffffff;
             border: 1px solid #dee2e8;
             border-radius: 12px;
-            padding: 3.25rem 3rem 2.75rem;
+            /* padding + width clamp smoothly with the viewport so the card is
+               never too big on a small laptop nor too small on a large one;
+               max-height + overflow-y:auto guarantees the whole card stays
+               visible on the shortest screens (last-resort internal scroll). */
+            padding: clamp(1.6rem, 4.2vw, 3.25rem) clamp(1.4rem, 3.4vw, 3rem) clamp(1.4rem, 3.4vw, 2.75rem);
             max-width: 480px; width: 92%;
+            max-height: 94vh;
+            overflow-y: auto;
             box-shadow: 0 2px 16px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04);
             animation: loginAppear 0.35s ease both;
         }
@@ -363,7 +571,7 @@
         .login-title {
             font-family: var(--font-display);
             font-weight: 400;
-            font-size: 2.1rem;
+            font-size: clamp(1.55rem, 3vw, 2.1rem);
             color: #111827;
             line-height: 1.15;
             letter-spacing: -0.02em;
@@ -371,13 +579,13 @@
         }
         .login-subtitle {
             color: #6b7280;
-            font-size: 1rem;
+            font-size: clamp(0.88rem, 1.6vw, 1rem);
             margin-bottom: 1.9rem;
             line-height: 1.5;
         }
         .login-divider {
             width: 32px; height: 2px;
-            background: #4a6bff;
+            background: var(--primary);
             border-radius: 2px;
             margin: 0.95rem 0 1.75rem;
         }
@@ -398,9 +606,9 @@
         }
         .form-input::placeholder { color: #9ca3af; }
         .form-input:focus {
-            outline: none; border-color: #4a6bff;
+            outline: none; border-color: var(--primary);
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(74,107,255,0.1);
+            box-shadow: 0 0 0 3px rgba(124,92,255,0.1);
         }
         .login-btn {
             padding: 0.9rem 1.1rem; border: none; border-radius: 8px;
@@ -408,9 +616,9 @@
             transition: all 0.18s ease;
         }
         .login-btn-primary {
-            background: #4a6bff; color: white;
+            background: var(--primary); color: white;
         }
-        .login-btn-primary:hover { background: #3a5bef; }
+        .login-btn-primary:hover { background: var(--primary-hover); }
         .login-btn-guest {
             background: transparent; color: #6b7280;
             border: 1.5px solid #d1d5db; font-size: 0.83rem;
@@ -428,17 +636,18 @@
 
         /* Header */
         header {
-            background: #ffffff;
-            color: #16181d;
+            background: var(--surface);
+            color: var(--ink);
             padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: var(--shadow);
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--hairline);
             position: sticky;
             top: 0;
             z-index: 1000;
+            transition: background 0.4s ease, border-color 0.3s ease;
         }
 
         .header-left {
@@ -490,14 +699,15 @@
         .voice-toast {
             position: fixed;
             top: 78px; right: 24px;
-            background: #1e2d4a;
-            color: white;
+            background: linear-gradient(135deg, #2a1a4a 0%, #3a1f6a 100%);
+            color: #f4f0ff;
             padding: 0.75rem 1.1rem;
-            border-radius: 8px;
+            border: 1px solid var(--brand-line);
+            border-radius: 10px;
             font-size: 0.8rem;
             font-weight: 500;
             line-height: 1.5;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 8px 26px rgba(124,92,255,0.35);
             z-index: 99999;
             display: flex;
             align-items: flex-start;
@@ -512,7 +722,95 @@
         .voice-toast .vt-dot {
             width: 7px; height: 7px; border-radius: 50%;
             background: #4ade80; flex-shrink: 0;
+            margin-top: 6px;
         }
+
+        /* ========== VOICE KEYWORDS POPOVER (hover the mic) ========== */
+        /* White card, light-purple accents, staggered entrance animation.
+           Each keyword row has the spoken phrase (mono badge), a short
+           description (the "narration"), and a speaker button that speaks
+           the phrase + description aloud via the same locked-in narrator. */
+        .voice-popover-wrap { position: relative; }
+        .voice-keywords-popover {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: min(360px, 86vw);
+            max-height: 64vh;
+            overflow-y: auto;
+            background: #ffffff;
+            border: 1px solid var(--hairline-strong);
+            border-radius: 14px;
+            box-shadow: 0 18px 50px rgba(91,44,145,0.20);
+            padding: 0.6rem;
+            z-index: 1500;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.97);
+            transform-origin: top right;
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+        }
+        .voice-keywords-popover.open {
+            opacity: 1; visibility: visible; transform: translateY(0) scale(1);
+        }
+        .vkp-head {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.35rem 0.5rem 0.55rem;
+            border-bottom: 1px solid var(--hairline);
+            margin-bottom: 0.4rem;
+        }
+        .vkp-head .vkp-mic {
+            width: 26px; height: 26px; border-radius: 8px;
+            background: var(--hero-grad-soft);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary);
+        }
+        .vkp-head .vkp-title { font-size: 0.82rem; font-weight: 800; color: var(--ink); }
+        .vkp-head .vkp-sub { font-size: 0.64rem; color: var(--ink-muted); font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; }
+        .vkp-group { margin-bottom: 0.5rem; }
+        .vkp-group-label {
+            font-family: var(--font-mono); font-size: 0.58rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.16em;
+            color: var(--secondary); padding: 0.3rem 0.5rem 0.35rem;
+        }
+        .vkp-row {
+            display: flex; align-items: center; gap: 0.55rem;
+            padding: 0.5rem 0.55rem;
+            border-radius: 9px;
+            transition: background 0.15s ease, transform 0.15s ease;
+            opacity: 0;
+            animation: vkpRowIn 0.3s ease forwards;
+        }
+        @keyframes vkpRowIn { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+        .vkp-row:hover { background: var(--surface-2); transform: translateX(2px); }
+        .vkp-phrase {
+            font-family: var(--font-mono); font-size: 0.74rem; font-weight: 700;
+            color: var(--primary); background: var(--brand-soft);
+            border: 1px solid var(--brand-line);
+            padding: 0.18rem 0.5rem; border-radius: 6px; white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .vkp-desc { font-size: 0.76rem; color: var(--ink-soft); line-height: 1.35; flex: 1; min-width: 0; }
+        .vkp-speak {
+            width: 26px; height: 26px; flex-shrink: 0;
+            border-radius: 50%; border: 1px solid var(--brand-line);
+            background: #ffffff; color: var(--primary);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.15s, transform 0.15s;
+        }
+        .vkp-speak:hover { background: var(--brand-soft); transform: scale(1.1); }
+        .vkp-speak.playing { background: var(--primary); color: #fff; animation: vkpSpeakPulse 0.8s ease-in-out infinite; }
+        @keyframes vkpSpeakPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(124,92,255,0.5); } 50% { box-shadow: 0 0 0 6px rgba(124,92,255,0); } }
+        /* Dark-mode: popover stays white-on-purple-accent for readability —
+           the keyword list is dense text, so a light card reads better in
+           both themes. */
+        [data-theme="dark"] .voice-keywords-popover { background: var(--surface); }
+        [data-theme="dark"] .vkp-speak { background: var(--surface-2); }
+        [data-theme="dark"] .vkp-row:hover { background: var(--surface-2); }
+        /* custom scrollbar inside the popover */
+        .voice-keywords-popover::-webkit-scrollbar { width: 7px; }
+        .voice-keywords-popover::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 6px; }
+        .voice-keywords-popover::-webkit-scrollbar-track { background: transparent; }
 
         /* ========== ONBOARDING TUTORIAL ========== */
         .tutorial-overlay {
@@ -541,26 +839,64 @@
             to   { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        /* Persistent avatar companion — stays visible throughout the whole tour */
+        /* Persistent avatar companion — a beautiful female robot guide in
+           light-purple / white. She doesn't just sit in one corner: she
+           glides next to whatever UI element the current tutorial step is
+           pointing at (see moveAvatarToTarget), so the learner's eye is
+           always drawn to the right place. */
         .tutorial-avatar-bubble {
             position: fixed;
             left: 24px; bottom: 24px;
-            width: 76px; height: 76px;
+            width: 104px; height: 104px;
             z-index: 999997;
             display: none;
-            filter: drop-shadow(0 8px 20px rgba(0,0,0,0.35));
-            animation: tutorialBubbleIn 0.3s ease both;
+            /* Smooth glide when repositioning between steps. */
+            transition: left 0.6s cubic-bezier(0.34,1.56,0.64,1),
+                        top 0.6s cubic-bezier(0.34,1.56,0.64,1),
+                        right 0.6s cubic-bezier(0.34,1.56,0.64,1),
+                        bottom 0.6s cubic-bezier(0.34,1.56,0.64,1),
+                        opacity 0.3s ease;
+            filter: drop-shadow(0 10px 24px rgba(124,92,255,0.45));
+            animation: tutorialBubbleIn 0.4s ease both, avatarFloat 4s ease-in-out 0.4s infinite;
         }
         .tutorial-avatar-bubble.active { display: block; }
-        @keyframes tutorialBubbleIn { from { opacity:0; transform: scale(0.7); } to { opacity:1; transform: scale(1); } }
+        @keyframes tutorialBubbleIn { from { opacity:0; transform: scale(0.6); } to { opacity:1; transform: scale(1); } }
+        /* Gentle idle bob so she always feels alive, even when not speaking. */
+        @keyframes avatarFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         .tutorial-avatar-bubble-bg {
             width: 100%; height: 100%; border-radius: 50%;
-            background: linear-gradient(160deg, #0d1117 0%, #161b22 100%);
-            border: 3px solid #4a6bff;
+            /* Soft Barbie-pink → lavender radial — sets off her blonde hair
+               and pink lips. */
+            background: radial-gradient(circle at 50% 38%, #ffffff 0%, #fff0f7 55%, #ffe0f0 100%);
+            border: 3px solid var(--brand-pink);
             display: flex; align-items: center; justify-content: center;
             overflow: hidden;
+            box-shadow: 0 0 0 5px rgba(255,140,200,0.14), 0 8px 26px rgba(199,125,255,0.30), inset 0 0 16px rgba(255,150,210,0.20);
+            position: relative;
         }
-        .tutorial-avatar-svg { width: 88%; height: 88%; }
+        /* A soft pulsing pink-purple halo while she's speaking — draws the eye. */
+        .tutorial-avatar-bubble.speaking .tutorial-avatar-bubble-bg {
+            box-shadow: 0 0 0 8px rgba(255,140,200,0.20), 0 0 30px 5px rgba(236,95,166,0.55), inset 0 0 18px rgba(255,150,210,0.35);
+            animation: avatarHaloPulse 1s ease-in-out infinite;
+        }
+        @keyframes avatarHaloPulse {
+            0%,100% { box-shadow: 0 0 0 6px rgba(255,140,200,0.16), 0 0 22px 3px rgba(236,95,166,0.42); }
+            50%     { box-shadow: 0 0 0 11px rgba(255,140,200,0.26), 0 0 38px 7px rgba(236,95,166,0.70); }
+        }
+        .tutorial-avatar-svg { width: 92%; height: 92%; overflow: visible; }
+
+        /* Eye blink */
+        .eye-group { animation: eyeBlink 4s ease-in-out infinite; transform-origin: center; }
+        .eye-group.right { animation-delay: 0.08s; }
+
+        /* Head idle bob — a touch more lift than before so she reads as
+           animated + feminine. Speaking swaps in a livelier motion. */
+        .avatar-head { animation: headBob 3s ease-in-out infinite; transform-origin: center bottom; }
+        .avatar-head.speaking { animation: headSpeak 0.45s ease-in-out infinite; }
+
+        /* Mouth open/close while speaking — a soft pink-purple lip */
+        @keyframes mouthOpen { 0%,100%{d:path("M 38 66 Q 50 70 62 66");} 50%{d:path("M 38 63 Q 50 74 62 63");} }
+        .mouth-path.speaking { animation: mouthOpen 0.35s ease-in-out infinite; }
 
         .tutorial-body {
             padding: 1.5rem 1.75rem 1.75rem;
@@ -568,7 +904,7 @@
         }
         .tutorial-step-label {
             font-size: 0.68rem; font-weight: 800; letter-spacing: 2px;
-            text-transform: uppercase; color: #4a6bff; margin-bottom: 0.6rem;
+            text-transform: uppercase; color: var(--primary); margin-bottom: 0.6rem;
         }
         .tutorial-text {
             font-size: 0.98rem; color: #1f2937; line-height: 1.6; font-weight: 500;
@@ -583,9 +919,9 @@
             transition: all 0.2s;
         }
         .tutorial-btn-yes {
-            background: linear-gradient(135deg,#4a6bff,#6a5acd); color: white;
+            background: linear-gradient(135deg,var(--primary),var(--secondary)); color: white;
         }
-        .tutorial-btn-yes:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(74,107,255,0.4); }
+        .tutorial-btn-yes:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(124,92,255,0.4); }
         .tutorial-btn-no {
             background: #f3f4f6; color: #4b5563;
         }
@@ -602,20 +938,20 @@
             width: 6px; height: 6px; border-radius: 50%; background: #e5e7eb;
             transition: all 0.25s;
         }
-        .tutorial-dot.active { background: #4a6bff; width: 18px; border-radius: 3px; }
+        .tutorial-dot.active { background: var(--primary); width: 18px; border-radius: 3px; }
         .tutorial-dot.done { background: #a5b4fc; }
 
         /* Spotlight highlight applied to real UI elements during the tour */
         .tutorial-highlight {
             position: relative;
             z-index: 999995 !important;
-            box-shadow: 0 0 0 4px rgba(74,107,255,0.35), 0 0 0 9999px rgba(13,17,23,0.55) !important;
+            box-shadow: 0 0 0 4px rgba(124,92,255,0.35), 0 0 0 9999px rgba(13,17,23,0.55) !important;
             border-radius: 10px;
             animation: tutorialHighlightPulse 1.4s ease-in-out infinite;
         }
         @keyframes tutorialHighlightPulse {
-            0%,100% { box-shadow: 0 0 0 4px rgba(74,107,255,0.35), 0 0 0 9999px rgba(13,17,23,0.55); }
-            50%      { box-shadow: 0 0 0 8px rgba(74,107,255,0.55), 0 0 0 9999px rgba(13,17,23,0.55); }
+            0%,100% { box-shadow: 0 0 0 4px rgba(124,92,255,0.35), 0 0 0 9999px rgba(13,17,23,0.55); }
+            50%      { box-shadow: 0 0 0 8px rgba(124,92,255,0.55), 0 0 0 9999px rgba(13,17,23,0.55); }
         }
 
         .tutorial-caption-box {
@@ -645,8 +981,8 @@
             padding: 0.4rem 0.9rem; border: none; border-radius: 6px;
             font-size: 0.78rem; font-weight: 700; cursor: pointer;
         }
-        .tc-btn-next { background: #4a6bff; color: white; }
-        .tc-btn-next:hover { background: #3a5bef; }
+        .tc-btn-next { background: var(--primary); color: white; }
+        .tc-btn-next:hover { background: var(--primary-hover); }
         .tc-btn-skip { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.75); }
         .tc-btn-skip:hover { background: rgba(255,255,255,0.22); }
 
@@ -749,7 +1085,8 @@
             display: none;
             position: relative;
             z-index: 1;
-            background: var(--bg-subtle, #fafafa);
+            background: var(--surface-2);
+            transition: background 0.4s ease;
         }
         .module-dashboard.active { display: block; }
 
@@ -758,7 +1095,8 @@
         .dashboard-header {
             padding: 3rem 2.75rem 1.75rem;
             border-bottom: 1px solid var(--hairline);
-            background: #fff;
+            background: var(--surface);
+            transition: background 0.4s ease;
         }
         .dashboard-header-left { max-width: 720px; }
 
@@ -768,24 +1106,41 @@
             font-size: clamp(2rem, 4vw, 3rem);
             line-height: 1.08;
             letter-spacing: -0.02em;
+            /* Pinkish-purple gradient text — matches Excelra's light-purple
+               identity. Falls back to --ink where background-clip unsupported. */
             color: var(--ink);
             margin: 1.25rem 0 1.25rem;
+            background: linear-gradient(120deg, #7c3aed 0%, #c77dff 55%, #f0a6ff 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: heroGradientShift 8s ease-in-out infinite alternate;
+            background-size: 200% 100%;
         }
-        .dashboard-title em { font-style: italic; font-weight: 400; color: var(--primary); }
+        @keyframes heroGradientShift { 0% { background-position: 0% 0; } 100% { background-position: 100% 0; } }
+        /* The "Excelra" word gets an even pinker emphasis gradient. */
+        .dashboard-title em {
+            font-style: italic; font-weight: 500;
+            background: linear-gradient(120deg, #c77dff 0%, #f0a6ff 50%, #ff9de0 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
         .dashboard-subtitle {
-            color: #5a6070;
-            font-size: 1rem;
-            line-height: 1.6;
-            max-width: 540px;
+            color: #7a4ea8;   /* soft pinkish-purple for the body copy */
+            font-size: 1.02rem;
+            line-height: 1.65;
+            max-width: 560px;
         }
+        [data-theme="dark"] .dashboard-subtitle { color: #c9a8e8; }
 
         .dashboard-cert-row {
             padding: 1.25rem 2.75rem;
             border-bottom: 1px solid var(--hairline);
-            background: #fff;
+            background: var(--surface);
             display: flex;
             justify-content: flex-end;
+            transition: background 0.4s ease;
         }
         .dashboard-cert-btn {
             padding: 0.65rem 1.3rem;
@@ -831,8 +1186,8 @@
             padding: 2rem 1.75rem 1.75rem;
             cursor: pointer;
             position: relative;
-            background: #fff;
-            transition: background 0.4s var(--ease-editorial);
+            background: var(--surface);
+            transition: background 0.4s var(--ease-editorial), transform 0.4s var(--ease-editorial), box-shadow 0.4s var(--ease-editorial);
             min-height: 250px;
             display: flex;
             flex-direction: column;
@@ -847,7 +1202,31 @@
             transition: width 0.6s var(--ease-editorial);
         }
         .module-card:hover::before { width: 100%; }
-        .module-card:hover { background: var(--bg-subtle, #fafafa); }
+        /* Lavender hover tint + lift + soft purple glow. */
+        .module-card:hover {
+            background: var(--surface-2);
+            transform: translateY(-6px);
+            box-shadow: 0 18px 40px rgba(124,92,255,0.18), 0 2px 8px rgba(124,92,255,0.08);
+        }
+        /* A second, gradient accent line that wipes across the top on hover
+           — purely decorative, draws the eye to the card under the cursor. */
+        .module-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px; width: 0;
+            background: linear-gradient(90deg, var(--primary), var(--brand-pink));
+            transition: width 0.5s var(--ease-editorial);
+        }
+        .module-card:hover::after { width: 100%; }
+        /* Staggered entrance so the grid "fills in" beautifully. Only
+           opacity is animated (not transform) so the hover lift below stays
+           effective — an animation's fill-mode would otherwise pin transform. */
+        .module-card { animation: moduleCardIn 0.55s ease both; }
+        @keyframes moduleCardIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
 
         .module-card-number {
             font-family: var(--font-mono);
@@ -875,7 +1254,7 @@
             background: #16a34a; border-color: #16a34a; color: #fff; font-weight: 700;
         }
         .module-card-status.progress {
-            background: rgba(74,107,255,0.1); border-color: rgba(74,107,255,0.3); color: var(--primary); font-weight: 700;
+            background: rgba(124,92,255,0.1); border-color: rgba(124,92,255,0.3); color: var(--primary); font-weight: 700;
         }
 
         .module-card-title {
@@ -1036,7 +1415,7 @@
             color: white;
             border-color: transparent;
             font-weight: 600;
-            box-shadow: 0 4px 14px rgba(74,107,255,0.3);
+            box-shadow: 0 4px 14px rgba(124,92,255,0.3);
         }
 
         .lesson-item.completed {
@@ -1132,13 +1511,15 @@
         .main-content {
             flex: 1;
             min-width: 0;
-            background: white;
+            background: var(--surface);
+            border: 1px solid var(--hairline);
             border-radius: 12px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 10px 30px rgba(124,92,255,0.10);
             overflow: visible;
             display: flex;
             flex-direction: column;
             margin-bottom: 2.75rem;
+            transition: background 0.4s ease, border-color 0.3s ease;
         }
 
         .content-header {
@@ -1203,8 +1584,8 @@
 
         /* ========== "WHY THIS ACTIVITY" COLLAPSIBLE PANEL ========== */
         .module-purpose {
-            background: #eef1ff;
-            border: 1px solid #dbe3fb;
+            background: linear-gradient(135deg, rgba(124,92,255,0.08), rgba(199,125,255,0.10));
+            border: 1px solid var(--brand-line);
             border-radius: 12px;
             margin: 0 0 1.25rem 0;
             overflow: hidden;
@@ -1245,15 +1626,16 @@
 
         /* ========== LESSON VIDEO PLACEHOLDER ========== */
         .video-placeholder-frame {
-            background: #0d1117;
+            background: var(--surface-2);
             border-radius: 16px;
             margin: 0 0 1.5rem 0;
             overflow: hidden;
-            box-shadow: 0 10px 36px rgba(13,17,23,0.35), 0 1px 0 rgba(255,255,255,0.03) inset;
-            border: 1px solid rgba(255,255,255,0.07);
+            box-shadow: 0 12px 36px rgba(124,92,255,0.18), inset 0 0 0 1px var(--brand-line);
+            border: 1px solid var(--hairline-strong);
             width: 100%;
             min-width: 0;
             max-width: 100%;
+            transition: background 0.4s ease, border-color 0.3s ease;
         }
 
         .video-placeholder-body {
@@ -1274,7 +1656,7 @@
         .video-placeholder-body::before {
             content: '';
             position: absolute; inset: 0;
-            background-image: radial-gradient(rgba(74,107,255,0.07) 1px, transparent 1px);
+            background-image: radial-gradient(rgba(124,92,255,0.07) 1px, transparent 1px);
             background-size: 28px 28px;
             pointer-events: none;
         }
@@ -1283,7 +1665,7 @@
             font-size: 0.68rem;
             text-transform: uppercase;
             letter-spacing: 0.2em;
-            color: rgba(74,107,255,0.65);
+            color: rgba(124,92,255,0.65);
             margin-bottom: 1.1rem;
             position: relative; z-index: 1;
         }
@@ -1418,7 +1800,7 @@
             transition: background 0.2s ease;
             white-space: nowrap;
         }
-        .mark-complete-btn:hover { background: #3a5bef; }
+        .mark-complete-btn:hover { background: var(--primary-hover); }
         .mark-complete-btn:disabled { background: #d1d5db; color: #6b7280; cursor: not-allowed; }
         .mark-complete-btn:disabled:hover { background: #d1d5db; }
         .mark-complete-btn.is-done {
@@ -1455,19 +1837,19 @@
         .quiz-question {
             margin-bottom: 1.25rem;
             padding: 1.25rem;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-            border: 1px solid #e5e7eb;
-            transition: box-shadow 0.2s;
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(124,92,255,0.08);
+            border: 1px solid var(--hairline);
+            transition: box-shadow 0.25s, transform 0.25s;
         }
-        .quiz-question:hover { box-shadow: 0 4px 18px rgba(74,107,255,0.1); }
+        .quiz-question:hover { box-shadow: 0 8px 24px rgba(124,92,255,0.16); transform: translateY(-2px); }
 
         .question-text {
             font-size: 1rem;
             font-weight: 700;
             margin-bottom: 1rem;
-            color: #1a1a2e;
+            color: var(--ink);
             line-height: 1.5;
         }
 
@@ -1475,7 +1857,7 @@
         .q-badge {
             display: inline-flex; align-items: center; justify-content: center;
             width: 26px; height: 26px; border-radius: 50%;
-            background: #4a6bff; color: white;
+            background: var(--primary); color: white;
             font-size: 0.75rem; font-weight: 800;
             margin-right: 0.6rem; flex-shrink: 0; vertical-align: middle;
         }
@@ -1489,12 +1871,13 @@
 
         .option {
             padding: 0.8rem 1rem;
-            border: 2px solid #e5e7eb;
-            border-radius: 8px;
+            border: 2px solid var(--hairline-strong);
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
             display: flex; align-items: center; gap: 0.85rem;
             animation: optionIn 0.25s ease both;
+            background: var(--surface);
         }
         .option:nth-child(1) { animation-delay: 0.04s; }
         .option:nth-child(2) { animation-delay: 0.08s; }
@@ -1502,11 +1885,11 @@
         .option:nth-child(4) { animation-delay: 0.16s; }
 
         .option:hover:not(.disabled) {
-            border-color: #4a6bff;
-            background: #f0f4ff;
+            border-color: var(--primary);
+            background: var(--surface-2);
             transform: translateX(4px);
         }
-        .option.selected { border-color: #4a6bff; background: #eef2ff; }
+        .option.selected { border-color: var(--primary); background: var(--brand-soft); }
         .option.correct  { border-color: #16a34a; background: #f0fdf4;
             animation: correctPulse 0.4s ease; }
         .option.incorrect { border-color: #dc2626; background: #fff1f2;
@@ -1526,16 +1909,16 @@
 
         .option-icon {
             width: 26px; height: 26px; border-radius: 50%;
-            background: #f3f4f6;
+            background: var(--surface-3);
             display: flex; align-items: center; justify-content: center;
-            color: #6b7280; font-size: 0.78rem; font-weight: 700;
+            color: var(--ink-muted); font-size: 0.78rem; font-weight: 700;
             flex-shrink: 0; transition: all 0.2s;
         }
-        .option.selected .option-icon  { background: #4a6bff; color: white; }
+        .option.selected .option-icon  { background: var(--primary); color: white; }
         .option.correct .option-icon   { background: #16a34a; color: white; }
         .option.incorrect .option-icon { background: #dc2626; color: white; }
 
-        .option-text { flex: 1; font-size: 0.9rem; color: #374151; font-weight: 500; }
+        .option-text { flex: 1; font-size: 0.9rem; color: var(--ink-soft); font-weight: 500; }
         .option.correct .option-text   { color: #15803d; font-weight: 600; }
         .option.incorrect .option-text { color: #991b1b; }
 
@@ -1573,7 +1956,7 @@
             margin: 0.5rem 0 1.25rem;
         }
         .quiz-score-fill {
-            height: 100%; background: linear-gradient(90deg,#4a6bff,#16a34a);
+            height: 100%; background: linear-gradient(90deg,var(--primary),#16a34a);
             border-radius: 3px; width: 0%; transition: width 1s ease;
         }
 
@@ -1595,9 +1978,9 @@
         }
 
         .btn-primary:hover {
-            background: #3a5bef;
+            background: var(--primary-hover);
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(74,107,255,0.35);
+            box-shadow: 0 6px 16px rgba(124,92,255,0.35);
         }
 
         .btn-success {
@@ -1624,11 +2007,12 @@
 
         /* Game Styles */
         .game-container {
-            background: #fff;
-            border: 1px solid var(--hairline);
-            border-radius: 12px;
+            background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+            border: 1px solid var(--hairline-strong);
+            border-radius: 16px;
             padding: 1.75rem 1.5rem;
             margin: 1.5rem 0;
+            box-shadow: 0 10px 30px rgba(124,92,255,0.12);
         }
 
         .game-header {
@@ -1645,7 +2029,7 @@
         }
 
         .game-description {
-            color: #666;
+            color: var(--ink-muted);
             margin-bottom: 1.5rem;
         }
 
@@ -1654,8 +2038,9 @@
             justify-content: space-between;
             margin-bottom: 1rem;
             padding: 1rem;
-            background: white;
-            border-radius: 8px;
+            background: var(--surface);
+            border: 1px solid var(--hairline);
+            border-radius: 10px;
         }
 
         .game-stat {
@@ -1675,8 +2060,9 @@
 
         /* Drag and Drop Game */
         .drag-container {
-            background: white;
-            border-radius: 8px;
+            background: var(--surface);
+            border: 1px solid var(--hairline);
+            border-radius: 12px;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
@@ -1684,7 +2070,7 @@
         .drag-instructions {
             text-align: center;
             margin-bottom: 1.5rem;
-            color: #666;
+            color: var(--ink-muted);
         }
 
         .drag-zone {
@@ -1695,9 +2081,9 @@
         }
 
         .drag-item {
-            background: white;
-            border: 2px dashed #e2e8f0;
-            border-radius: 8px;
+            background: var(--surface);
+            border: 2px dashed var(--hairline-strong);
+            border-radius: 10px;
             padding: 1rem;
             cursor: move;
             transition: var(--transition);
@@ -1925,7 +2311,13 @@
             display: none;
             position: fixed; inset: 0;
             z-index: 9000;
-            background: #ffffff;
+            /* Whitish-lavender base, with a soft radial purple glow at the
+               top so the page reads as part of the Excelra light-purple
+               identity the moment it opens. */
+            background:
+                radial-gradient(120% 80% at 80% 0%, rgba(199,125,255,0.16), transparent 60%),
+                radial-gradient(120% 80% at 10% 10%, rgba(124,92,255,0.12), transparent 55%),
+                linear-gradient(180deg, #fbf9ff 0%, #f3ecff 100%);
             overflow-y: auto;
         }
         .about-page.active { display: block; }
@@ -1934,33 +2326,100 @@
             position: sticky; top: 0; z-index: 2;
             display: flex; align-items: center; justify-content: space-between;
             padding: 1.1rem 2.5rem;
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--hairline);
         }
         .about-page-logo { height: 34px; width: auto; display: block; }
         .about-page-close {
-            background: #1e2d4a; color: white; border: none; border-radius: 8px;
+            background: linear-gradient(135deg,var(--primary),var(--secondary)); color: white; border: none; border-radius: 8px;
             padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.85rem; cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
             display: inline-flex; align-items: center; gap: 0.5rem;
+            box-shadow: 0 4px 14px rgba(124,92,255,0.3);
         }
-        .about-page-close:hover { background: #2f4a8a; }
+        .about-page-close:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(124,92,255,0.45); }
+
+        /* ── About hero: animated DNA double helix + tagline ── */
+        .about-hero {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            gap: 3rem;
+            align-items: center;
+            padding: 5rem 6vw 4rem;
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+        .about-hero-text { min-width: 0; }
+        .about-hero-title {
+            font-family: var(--font-display);
+            font-weight: 300;
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            margin: 1rem 0 1.1rem;
+            background: linear-gradient(120deg, #7c3aed 0%, #c77dff 55%, #f0a6ff 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .about-hero-title em { font-style: italic; font-weight: 500; }
+        .about-hero-lede {
+            font-size: 1.12rem; line-height: 1.65; color: #5a4a78; max-width: 540px;
+        }
+        [data-theme="dark"] .about-hero-lede { color: #c9a8e8; }
+        .about-hero-pills { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1.6rem; }
+        .about-hero-pill {
+            font-size: 0.74rem; font-weight: 700; letter-spacing: 0.04em;
+            padding: 0.4rem 0.9rem; border-radius: 20px;
+            background: var(--brand-soft); border: 1px solid var(--brand-line); color: var(--primary);
+        }
+        /* DNA double helix — animated, whitish-light-purple. The two strands
+           twist via a 3D rotation; rungs connect base pairs. Pure SVG+CSS. */
+        .dna-wrap {
+            width: 100%; max-width: 360px; margin: 0 auto;
+            aspect-ratio: 1 / 1.05;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .dna-svg { width: 100%; height: 100%; overflow: visible; }
+        .dna-strand-a, .dna-strand-b {
+            fill: none; stroke-width: 5; stroke-linecap: round;
+        }
+        .dna-strand-a { stroke: url(#dnaGradA); }
+        .dna-strand-b { stroke: url(#dnaGradB); }
+        .dna-rung { stroke: rgba(124,92,255,0.45); stroke-width: 2.4; stroke-linecap: round; }
+        .dna-node { fill: #fff; stroke: var(--primary); stroke-width: 2; }
+        .dna-node.alt { fill: #f0e6ff; stroke: var(--brand-pink); }
+        /* Slow twist: rotate the whole helix group around its vertical axis. */
+        .dna-helix { transform-origin: 50% 50%; animation: dnaTwist 9s linear infinite; }
+        @keyframes dnaTwist { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+        /* Floating particles around the helix for life. */
+        .dna-particle { fill: var(--brand-pink); opacity: 0.5; }
+        .dna-particle.p1 { animation: dnaFloat 6s ease-in-out infinite; }
+        .dna-particle.p2 { animation: dnaFloat 7.5s ease-in-out infinite 0.6s; }
+        .dna-particle.p3 { animation: dnaFloat 5.5s ease-in-out infinite 1.2s; }
+        @keyframes dnaFloat { 0%,100% { transform: translateY(0); opacity: 0.35; } 50% { transform: translateY(-14px); opacity: 0.7; } }
+        @media (max-width: 820px) {
+            .about-hero { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 6vw 2.5rem; text-align: center; }
+            .about-hero-lede { margin: 0 auto; }
+            .about-hero-pills { justify-content: center; }
+        }
 
         .about-section {
             padding: 4.5rem 6vw;
         }
         .about-section.reverse {
-            background: #f9fafb;
-            border-top: 1px solid #eef1f7;
-            border-bottom: 1px solid #eef1f7;
+            background: linear-gradient(180deg, rgba(124,92,255,0.05), rgba(199,125,255,0.07));
+            border-top: 1px solid var(--hairline);
+            border-bottom: 1px solid var(--hairline);
         }
         .about-eyebrow {
             display: inline-flex; align-items: center; gap: 0.6rem;
             font-size: 0.75rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
-            color: #4a6bff; margin-bottom: 1.1rem;
+            color: var(--primary); margin-bottom: 1.1rem;
         }
         .about-eyebrow::before {
-            content: ''; width: 26px; height: 2px; background: #4a6bff; border-radius: 2px;
+            content: ''; width: 26px; height: 2px; background: linear-gradient(90deg,var(--primary),var(--brand-pink)); border-radius: 2px;
         }
 
         .about-text {
@@ -2188,7 +2647,7 @@
 
         .option:hover:not(.disabled) {
             transform: translateX(6px);
-            box-shadow: 0 4px 15px rgba(74,107,255,0.15);
+            box-shadow: 0 4px 15px rgba(124,92,255,0.15);
         }
 
         .option.correct {
@@ -2282,7 +2741,7 @@
 
         .quiz-score-fill {
             height: 100%;
-            background: linear-gradient(90deg, #4a6bff, #28a745);
+            background: linear-gradient(90deg, var(--primary), #28a745);
             border-radius: 4px;
             width: 0%;
             transition: width 1s ease;
@@ -2308,7 +2767,7 @@
             border-radius: 4px;
             transition: width 0.5s ease;
             width: 0%;
-            box-shadow: 0 0 8px rgba(74,107,255,0.4);
+            box-shadow: 0 0 8px rgba(124,92,255,0.4);
         }
 
         /* Utility Classes */
@@ -2333,7 +2792,7 @@
         <div class="login-container" id="loginPrompt">
             <!-- Excelra Logo (image, served from repo root as Logo.png) -->
             <div style="margin-bottom:1.75rem;">
-                <img src="Logo.png" alt="Excelra" style="height:38px;width:auto;display:block;">
+                <img src="Logo.png" alt="Excelra" class="excelra-logo" style="height:38px;width:auto;display:block;">
                 <div style="font-size:0.58rem;font-weight:700;letter-spacing:3.5px;text-transform:uppercase;color:#9ca3af;margin-top:5px;padding-left:1px;">Knowledge Solutions</div>
             </div>
             <div class="login-wordmark">Learning Repository</div>
@@ -2344,26 +2803,12 @@
                 <button class="login-btn login-btn-primary" onclick="beginJourney()">Yes</button>
                 <button class="login-btn login-btn-guest" onclick="declineJourney()">No</button>
             </div>
-            <div class="login-meta">
-                <div class="login-meta-item">
-                    <div class="login-meta-val" id="loginMetaModules">–</div>
-                    <div class="login-meta-lbl">Modules</div>
-                </div>
-                <div class="login-meta-item">
-                    <div class="login-meta-val" id="loginMetaDuration">–</div>
-                    <div class="login-meta-lbl">Est. Duration</div>
-                </div>
-                <div class="login-meta-item">
-                    <div class="login-meta-val">Self-paced</div>
-                    <div class="login-meta-lbl">Format</div>
-                </div>
-            </div>
         </div>
 
         <!-- Goodbye view: shown only if the user clicks "No" -->
         <div class="login-container" id="loginGoodbye" style="display:none; text-align:center;">
             <div style="margin-bottom:1.75rem;">
-                <img src="Logo.png" alt="Excelra" style="height:38px;width:auto;display:block;margin:0 auto;">
+                <img src="Logo.png" alt="Excelra" class="excelra-logo" style="height:38px;width:auto;display:block;margin:0 auto;">
             </div>
             <div class="login-title">We are sorry to see you leaving,<br>see you next time.</div>
             <div class="login-subtitle">We will miss you.</div>
@@ -2391,19 +2836,42 @@
                     Drug Discovery <span style="color:#000;">Interactive Course</span>
                     <span style="display:inline-flex;align-items:center;gap:0.4rem;">
                         <span style="font-weight:400;font-size:0.78rem;color:#000;">by</span>
-                        <img src="Logo.png" alt="Excelra" style="height:20px;width:auto;display:block;">
+                        <img src="Logo.png" alt="Excelra" class="excelra-logo" style="height:20px;width:auto;display:block;">
                     </span>
                 </div>
             </div>
         </div>
         <div class="user-info">
+            <div class="theme-switch">
+                <button class="theme-switch-btn" id="themeSwitchBtn" onclick="toggleThemeDropdown(event)" title="Adjust Theme — switch between dark and light mode" aria-haspopup="true" aria-expanded="false">
+                    <svg class="ts-sun" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                    <svg class="ts-moon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <span>Adjust Theme</span>
+                </button>
+                <div class="theme-switch-dropdown" id="themeSwitchDropdown" role="menu">
+                    <div class="tsd-label">Appearance</div>
+                    <div class="theme-option" id="themeOptLight" onclick="setCourseTheme('light')" role="menuitem">
+                        <div class="ts-swatch light"></div>
+                        <div class="ts-meta"><span class="ts-name">Light</span><span class="ts-sub">Whitish lavender</span></div>
+                        <span class="ts-check">&#10003;</span>
+                    </div>
+                    <div class="theme-option" id="themeOptDark" onclick="setCourseTheme('dark')" role="menuitem">
+                        <div class="ts-swatch dark"></div>
+                        <div class="ts-meta"><span class="ts-name">Dark</span><span class="ts-sub">Deep purple night</span></div>
+                        <span class="ts-check">&#10003;</span>
+                    </div>
+                </div>
+            </div>
             <button class="relaxer-btn" id="relaxerBtn" onclick="toggleCourseRelaxer()" title="Take a short breather">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9a9 9 0 0 0 15.4 6.36c-4.4.3-8.4-3.1-8.4-7.86 0-3.2 1.8-5.98 4.5-7.36A8.96 8.96 0 0 0 12 3z"/></svg>
                 <span id="relaxerBtnLabel">Course Relaxer</span>
             </button>
-            <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceControl()" title="Voice control (say: next, previous, play, pause, switch)">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
-            </button>
+            <div class="voice-popover-wrap" id="voicePopoverWrap">
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceControl()" title="Voice control — hover to see all keywords" aria-haspopup="true" aria-expanded="false" aria-describedby="voiceKeywordsPopover">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+                </button>
+                <div class="voice-keywords-popover" id="voiceKeywordsPopover" role="tooltip" aria-hidden="true"></div>
+            </div>
             <button onclick="showAboutExcelra()" title="About Excelra"
                 style="background:rgba(0,0,0,0.05);border:1.5px solid rgba(0,0,0,0.15);
                        color:#3a4150;border-radius:6px;padding:0.3rem 0.7rem;
@@ -2432,7 +2900,6 @@
     <div class="module-dashboard" id="moduleDashboard">
         <div class="dashboard-header">
             <div class="dashboard-header-left">
-                <div class="eyebrow">Course Catalog · <span id="dashModuleCount">12</span> Modules</div>
                 <h1 class="dashboard-title">Drug Discovery Course<br>built by <em>Excelra</em></h1>
                 <p class="dashboard-subtitle">Each module builds on the last — covering the science, business context, and data systems behind modern drug discovery at Excelra. Pick up wherever you left off.</p>
             </div>
@@ -2445,7 +2912,6 @@
         <div class="dashboard-section">
             <div class="dashboard-section-header">
                 <h3 class="dashboard-section-title">Curriculum</h3>
-                <div class="dashboard-section-meta">Sequence · Recommended order</div>
             </div>
             <div class="dashboard-grid" id="dashboardGrid">
                 <!-- Module cards injected by JS -->
@@ -2472,6 +2938,14 @@
                     </div>
                 </div>
                 <div class="content-nav">
+                    <!-- Per-module PDF study sheet (Excelra logo + architectural
+                         diagram + timestamp + learner name). Sits to the LEFT
+                         of the Dashboard button, as requested. Label is updated
+                         per-module by updateModulePdfButton(). -->
+                    <button class="nav-btn module-pdf-btn" id="modulePdfBtn" onclick="downloadModulePdf()" title="Download this module's PDF study sheet" style="background:linear-gradient(135deg,#7c5cff,#c77dff);color:#fff;border:none;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="margin-right:4px;vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
+                        <span id="modulePdfBtnLabel">Get Module PDF</span>
+                    </button>
                     <button class="nav-btn" onclick="showModuleDashboard()" id="dashboardBackBtn" title="Back to the module dashboard">
                         &larr; Dashboard
                     </button>
@@ -2536,7 +3010,7 @@
     <div class="about-page" id="aboutExcelraPage">
         <div class="about-page-topbar">
             <div style="display:flex;align-items:center;gap:0.9rem;">
-                <img src="Logo.png" alt="Excelra" class="about-page-logo">
+                <img src="Logo.png" alt="Excelra" class="excelra-logo about-page-logo">
                 <div>
                     <span style="font-size:0.782rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#9ca3af;display:block;">Knowledge Solutions</span>
                     <span style="font-size:0.897rem;color:#9ca3af;">Life Sciences Data &amp; AI Company</span>
@@ -2544,6 +3018,83 @@
             </div>
             <button class="about-page-close" onclick="closeAboutExcelra()">← Back to Course</button>
         </div>
+
+        <!-- ── Hero: animated DNA double helix + Excelra tagline ── -->
+        <section class="about-hero">
+            <div class="about-hero-text">
+                <div class="about-eyebrow">Where Data Means More</div>
+                <h1 class="about-hero-title">Life sciences data,<br><em>beautifully unlocked.</em></h1>
+                <p class="about-hero-lede">Excelra transforms complex scientific data into actionable insight — accelerating drug discovery from early targets to regulatory submission. This course is built on that same belief: that the right data, well-structured, moves medicine forward.</p>
+                <div class="about-hero-pills">
+                    <span class="about-hero-pill">Founded 2001</span>
+                    <span class="about-hero-pill">1,000+ Scientists</span>
+                    <span class="about-hero-pill">Hyderabad &middot; Boston &middot; SF &middot; Gent</span>
+                </div>
+            </div>
+            <div class="dna-wrap" aria-hidden="true">
+                <!-- DNA double helix, drawn so the two strands sine-wave across
+                     the vertical, with base-pair rungs + nodes between them.
+                     The whole group slowly twists around its vertical axis. -->
+                <svg class="dna-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="dnaGradA" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#7c5cff"/>
+                            <stop offset="100%" stop-color="#c77dff"/>
+                        </linearGradient>
+                        <linearGradient id="dnaGradB" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#b06bff"/>
+                            <stop offset="100%" stop-color="#f0a6ff"/>
+                        </linearGradient>
+                        <radialGradient id="dnaBgGlow" cx="50%" cy="50%" r="55%">
+                            <stop offset="0%" stop-color="rgba(199,125,255,0.35)"/>
+                            <stop offset="100%" stop-color="rgba(199,125,255,0)"/>
+                        </radialGradient>
+                    </defs>
+                    <circle cx="100" cy="110" r="95" fill="url(#dnaBgGlow)"/>
+                    <!-- floating particles -->
+                    <circle class="dna-particle p1" cx="40"  cy="40"  r="3.5"/>
+                    <circle class="dna-particle p2" cx="165" cy="60"  r="2.8"/>
+                    <circle class="dna-particle p3" cx="155" cy="180" r="3.2"/>
+                    <circle class="dna-particle p2" cx="35"  cy="170" r="2.6"/>
+                    <g class="dna-helix">
+                        <!-- The two strands are sine paths across y=10..210,
+                             phase-offset by half a period so they braid. -->
+                        <path class="dna-strand-a" d="M100 10 C60 35, 60 60, 100 85 C140 110, 140 135, 100 160 C60 185, 60 210, 100 210"/>
+                        <path class="dna-strand-b" d="M100 10 C140 35, 140 60, 100 85 C60 110, 60 135, 100 160 C140 185, 140 210, 100 210"/>
+                        <!-- base-pair rungs at the braid crossing points -->
+                        <line class="dna-rung" x1="78"  y1="28"  x2="122" y2="28"/>
+                        <line class="dna-rung" x1="70"  y1="48"  x2="130" y2="48"/>
+                        <line class="dna-rung" x1="78"  y1="68"  x2="122" y2="68"/>
+                        <line class="dna-rung" x1="100" y1="85"  x2="100" y2="85"/>
+                        <line class="dna-rung" x1="78"  y1="102" x2="122" y2="102"/>
+                        <line class="dna-rung" x1="70"  y1="122" x2="130" y2="122"/>
+                        <line class="dna-rung" x1="78"  y1="142" x2="122" y2="142"/>
+                        <line class="dna-rung" x1="78"  y1="160" x2="122" y2="160"/>
+                        <line class="dna-rung" x1="70"  y1="180" x2="130" y2="180"/>
+                        <line class="dna-rung" x1="78"  y1="200" x2="122" y2="200"/>
+                        <!-- nodes (base pairs) -->
+                        <circle class="dna-node"      cx="78"  cy="28"  r="4.2"/>
+                        <circle class="dna-node alt"  cx="122" cy="28"  r="4.2"/>
+                        <circle class="dna-node alt"  cx="70"  cy="48"  r="4.2"/>
+                        <circle class="dna-node"      cx="130" cy="48"  r="4.2"/>
+                        <circle class="dna-node"      cx="78"  cy="68"  r="4.2"/>
+                        <circle class="dna-node alt"  cx="122" cy="68"  r="4.2"/>
+                        <circle class="dna-node alt"  cx="78"  cy="102" r="4.2"/>
+                        <circle class="dna-node"      cx="122" cy="102" r="4.2"/>
+                        <circle class="dna-node"      cx="70"  cy="122" r="4.2"/>
+                        <circle class="dna-node alt"  cx="130" cy="122" r="4.2"/>
+                        <circle class="dna-node alt"  cx="78"  cy="142" r="4.2"/>
+                        <circle class="dna-node"      cx="122" cy="142" r="4.2"/>
+                        <circle class="dna-node"      cx="78"  cy="160" r="4.2"/>
+                        <circle class="dna-node alt"  cx="122" cy="160" r="4.2"/>
+                        <circle class="dna-node alt"  cx="70"  cy="180" r="4.2"/>
+                        <circle class="dna-node"      cx="130" cy="180" r="4.2"/>
+                        <circle class="dna-node"      cx="78"  cy="200" r="4.2"/>
+                        <circle class="dna-node alt"  cx="122" cy="200" r="4.2"/>
+                    </g>
+                </svg>
+            </div>
+        </section>
 
         <!-- Section 1: company overview -->
         <section class="about-section reverse">
@@ -2553,7 +3104,7 @@
 
                 <!-- Tagline -->
                 <div style="margin-bottom:2.25rem;">
-                    <p style="font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:1.65rem; color:#1e2d4a; line-height:1.55; margin:0; padding-left:1.5rem; border-left:3px solid #4a6bff;">
+                    <p style="font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:1.65rem; color:#1e2d4a; line-height:1.55; margin:0; padding-left:1.5rem; border-left:3px solid var(--primary);">
                         "We speak life science data and help you unlock its potential. Where data means more."
                     </p>
                 </div>
@@ -2598,7 +3149,7 @@
                     <h3 style="font-size:1.035rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#374151;margin-bottom:0.85rem;">Flagship Products</h3>
                     <div style="display:flex;flex-direction:column;gap:0.65rem;">
                         <div style="display:flex;gap:1rem;padding:0.85rem 1rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;align-items:flex-start;">
-                            <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#4a6bff,#6a5acd);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.862rem;flex-shrink:0;">GS</div>
+                            <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.862rem;flex-shrink:0;">GS</div>
                             <div>
                                 <div style="font-weight:700;font-size:1.058rem;color:#1e2d4a;">GOSTAR&reg;</div>
                                 <div style="font-size:0.943rem;color:#6b7280;margin-top:2px;line-height:1.5;">Global Online Structure-Activity Relationship Database — the world's largest curated small molecule drug discovery database, covering over 10.6 million chemical structures, 35 million bioactivities, and 79,000 biological targets across SAR, ADMET, preclinical, clinical, and structural data.</div>
@@ -2666,7 +3217,7 @@
 
                 <div style="text-align:left;">
                     <a href="https://www.excelra.com" target="_blank"
-                       style="display:inline-block;padding:0.65rem 1.75rem;background:linear-gradient(135deg,#4a6bff,#6a5acd);color:white;border-radius:8px;font-weight:700;font-size:1.012rem;text-decoration:none;">
+                       style="display:inline-block;padding:0.65rem 1.75rem;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:8px;font-weight:700;font-size:1.012rem;text-decoration:none;">
                         Visit excelra.com
                     </a>
                 </div>
@@ -2676,6 +3227,107 @@
     </div>
 
     <script>
+        // ========== THEME MANAGER ==========
+        // setCourseTheme flips the [data-theme] attribute on <html> (which the
+        // CSS tokens key off, so every surface recolours instantly), mirrors
+        // it onto <body> as a .theme-dark class for the legacy element-level
+        // dark overrides, persists the choice, and updates the dropdown's
+        // selected state. No visibility glitches: brand purple stays the same
+        // in both themes; only surfaces/ink/lines flip.
+        function setCourseTheme(theme) {
+            if (theme !== 'dark' && theme !== 'light') theme = 'light';
+            try {
+                document.documentElement.setAttribute('data-theme', theme);
+                document.body.classList.toggle('theme-dark', theme === 'dark');
+                localStorage.setItem('courseTheme', theme);
+                // Cross-tab/cross-frame: a storage event lets any same-origin
+                // iframe (the Module N.html presentations) pick up the change
+                // too — but we also dispatch it here for our own logo swap.
+            } catch (e) {}
+            applyLogoTheme(theme);   // swap every Excelra logo for the right variant
+            // Reflect the choice in the dropdown (which option is ticked).
+            var light = document.getElementById('themeOptLight');
+            var dark  = document.getElementById('themeOptDark');
+            if (light) light.classList.toggle('selected', theme === 'light');
+            if (dark)  dark.classList.toggle('selected', theme === 'dark');
+            // Close the dropdown after picking.
+            var dd = document.getElementById('themeSwitchDropdown');
+            var btn = document.getElementById('themeSwitchBtn');
+            if (dd) dd.classList.remove('open');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+
+        // Swaps every Excelra logo <img> between Logo.png (light, dark text
+        // on transparent) and Logo-light.png (light text — for dark surfaces),
+        // so the logo NEVER sits in a white box when the theme flips dark.
+        // The certificate rebuilds its own <img> with the right URL (see
+        // generateCertificate), so this only targets the persistent UI logos.
+        function applyLogoTheme(theme) {
+            var name = (theme === 'dark') ? 'Logo-light.png' : 'Logo.png';
+            var url;
+            try { url = new URL(name, document.baseURI).href; } catch(e){ url = name; }
+            document.querySelectorAll('img.excelra-logo').forEach(function(img){
+                if (img.getAttribute('data-logo-current') === name) return;
+                img.setAttribute('data-logo-current', name);
+                img.src = url;
+            });
+        }
+
+        // Open/close the dropdown. Stops propagation so the document click
+        // handler below doesn't immediately re-close it.
+        function toggleThemeDropdown(e) {
+            if (e) e.stopPropagation();
+            var dd = document.getElementById('themeSwitchDropdown');
+            var btn = document.getElementById('themeSwitchBtn');
+            if (!dd) return;
+            var open = dd.classList.toggle('open');
+            if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        // Clicking anywhere outside the dropdown closes it (same pattern as
+        // the user menu). Registered once, on load.
+        function initThemeSwitch() {
+            // Mirror the early-applied html data-theme onto body for the
+            // legacy body.theme-dark overrides.
+            try {
+                var t = document.documentElement.getAttribute('data-theme') || 'light';
+                document.body.classList.toggle('theme-dark', t === 'dark');
+                setCourseThemeDropdownState(t);
+                applyLogoTheme(t);   // pick the right logo variant on load
+            } catch (e) {}
+            // If another same-origin tab/frame changes the theme, mirror it
+            // here too (body class + logo) so this page never drifts.
+            window.addEventListener('storage', function (e) {
+                if (e.key !== 'courseTheme') return;
+                var t = (e.newValue === 'dark') ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', t);
+                document.body.classList.toggle('theme-dark', t === 'dark');
+                setCourseThemeDropdownState(t);
+                applyLogoTheme(t);
+            });
+            document.addEventListener('click', function (e) {
+                var dd = document.getElementById('themeSwitchDropdown');
+                var btn = document.getElementById('themeSwitchBtn');
+                if (!dd) return;
+                if (!dd.contains(e.target) && !btn.contains(e.target)) {
+                    dd.classList.remove('open');
+                    if (btn) btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+            // Esc also closes it.
+            document.addEventListener('keydown', function (e) {
+                if (e.key !== 'Escape') return;
+                var dd = document.getElementById('themeSwitchDropdown');
+                if (dd) dd.classList.remove('open');
+            });
+        }
+        function setCourseThemeDropdownState(theme) {
+            var light = document.getElementById('themeOptLight');
+            var dark  = document.getElementById('themeOptDark');
+            if (light) light.classList.toggle('selected', theme !== 'dark');
+            if (dark)  dark.classList.toggle('selected', theme === 'dark');
+        }
+
         // ========== USER MANAGEMENT ==========
         let currentUser = null;
 
@@ -2931,8 +3583,10 @@
                 // video/narration underneath unless told to pause too.
                 stopActiveLessonMedia();
                 startRelaxerQuotes();
+                startRelaxerAudio();   // pure-Web-Audio calming ambient music
             } else {
                 stopRelaxerQuotes();
+                stopRelaxerAudio();
             }
         }
 
@@ -2955,6 +3609,175 @@
             if (relaxerQuoteTimer) { clearTimeout(relaxerQuoteTimer); relaxerQuoteTimer = null; }
             const el = document.getElementById('relaxerQuote');
             if (el) el.innerHTML = '';
+        }
+
+        // ========== RELAXER AMBIENT MUSIC (pure Web Audio API) ==========
+        // No downloads, no API keys, no external audio files — the calming
+        // background music is synthesised entirely in-browser with the Web
+        // Audio API the moment the user opens Course Relaxer (a user
+        // gesture, so autoplay rules are satisfied). Layered, slowly
+        // evolving pad chords + sparse bell tones + a soft filtered-noise
+        // "air" bed, all through a gentle low-pass and a low master gain so
+        // it reads as genuinely calming rather than "computer music".
+        var relaxerAudio = null;
+        function startRelaxerAudio() {
+            // Lazily build the engine the first time. Reuse it on later
+            // toggles so there's no click/pop from recreating nodes.
+            if (!relaxerAudio) relaxerAudio = createRelaxerAudioEngine();
+            if (!relaxerAudio) return;
+            try {
+                if (relaxerAudio.ctx.state === 'suspended') relaxerAudio.ctx.resume();
+            } catch (e) {}
+            relaxerAudio.start();
+        }
+        function stopRelaxerAudio() {
+            if (relaxerAudio) relaxerAudio.stop();
+        }
+        function createRelaxerAudioEngine() {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return null;
+            var ctx;
+            try { ctx = new AC(); } catch (e) { return null; }
+
+            // ── Master chain: master gain → soft limiter (DynamicsCompressor
+            // used gently) → low-pass for warmth → destination. ──
+            var master = ctx.createGain();
+            master.gain.value = 0;
+            var warmth = ctx.createBiquadFilter();
+            warmth.type = 'lowpass';
+            warmth.frequency.value = 2200;
+            warmth.Q.value = 0.4;
+            var comp = ctx.createDynamicsCompressor();
+            comp.threshold.value = -18; comp.knee.value = 24; comp.ratio.value = 3;
+            comp.attack.value = 0.02; comp.release.value = 0.4;
+            master.connect(warmth); warmth.connect(comp); comp.connect(ctx.destination);
+
+            // Fade master in/out softly so toggling never clicks.
+            function fadeMaster(to, time) {
+                var now = ctx.currentTime;
+                master.gain.cancelScheduledValues(now);
+                master.gain.setValueAtTime(master.gain.value, now);
+                master.gain.linearRampToValueAtTime(to, now + time);
+            }
+
+            // ── Pad: 4 sine oscillators tuned to a soft major-ish chord,
+            //    each with a slow gain LFO so the pad "breathes". The chord
+            //    cycles through a gentle progression every ~12s. ──
+            // Frequencies (Hz) for a progression in C-ish, all low/octavey:
+            var progression = [
+                [130.81, 196.00, 261.63, 392.00], // C  (C3 G3 C4 G4)
+                [146.83, 220.00, 293.66, 369.99],  // Dm (D3 A3 D4 F#4-ish -> use 370 for softness)
+                [110.00, 164.81, 220.00, 329.63],  // Am (A2 E3 A3 E4)
+                [123.47, 185.00, 246.94, 369.99]   // Bdim-ish soft (B2 F#3 B3 F#4)
+            ];
+            var padGain = ctx.createGain(); padGain.gain.value = 0.5; padGain.connect(master);
+            var padFilter = ctx.createBiquadFilter();
+            padFilter.type = 'lowpass'; padFilter.frequency.value = 900; padFilter.Q.value = 0.6;
+            padFilter.connect(padGain);
+
+            var oscs = [];
+            var oscGains = [];
+            function buildChord(freqs) {
+                // tear down previous
+                oscs.forEach(function(o){ try{o.stop();}catch(e){} try{o.disconnect();}catch(e){} });
+                oscGains.forEach(function(g){ try{g.disconnect();}catch(e){} });
+                oscs = []; oscGains = [];
+                freqs.forEach(function(f, i){
+                    var o = ctx.createOscillator();
+                    o.type = i % 2 === 0 ? 'sine' : 'triangle';
+                    o.frequency.value = f;
+                    // tiny detune for warmth/chorus feel
+                    o.detune.value = (i - 1.5) * 4;
+                    var g = ctx.createGain();
+                    g.gain.value = 0;
+                    o.connect(g); g.connect(padFilter);
+                    // breathing LFO per oscillator, offset phases
+                    var lfo = ctx.createOscillator();
+                    lfo.frequency.value = 0.06 + i * 0.015;
+                    var lfoGain = ctx.createGain();
+                    lfoGain.gain.value = 0.12;
+                    lfo.connect(lfoGain); lfoGain.connect(g.gain);
+                    // fade this oscillator in gently
+                    var now = ctx.currentTime;
+                    g.gain.setValueAtTime(0, now);
+                    g.gain.linearRampToValueAtTime(0.22, now + 3.5);
+                    lfo.start();
+                    o.start();
+                    oscs.push(o); oscGains.push(g);
+                    // keep lfo alive — store on o for cleanup
+                    o._lfo = lfo;
+                });
+            }
+            var chordIdx = 0; var chordTimer = null;
+            function nextChord() {
+                buildChord(progression[chordIdx]);
+                chordIdx = (chordIdx + 1) % progression.length;
+            }
+
+            // ── Bells: sparse sine "marimba-ish" tones scheduled at random
+            //    gentle intervals, drawn from a pentatonic set so they never
+            //    clash with the pad. Each bell gets a fast attack + long
+            //    exponential decay. ──
+            var pentatonic = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50]; // C5 D5 E5 G5 A5 C6
+            var bellTimer = null;
+            function scheduleBell() {
+                var f = pentatonic[Math.floor(Math.random() * pentatonic.length)];
+                var o = ctx.createOscillator();
+                o.type = 'sine'; o.frequency.value = f;
+                var g = ctx.createGain();
+                g.gain.value = 0;
+                var now = ctx.currentTime;
+                // ADSR: quick attack, long exponential decay
+                g.gain.setValueAtTime(0, now);
+                g.gain.linearRampToValueAtTime(0.18, now + 0.02);
+                g.gain.exponentialRampToValueAtTime(0.0001, now + 3.2);
+                o.connect(g); g.connect(master);
+                o.start(now);
+                o.stop(now + 3.4);
+                // next bell in 2.5–6s
+                bellTimer = setTimeout(scheduleBell, 2500 + Math.random() * 3500);
+            }
+
+            // ── Air bed: filtered white noise at very low gain for texture. ──
+            var noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+            var data = noiseBuf.getChannelData(0);
+            for (var i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+            var noise = ctx.createBufferSource();
+            noise.buffer = noiseBuf; noise.loop = true;
+            var noiseFilter = ctx.createBiquadFilter();
+            noiseFilter.type = 'bandpass'; noiseFilter.frequency.value = 600; noiseFilter.Q.value = 0.5;
+            var noiseGain = ctx.createGain(); noiseGain.gain.value = 0.04;
+            noise.connect(noiseFilter); noiseFilter.connect(noiseGain); noiseGain.connect(master);
+
+            var running = false;
+            return {
+                ctx: ctx,
+                start: function() {
+                    if (running) return;
+                    running = true;
+                    nextChord();
+                    chordTimer = setInterval(nextChord, 12000);
+                    scheduleBell();
+                    try { noise.start(); } catch (e) {}
+                    fadeMaster(0.16, 2.0);   // gentle 2s fade-in to full (low) volume
+                },
+                stop: function() {
+                    if (!running) return;
+                    running = false;
+                    if (chordTimer) { clearInterval(chordTimer); chordTimer = null; }
+                    if (bellTimer) { clearTimeout(bellTimer); bellTimer = null; }
+                    fadeMaster(0, 1.4);       // soft fade-out, then silence the oscillators
+                    setTimeout(function() {
+                        oscs.forEach(function(o){ try{o._lfo && o._lfo.stop();}catch(e){} try{o.stop();}catch(e){} try{o.disconnect();}catch(e){} });
+                        oscs = []; oscGains = [];
+                        try { noise.stop(); } catch (e) {}
+                        // rebuild noise source for next start (one-shot BufferSource)
+                        noise = ctx.createBufferSource();
+                        noise.buffer = noiseBuf; noise.loop = true;
+                        noise.connect(noiseFilter);
+                    }, 1500);
+                }
+            };
         }
 
         function showProfile() {
@@ -4075,23 +4898,48 @@
 
         // Called on each word-boundary event during speech — opens the mouth
         // exactly when a word is actually being spoken, and closes it again
-        // shortly after if no further word arrives right away. This is what
-        // actually fixes the lag: previously the mouth ran on a fixed timer
-        // for the whole sentence, independent of when audio truly started or
-        // stopped, so it visibly lagged at both ends.
+        // shortly after if no further word arrives right away.
+        //
+        // BUG FIX (lingering lip-sync): the previous version returned early
+        // when the fallback interval was already running, which meant once
+        // the coarse fallback started (common — see tutSetAvatarSpeaking)
+        // it kept toggling the mouth every 140ms for the WHOLE sentence
+        // even after real word-boundary events began arriving, and — worse —
+        // if onend never fired (network-voice silent failure) the fallback
+        // could keep flapping the mouth for up to 30s after the sentence
+        // had actually finished. Now, the moment the FIRST real boundary
+        // fires, the fallback is stopped and word-accurate timing takes
+        // over, so the mouth only moves while words are genuinely being
+        // spoken.
         function tutOnWordBoundary() {
             _tutBoundaryFired = true;
-            if (_tutMouthInterval) return; // already in fallback mode — let that run instead
+            if (_tutMouthInterval) {           // stop the coarse fallback…
+                clearInterval(_tutMouthInterval);
+                _tutMouthInterval = null;
+            }
             tutMouthOpen();
             clearTimeout(_tutWordCloseTimeout);
-            _tutWordCloseTimeout = setTimeout(tutMouthClose, 110);
+            _tutWordCloseTimeout = setTimeout(tutMouthClose, 130);
+        }
+
+        // Estimated speech duration for the hard cap below — words * ~0.45s
+        // (roughly the locked-in narrator's rate of 0.94) plus a generous
+        // 2.5s buffer for the network voice's startup latency and any
+        // trailing syllable.
+        function tutEstimateSpeakMs(text) {
+            var words = (text || '').trim().split(/\s+/).filter(Boolean).length;
+            return Math.max(2500, words * 450 + 2500);
         }
 
         function tutSetAvatarSpeaking(speaking) {
-            var head = document.getElementById('tutorialAvatarHead');
+            var head  = document.getElementById('tutorialAvatarHead');
+            var bubble = document.getElementById('tutorialAvatarBubble');
             if (!head) return;
+            if (typeof _tutMaxSpeakTimeout === 'undefined') _tutMaxSpeakTimeout = null;
+            clearTimeout(_tutMaxSpeakTimeout);
             if (speaking) {
                 head.classList.add('speaking');
+                if (bubble) bubble.classList.add('speaking');
                 _tutBoundaryFired = false;
                 clearTimeout(_tutFallbackCheckTimeout);
                 _tutFallbackCheckTimeout = setTimeout(function() {
@@ -4099,25 +4947,29 @@
                 }, 300);
             } else {
                 head.classList.remove('speaking');
-                tutStopMouthAnim();
+                if (bubble) bubble.classList.remove('speaking');
+                tutStopMouthAnim();   // mouth stops the instant speech stops — no lingering movement
             }
         }
 
         // Speak a line of tutorial narration with lip-sync, and call
         // onDone() when speech finishes (or immediately if TTS unsupported).
         //
-        // This used to build its own SpeechSynthesisUtterance with its own
-        // separate voice pick (window.bestVoice, from populateVoiceSelector
-        // below) — a second, independently-coded voice-selection path living
-        // alongside voice-engine.js's. Two separate pickers with different
-        // matching rules (exact-name vs. substring, different fallback
-        // order) can land on two *different* voices on the very same
-        // machine — which is exactly the "sweet tutorial voice, robotic
-        // module voice" inconsistency this course had. Delegating to
-        // window.presentationVoice.speak() (the same call every Module
-        // N.html narrator uses) makes it impossible for that to happen:
-        // there is now only one voice, chosen once, for the whole course.
+        // Delegates to window.presentationVoice.speak() — the same call
+        // every Module N.html narrator uses — so the tutorial guide and the
+        // in-module narrator are guaranteed to be the SAME locked-in voice
+        // (one voice picker for the whole course, see voice-engine.js).
+        //
+        // HARD CAP (fixes "mouth keeps moving after the sentence finishes"):
+        // the engine's speak() promise only resolves on utterance.onend OR
+        // its own 5s silent-failure timer OR a 30s absolute safety net. On
+        // some browser/voice combos onend simply never fires, so the
+        // promise (and thus tutSetAvatarSpeaking(false)) can lag far behind
+        // the actual audio. We schedule our own cap at the ESTIMATED spoken
+        // duration + buffer and force the mouth closed there if it hasn't
+        // already stopped — so the lips never flap on after the line is done.
         var _tutUtterance = null;
+        var _tutMaxSpeakTimeout = null;
         function tutorialSpeak(text, onDone) {
             tutSetAvatarSpeaking(false);
 
@@ -4126,12 +4978,23 @@
                 return;
             }
 
+            var resolved = false;
+            function finish() {
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(_tutMaxSpeakTimeout);
+                tutSetAvatarSpeaking(false);
+                if (onDone) onDone();
+            }
+
+            // Hard cap: stop the mouth at the estimated end even if onend
+            // never fires. Does NOT cancel the engine's audio (the engine's
+            // own nets still resolve normally) — it only ends the visual.
+            _tutMaxSpeakTimeout = setTimeout(finish, tutEstimateSpeakMs(text));
+
             window.presentationVoice.speak(text, {
                 onUtterance: function(utter) {
                     _tutUtterance = utter;
-                    // Wrap (not replace) the engine's own onstart/onboundary —
-                    // it uses those to detect a silently-broken voice (the
-                    // Mac Chrome failure mode) and needs them to keep firing.
                     var engineOnStart = utter.onstart;
                     var engineOnBoundary = utter.onboundary;
                     utter.onstart = function(e) {
@@ -4143,13 +5006,58 @@
                         if (!e.name || e.name === 'word') tutOnWordBoundary();
                     };
                 }
-            }).then(function() {
-                tutSetAvatarSpeaking(false);
-                if (onDone) onDone();
-            });
+            }).then(finish);
+        }
+
+        // ── Avatar movement ───────────────────────────────────────────
+        // Instead of sitting glued to the bottom-left corner, the guide
+        // glides next to whatever element the current step is highlighting,
+        // so the learner's eye is led straight to it. She parks on the
+        // opposite side from the caption box where possible, and tucks into
+        // a safe corner of the viewport otherwise. CSS transition on
+        // left/top/right/bottom gives the smooth glide.
+        function moveAvatarToTarget(targetEl) {
+            var bubble = document.getElementById('tutorialAvatarBubble');
+            if (!bubble) return;
+            // Clear all four anchor props so the one we set actually wins
+            // (CSS defaults set left+bottom; inline overrides must null the
+            // others with 'auto' or the element would stretch).
+            bubble.style.left = 'auto'; bubble.style.right = 'auto';
+            bubble.style.top = 'auto'; bubble.style.bottom = 'auto';
+
+            if (!targetEl) {
+                // Default: bottom-left companion spot.
+                bubble.style.left = '24px';
+                bubble.style.bottom = '24px';
+                return;
+            }
+            var r = targetEl.getBoundingClientRect();
+            var vw = window.innerWidth, vh = window.innerHeight;
+            var size = 104, gap = 18;
+
+            // Prefer the same vertical band as the target, on whichever
+            // horizontal side has more room (and isn't where the caption
+            // sits, which the caller positions separately).
+            var top = Math.min(vh - size - 12, Math.max(12, r.top + r.height/2 - size/2));
+            var leftSide = r.left > vw - r.right; // more room on the left
+            if (leftSide) {
+                bubble.style.left = Math.max(12, r.left - size - gap) + 'px';
+            } else {
+                bubble.style.left = Math.min(vw - size - 12, r.right + gap) + 'px';
+            }
+            bubble.style.top = top + 'px';
+        }
+        function moveAvatarHome() {
+            var bubble = document.getElementById('tutorialAvatarBubble');
+            if (!bubble) return;
+            bubble.style.left = 'auto'; bubble.style.right = 'auto';
+            bubble.style.top = 'auto'; bubble.style.bottom = 'auto';
+            bubble.style.left = '24px';
+            bubble.style.bottom = '24px';
         }
 
         function tutorialStopSpeaking() {
+            clearTimeout(_tutMaxSpeakTimeout);
             if (window.presentationVoice && window.presentationVoice.synth) {
                 try { window.presentationVoice.synth.cancel(); } catch(e) {}
             }
@@ -4213,6 +5121,7 @@
 
             overlay.classList.add('active');
             bubble.classList.add('active');
+            moveAvatarHome();   // for the welcome card she parks in her home corner
 
             tutorialSpeak("Hi! I'm your course guide. Would you like a quick tutorial on how this course works before you dive in?");
         }
@@ -4330,10 +5239,12 @@
                 if (!comfortablyVisible) {
                     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     // Give the smooth scroll time to settle, then position
-                    // against the element's final, post-scroll location.
+                    // both the caption and the avatar against the element's
+                    // final, post-scroll location.
                     setTimeout(function() {
                         box.classList.add('active');
                         tutorialPositionCaption(targetEl);
+                        moveAvatarToTarget(targetEl);
                     }, 420);
                 } else {
                     // Already visible — position immediately, synchronously,
@@ -4341,6 +5252,7 @@
                     // visible jump and never overlaps the highlighted element.
                     box.classList.add('active');
                     tutorialPositionCaption(targetEl);
+                    moveAvatarToTarget(targetEl);
                 }
             } else {
                 // Target not present on screen — center the caption instead
@@ -4393,9 +5305,11 @@
 
         // ========== INITIALIZATION ==========
         window.addEventListener('load', () => {
+            initThemeSwitch();
             buildLoginBackground();
             checkLogin();
             initVoiceControl();
+            initVoicePopover();   // hover-the-mic keyword list
             // Voice selection for the tutorial's speech is now handled
             // entirely by voice-engine.js (window.presentationVoice), the
             // same engine every module narrator uses — see tutorialSpeak().
@@ -4438,7 +5352,7 @@
             }
 
             // Floating vertical strands
-            const colors = ['#4a6bff','#6a5acd','#ff6b6b','#28a745'];
+            const colors = ['var(--primary)','var(--secondary)','#ff6b6b','#28a745'];
             for (let i = 0; i < 8; i++) {
                 const strand = document.createElement('div');
                 const h = 60 + Math.random() * 120;
@@ -4466,7 +5380,7 @@
         }
 
         function spawnConfetti() {
-            const colors = ['#4a6bff','#ff6b6b','#ffc107','#28a745','#6a5acd','#17a2b8'];
+            const colors = ['var(--primary)','#ff6b6b','#ffc107','#28a745','var(--secondary)','#17a2b8'];
             for (let i = 0; i < 40; i++) {
                 const p = document.createElement('div');
                 p.className = 'confetti-piece';
@@ -4564,6 +5478,9 @@
 
                 const card = document.createElement('article');
                 card.className = 'module-card';
+                // Staggered entrance — each card fades in a touch after the
+                // previous one, so the grid "fills in" gracefully.
+                card.style.animationDelay = (moduleIndex * 45) + 'ms';
                 card.setAttribute('tabindex', '0');
                 card.setAttribute('role', 'button');
                 card.onclick = () => openModuleFromDashboard(moduleIndex);
@@ -4714,6 +5631,7 @@
             const lesson = courseData.modules[currentModuleIndex].lessons[currentLessonIndex];
             document.getElementById('currentModuleTitle').textContent = lesson.title;
             document.getElementById('currentXP').textContent = lesson.xp;
+            updateModulePdfButton(currentModuleIndex);   // "Get Module_N pdf"
 
             const lessonKey = `${currentModuleIndex}-${currentLessonIndex}`;
             const isDone = userProgress.completedLessons.has(lessonKey);
@@ -4729,16 +5647,16 @@
                 });
                 const groupHTML = Object.keys(groups).map(cat => `
                     <div style="margin-bottom:1.6rem;">
-                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:#4a6bff; margin-bottom:0.7rem;">${cat}</div>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--primary); margin-bottom:0.7rem;">${cat}</div>
                         <div style="display:flex; flex-direction:column; gap:0.6rem;">
                             ${groups[cat].map(r => `
                                 <a href="${r.url}" target="_blank" rel="noopener noreferrer"
                                    style="display:block; text-decoration:none; padding:0.85rem 1.1rem; background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; transition:all 0.15s;"
-                                   onmouseover="this.style.borderColor='#4a6bff'; this.style.background='#f0f4ff';"
+                                   onmouseover="this.style.borderColor='var(--primary)'; this.style.background='#f0f4ff';"
                                    onmouseout="this.style.borderColor='#e5e7eb'; this.style.background='#f9fafb';">
                                     <div style="display:flex; align-items:baseline; justify-content:space-between; gap:1rem;">
                                         <span style="font-weight:700; color:#16181d; font-size:0.95rem;">${r.label}</span>
-                                        <span style="font-size:0.72rem; color:#4a6bff; white-space:nowrap;">Visit source &#8599;</span>
+                                        <span style="font-size:0.72rem; color:var(--primary); white-space:nowrap;">Visit source &#8599;</span>
                                     </div>
                                     <div style="font-size:0.85rem; color:#5b6472; margin-top:0.25rem; line-height:1.5;">${r.detail}</div>
                                 </a>
@@ -4833,9 +5751,12 @@
             void cb.offsetWidth; // force reflow to restart animation
             cb.classList.add('fading-in');
             document.getElementById('prevBtn').disabled = currentModuleIndex === 0 && currentLessonIndex === 0;
-            document.getElementById('nextBtn').disabled =
-                currentModuleIndex === courseData.modules.length - 1 &&
-                currentLessonIndex === courseData.modules[currentModuleIndex].lessons.length - 1;
+            // FORWARD-LOCK: the learner can only move forward (Next) once the
+            // CURRENT lesson is complete — either marked manually or finished
+            // naturally by watching to the end. This is the "video player
+            // won't let you go forward until the previous one is complete"
+            // behaviour requested. The end-of-course edge case also disables.
+            updateNextLockState();
 
             userProgress.currentModuleTime = 0;
             document.getElementById('moduleTimer').textContent = '0:00';
@@ -4926,6 +5847,29 @@
         // Manually marks the current lesson complete (stand-in for the old
         // "narration finished" trigger, until a real video is wired up).
         // Reuses the exact same completion/XP/badge logic as before.
+        // FORWARD-LOCK helper: disables the Next button until the current
+        // lesson is complete (so the learner can't jump ahead of the video).
+        // Also handles the end-of-course edge case. Re-called whenever a
+        // lesson becomes complete, so Next lights up the instant it's earned.
+        function updateNextLockState() {
+            var nb = document.getElementById('nextBtn');
+            if (!nb) return;
+            var mod = courseData.modules[currentModuleIndex];
+            if (!mod) { nb.disabled = true; return; }
+            var atEnd = (currentModuleIndex === courseData.modules.length - 1 &&
+                         currentLessonIndex === mod.lessons.length - 1);
+            var lessonKey = currentModuleIndex + '-' + currentLessonIndex;
+            var done = userProgress.completedLessons.has(lessonKey);
+            // Quiz/game sections forward-lock on their own completion; for
+            // the lesson section (the common case the user cares about), the
+            // lock is "lesson not done yet".
+            var locked = (currentSection === 'lesson') ? !done : false;
+            nb.disabled = atEnd || locked;
+            nb.title = atEnd ? 'You are at the end of the course'
+                     : locked ? 'Complete this lesson to unlock Next'
+                     : 'Move to the next section';
+        }
+
         function markLessonComplete() {
             const lessonKey = `${currentModuleIndex}-${currentLessonIndex}`;
             if (userProgress.completedLessons.has(lessonKey)) return;
@@ -4943,6 +5887,7 @@
                 btn.textContent = '\u2713 Completed';
                 btn.classList.add('is-done');
             }
+            updateNextLockState();   // unlock Next now that this lesson is done
         }
 
         // ========== NAVIGATION ==========
@@ -4970,6 +5915,7 @@
             saveLessonProgress(modIdx, lesIdx);
             // Flash the lesson item green in the sidebar
             renderSidebar();
+            updateNextLockState();   // natural completion unlocks Next too
         }
 
         // currentSection tracks where within a module the user is:
@@ -5581,7 +6527,7 @@
 
             const idx = window._coSequence.length;
             const chip = document.createElement('div');
-            chip.style.cssText = 'padding:0.5rem 0.9rem;background:#4a6bff;color:white;border-radius:6px;font-weight:700;font-size:0.85rem;';
+            chip.style.cssText = 'padding:0.5rem 0.9rem;background:var(--primary);color:white;border-radius:6px;font-weight:700;font-size:0.85rem;';
             chip.textContent = (idx + 1) + '. ' + el.dataset.val;
             dz.appendChild(chip);
             window._coSequence.push(el.dataset.val);
@@ -5799,7 +6745,7 @@
                 gb.innerHTML =
                     '<div style="text-align:center;">' +
                     '<div style="font-size:0.78rem;color:#888;font-weight:600;margin-bottom:1rem;">Card ' + (i+1) + ' of ' + cards.length + (score > 0 ? ' &nbsp;|&nbsp; ' + score + ' correct' : '') + '</div>' +
-                    '<div id="fcCard" onclick="fcFlip()" style="width:100%;max-width:480px;margin:0 auto 1.25rem;height:200px;background:linear-gradient(135deg,#1e2d4a,#2a3a5c);border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 24px rgba(74,107,255,0.2);transition:all 0.3s;padding:1.5rem;box-sizing:border-box;">' +
+                    '<div id="fcCard" onclick="fcFlip()" style="width:100%;max-width:480px;margin:0 auto 1.25rem;height:200px;background:linear-gradient(135deg,#1e2d4a,#2a3a5c);border-radius:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 24px rgba(124,92,255,0.2);transition:all 0.3s;padding:1.5rem;box-sizing:border-box;">' +
                     '<div style="text-align:center;color:white;">' +
                     '<div style="font-size:0.72rem;opacity:0.5;margin-bottom:0.75rem;letter-spacing:2px;text-transform:uppercase;">Click to reveal</div>' +
                     '<div id="fcText" style="font-size:1.1rem;font-weight:700;line-height:1.5;">' + c.front + '</div>' +
@@ -5879,7 +6825,7 @@
                     'style="background:#f0f4ff;border:2px solid #c7d2fe;border-radius:10px;padding:1.25rem;cursor:pointer;transition:all 0.3s;text-align:center;user-select:none;">' +
                     '<div style="width:44px;height:44px;border-radius:50%;background:var(--primary);color:white;font-weight:800;font-size:1rem;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;">' + (i+1) + '</div>' +
                     '<div style="font-weight:700;color:#1a1a2e;font-size:0.9rem;margin-bottom:0.4rem;">' + h.label + '</div>' +
-                    '<div style="font-size:0.75rem;color:#4a6bff;font-weight:600;">Click to reveal</div>' +
+                    '<div style="font-size:0.75rem;color:var(--primary);font-weight:600;">Click to reveal</div>' +
                     '</div>'
                 ).join('') + '</div>';
 
@@ -6166,14 +7112,14 @@
             var tilesHTML = scrambled.map(function(letter, i) {
                 return '<div class="ws-tile" id="ws-tile-' + i + '" onclick="wsPick(' + moduleIndex + ',' + i + ')" ' +
                     'style="width:42px;height:42px;display:flex;align-items:center;justify-content:center;' +
-                    'background:linear-gradient(135deg,#4a6bff,#6a5acd);color:white;font-weight:800;font-size:1.15rem;' +
-                    'border-radius:8px;cursor:pointer;box-shadow:0 3px 8px rgba(74,107,255,0.35);transition:all 0.18s;user-select:none;">' +
+                    'background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:1.15rem;' +
+                    'border-radius:8px;cursor:pointer;box-shadow:0 3px 8px rgba(124,92,255,0.35);transition:all 0.18s;user-select:none;">' +
                     letter + '</div>';
             }).join('');
 
             var slotsHTML = answer.split('').map(function(_, i) {
                 return '<div class="ws-slot" id="ws-slot-' + i + '" style="width:42px;height:42px;display:flex;align-items:center;justify-content:center;' +
-                    'border:2px dashed #c7d2fe;border-radius:8px;font-weight:800;font-size:1.15rem;color:#4a6bff;background:#f8faff;"></div>';
+                    'border:2px dashed #c7d2fe;border-radius:8px;font-weight:800;font-size:1.15rem;color:var(--primary);background:#f8faff;"></div>';
             }).join('');
 
             gb.innerHTML =
@@ -6482,72 +7428,80 @@
                 showNotification('Complete at least 80% of the course to earn your certificate. You have completed ' + done + ' of ' + tot + ' activities (' + pct + '%).');
                 return;
             }
-            if (pct < 80) {
-                showNotification('Complete at least 80% of the course to earn your certificate. Current progress: ' + pct + '%.');
-                return;
-            }
             var dt  = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
             var cid = 'EXC-DD-' + Date.now().toString(36).toUpperCase();
             var name = currentUser.username;
+            // Absolute logo URL so it ALSO resolves inside the print window
+            // (whose document has no base, so relative paths break there).
+            // The certificate card is ALWAYS light lavender (it's a printable
+            // design that should look the same on screen and on paper), so the
+            // dark-text Logo.png is correct here regardless of the active UI
+            // theme — the surrounding modal backdrop adapts, the card does not.
+            var logoUrl = (function(){ try { return new URL('Logo.png', document.baseURI).href; } catch(e){ return 'Logo.png'; } })();
 
+            // ── Whitish-light-purple certificate, Excelra logo embedded ──
             var certHtml =
-              '<div id="certPrintArea" style="font-family:Segoe UI,Arial,sans-serif;background:white;">' +
-              '<div style="border:5px solid #1a1a6e;border-radius:10px;overflow:hidden;max-width:750px;margin:0 auto;">' +
+              '<div id="certPrintArea" style="font-family:Segoe UI,Arial,sans-serif;background:linear-gradient(135deg,#fbf9ff 0%, #f3ecff 100%);padding:1.5rem;">' +
+              '<div style="position:relative;border:3px solid transparent;border-radius:14px;overflow:hidden;max-width:760px;margin:0 auto;background:linear-gradient(135deg,#fbf9ff,#f3ecff);background-clip:padding-box;">' +
+              // gradient frame
+              '<div style="position:absolute;inset:0;border-radius:14px;padding:3px;background:linear-gradient(135deg,#7c5cff,#c77dff,#f0a6ff);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;"></div>' +
+              // top + bottom accent bars
+              '<div style="background:linear-gradient(90deg,#7c5cff,#c77dff,#f0a6ff);height:8px;"></div>' +
 
-              '<div style="background:linear-gradient(90deg,#4a6bff,#6a5acd,#4a6bff);height:8px;"></div>' +
+              '<div style="position:relative;padding:2.4rem 3rem 2.6rem;text-align:center;">' +
 
-              '<div style="padding:2.5rem 3rem;text-align:center;">' +
+              // Excelra logo (embedded image)
+              '<img src="' + logoUrl + '" alt="Excelra" style="height:46px;width:auto;display:block;margin:0 auto 0.4rem;">' +
+              '<div style="font-size:0.58rem;font-weight:800;letter-spacing:3.5px;text-transform:uppercase;color:#9b6cd6;margin-bottom:1.4rem;">Excelra Knowledge Solutions</div>' +
+              '<div style="width:40px;height:2px;background:linear-gradient(90deg,#7c5cff,#c77dff);margin:0 auto 1.3rem;border-radius:2px;"></div>' +
 
-              '<div style="font-size:0.65rem;font-weight:800;letter-spacing:4px;text-transform:uppercase;color:#4a6bff;margin-bottom:0.5rem;">Excelra Knowledge Solutions</div>' +
-              '<div style="width:36px;height:2px;background:#4a6bff;margin:0.5rem auto 1.25rem;border-radius:2px;"></div>' +
+              '<div style="font-size:0.72rem;color:#9b6cd6;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.3rem;">Certificate of Completion</div>' +
+              '<h1 style="font-size:1.95rem;font-weight:800;margin:0 0 1.2rem;background:linear-gradient(120deg,#7c3aed,#c77dff 55%,#f0a6ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">Drug Discovery Interactive Course</h1>' +
 
-              '<div style="font-size:0.72rem;color:#999;letter-spacing:2px;text-transform:uppercase;margin-bottom:0.2rem;">Certificate of Completion</div>' +
-              '<h1 style="font-size:1.9rem;color:#1a1a2e;font-weight:800;margin:0 0 1.25rem;">Drug Discovery Interactive Course</h1>' +
-
-              '<p style="color:#777;margin-bottom:0.35rem;font-size:0.9rem;">This certifies that</p>' +
-              '<div style="border-bottom:2px solid #1a1a2e;display:inline-block;min-width:260px;padding:0.15rem 1.5rem 0.35rem;margin-bottom:0.6rem;">' +
-              '<span style="font-size:1.65rem;font-weight:700;color:#1a1a2e;">' + name + '</span>' +
+              '<p style="color:#7a6a94;margin-bottom:0.4rem;font-size:0.9rem;">This certifies that</p>' +
+              '<div style="display:inline-block;min-width:280px;padding:0.2rem 1.5rem 0.4rem;margin-bottom:0.7rem;border-bottom:2px solid #c77dff;">' +
+              '<span style="font-size:1.7rem;font-weight:700;color:#3a1f6a;letter-spacing:0.5px;">' + name + '</span>' +
               '</div>' +
 
-              '<p style="color:#555;line-height:1.65;font-size:0.85rem;max-width:500px;margin:0.75rem auto 1.5rem;">' +
+              '<p style="color:#5a4a78;line-height:1.65;font-size:0.88rem;max-width:520px;margin:0.8rem auto 1.5rem;">' +
               'has successfully completed the <strong>Drug Discovery Interactive Course</strong> by Excelra, ' +
               'a programme spanning 12 modules covering drug discovery science, industry standards, ' +
               'data landscape, technology ecosystem, and the role of AI in life sciences.' +
               '</p>' +
 
-              '<div style="display:flex;justify-content:center;gap:1.25rem;margin:1.25rem 0;flex-wrap:wrap;">' +
-              '<div style="text-align:center;padding:0.6rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:8px;min-width:90px;">' +
-              '<div style="font-size:1.3rem;font-weight:800;color:#4a6bff;">' + pct + '%</div>' +
-              '<div style="font-size:0.62rem;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Completion</div>' +
+              '<div style="display:flex;justify-content:center;gap:1.1rem;margin:1.2rem 0;flex-wrap:wrap;">' +
+              '<div style="text-align:center;padding:0.6rem 1.15rem;border:1.5px solid #e0d4f5;border-radius:10px;min-width:92px;background:rgba(255,255,255,0.6);">' +
+              '<div style="font-size:1.35rem;font-weight:800;color:#7c3aed;">' + pct + '%</div>' +
+              '<div style="font-size:0.6rem;color:#9b6cd6;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Completion</div>' +
               '</div>' +
-              '<div style="text-align:center;padding:0.6rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:8px;min-width:90px;">' +
-              '<div style="font-size:1.3rem;font-weight:800;color:#6a5acd;">' + userProgress.points + '</div>' +
-              '<div style="font-size:0.62rem;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">XP Earned</div>' +
+              '<div style="text-align:center;padding:0.6rem 1.15rem;border:1.5px solid #e0d4f5;border-radius:10px;min-width:92px;background:rgba(255,255,255,0.6);">' +
+              '<div style="font-size:1.35rem;font-weight:800;color:#b06bff;">' + userProgress.points + '</div>' +
+              '<div style="font-size:0.6rem;color:#9b6cd6;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">XP Earned</div>' +
               '</div>' +
-              '<div style="text-align:center;padding:0.6rem 1.1rem;border:1.5px solid #e2e8f0;border-radius:8px;min-width:90px;">' +
-              '<div style="font-size:1.3rem;font-weight:800;color:#28a745;">Level ' + userProgress.level + '</div>' +
-              '<div style="font-size:0.62rem;color:#aaa;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Achieved</div>' +
+              '<div style="text-align:center;padding:0.6rem 1.15rem;border:1.5px solid #e0d4f5;border-radius:10px;min-width:92px;background:rgba(255,255,255,0.6);">' +
+              '<div style="font-size:1.35rem;font-weight:800;color:#16a34a;">Level ' + userProgress.level + '</div>' +
+              '<div style="font-size:0.6rem;color:#9b6cd6;text-transform:uppercase;letter-spacing:1px;margin-top:2px;">Achieved</div>' +
               '</div>' +
-              '</div>' +
-
-              '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #f0f0f0;flex-wrap:wrap;gap:0.5rem;">' +
-              '<div style="text-align:left;"><div style="font-size:0.64rem;color:#bbb;text-transform:uppercase;letter-spacing:1px;">Date Issued</div>' +
-              '<div style="font-weight:600;color:#333;font-size:0.85rem;margin-top:2px;">' + dt + '</div></div>' +
-              '<div style="text-align:center;"><div style="font-size:0.58rem;color:#ccc;letter-spacing:1px;text-transform:uppercase;">Certificate ID</div>' +
-              '<div style="font-size:0.62rem;color:#bbb;font-family:monospace;margin-top:2px;">' + cid + '</div></div>' +
-              '<div style="text-align:right;"><div style="font-weight:600;color:#333;font-size:0.85rem;">Excelra Knowledge Solutions</div>' +
-              '<div style="font-size:0.72rem;color:#888;">Boston &middot; San Francisco &middot; Gent &middot; Hyderabad</div></div>' +
               '</div>' +
 
+              '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #e0d4f5;flex-wrap:wrap;gap:0.5rem;">' +
+              '<div style="text-align:left;"><div style="font-size:0.62rem;color:#9b6cd6;text-transform:uppercase;letter-spacing:1px;">Date Issued</div>' +
+              '<div style="font-weight:600;color:#3a1f6a;font-size:0.85rem;margin-top:2px;">' + dt + '</div></div>' +
+              '<div style="text-align:center;"><div style="font-size:0.56rem;color:#b06bff;letter-spacing:1px;text-transform:uppercase;">Certificate ID</div>' +
+              '<div style="font-size:0.62rem;color:#9b6cd6;font-family:monospace;margin-top:2px;">' + cid + '</div></div>' +
+              '<div style="text-align:right;"><div style="font-weight:600;color:#3a1f6a;font-size:0.85rem;">Excelra Knowledge Solutions</div>' +
+              '<div style="font-size:0.68rem;color:#9b6cd6;">Boston &middot; San Francisco &middot; Gent &middot; Hyderabad</div></div>' +
               '</div>' +
-              '<div style="background:linear-gradient(90deg,#4a6bff,#6a5acd,#4a6bff);height:5px;"></div>' +
+
+              '</div>' +
+              '<div style="background:linear-gradient(90deg,#7c5cff,#c77dff,#f0a6ff);height:5px;"></div>' +
               '</div></div>';
 
             var cc = document.getElementById('certificateContent');
             cc.innerHTML = certHtml +
-              '<div style="text-align:center;margin-top:1.5rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">' +
-              '<button class="btn btn-primary" onclick="printCertificate()">Print / Download PDF</button>' +
-              '<button class="btn" style="background:#e5e7eb;color:#374151;" onclick="closeModal(\'certificateModal\')">Close</button>' +
+              '<div style="text-align:center;margin-top:1.4rem;display:flex;gap:0.9rem;justify-content:center;flex-wrap:wrap;">' +
+              '<button class="btn btn-primary" style="background:linear-gradient(135deg,#7c5cff,#c77dff);border:none;" onclick="printCertificate()">&#11015; Download PDF</button>' +
+              '<button class="btn" style="background:#efe6ff;color:#5a3a8a;border:1px solid #d0bdf2;" onclick="closeModal(\'certificateModal\')">Close</button>' +
               '</div>';
             document.getElementById('certificateModal').classList.add('active');
         }
@@ -6557,17 +7511,245 @@
             const area = document.getElementById('certPrintArea');
             if (!area) { window.print(); return; }
             const pw = window.open('', '_blank');
-            pw.document.write('<html><head><title>Drug Discovery Certificate</title>' +
-                '<style>body{margin:0;padding:2rem;background:#f5f5f5;font-family:"Segoe UI",Arial,sans-serif;}' +
+            pw.document.write('<html><head><title>Excelra Drug Discovery Certificate</title>' +
+                '<style>body{margin:0;padding:2rem;background:#f3ecff;font-family:"Segoe UI",Arial,sans-serif;}' +
+                '*{-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
                 '@media print{body{padding:0;background:white;}}</style></head>' +
                 '<body>' + area.outerHTML + '</body></html>');
             pw.document.close();
-            setTimeout(() => { pw.focus(); pw.print(); }, 600);
+            // Give the embedded logo image a moment to load before printing.
+            setTimeout(() => { try { pw.focus(); pw.print(); } catch(e){} }, 700);
         }
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.remove('active');
         }
+
+        // ========== PER-MODULE PDF STUDY SHEETS (jsPDF, client-side) ==========
+        // One entry per module. The "pipeline" array drives the architectural
+        // flow diagram drawn on the sheet (boxes + arrows); "takeaways" become
+        // the bullet list. Content is genuinely module-specific so each sheet
+        // is a real study aid, not a template.
+        var MODULE_PDF_CONTENT = [
+            { n:1, title:'Introduction',
+              summary:'Introduces the core vocabulary and concepts of modern drug discovery, and the central role large-scale, structured data plays in accelerating it. Sets the frame for the rest of the course.',
+              pipeline:['Research Question','Data Resources','Structured Records','Analysis & Insight','Drug Discovery'],
+              takeaways:['Modern drug discovery increasingly relies on large-scale, structured data.','Data resources span chemical compounds, biological targets, and clinical outcomes.','The course covers the entire discovery process end to end.','Excelra sits at the intersection of science, data, and AI.'] },
+            { n:2, title:'Business Overview',
+              summary:'Frames drug discovery as a business: the economics, the risk, and where data-driven intelligence changes the cost/time curve from target to market.',
+              pipeline:['Target Identification','Lead Discovery','Preclinical','Clinical Trials','Market'],
+              takeaways:['Drug discovery is high-cost, high-risk, and long-cycle.','Data compresses timelines across every phase.','Business context shapes scientific priorities.','ROI depends on data quality at each handoff.'] },
+            { n:3, title:'End-to-End Process',
+              summary:'A walk through the full discovery-to-submission workflow — the stages, the gates between them, and where Excelra\'s data services plug in.',
+              pipeline:['Discovery','Preclinical','Phase I','Phase II','Phase III','Submission'],
+              takeaways:['Each stage has its own data standards and gates.','Handoffs between stages are where data loss happens.','A single FAIR data backbone spans the pipeline.','Excelra supports every phase, not just one.'] },
+            { n:4, title:'Key Terminologies',
+              summary:'The essential vocabulary — target, lead, IND, ADMET, IC50, SAR, FAIR, SEND — that every later module assumes you already know.',
+              pipeline:['Target','Hit','Lead','Candidate','IND'],
+              takeaways:['A target is the biological entity a drug acts on.','IC50 measures a compound\'s potency.','ADMET predicts absorption, distribution, metabolism, excretion, toxicity.','FAIR data is Findable, Accessible, Interoperable, Reusable.'] },
+            { n:5, title:'Stakeholders',
+              summary:'The people and organisations across discovery — scientists, clinicians, regulators, data engineers — and how their roles interlock.',
+              pipeline:['Scientists','Clinicians','Regulators','Data Engineers','Patients'],
+              takeaways:['No single stakeholder owns the whole pipeline.','Regulators define the evidence bar.','Data engineers make science computable.','Patients are the ultimate stakeholder.'] },
+            { n:6, title:'Data Landscape',
+              summary:'The types of data generated across discovery — chemistry, biology, preclinical, clinical, structural — and how they relate.',
+              pipeline:['Chemical Data','Biological Data','Preclinical','Clinical','Real-World'],
+              takeaways:['Chemical data covers structures and bioactivities.','Biological data covers targets and pathways.','Clinical data carries outcomes.','Real-world evidence complements trials.','Volume + variety make integration hard.'] },
+            { n:7, title:'Industry Standards',
+              summary:'The standards that let data move between systems and organisations — CDISC (SDTM/SEND), CDASH, HL7, FAIR, ALCOA — and why they matter.',
+              pipeline:['Collect (CDASH)','Tabulate (SDTM)','Exchange (HL7)','Submit (FDA)','Archive (FAIR)'],
+              takeaways:['Standards make data portable and auditable.','CDISC SDTM/SEND structure regulatory submissions.','FAIR principles guide reuse.','ALCOA guarantees data integrity.'] },
+            { n:8, title:'Technology Ecosystem',
+              summary:'The systems that hold and move discovery data — ELN, LIMS, CTMS, registries, data warehouses — and the modernisation pushing them to the cloud.',
+              pipeline:['ELN (Lab)','LIMS (Samples)','CTMS (Trials)','Warehouse','Cloud / AI'],
+              takeaways:['ELN captures experiments; LIMS captures samples.','CTMS tracks clinical trial operations.','Warehouses unify data for analytics.','Cloud modernisation enables AI at scale.'] },
+            { n:9, title:'Current Industry Challenges',
+              summary:'The hard problems — data silos, integrity, interoperability, scale, cost — and where the industry is feeling the most pressure today.',
+              pipeline:['Silos','Integrity','Interoperability','Scale','Cost & Time'],
+              takeaways:['Silos prevent cross-org insight.','Data integrity failures sink submissions.','Interoperability is still unsolved at scale.','Rising R&D cost pressures every decision.'] },
+            { n:10, title:'Role of Data Engineering & AI',
+              summary:'How modern data engineering and AI/ML accelerate discovery — from FAIRification and knowledge graphs to predictive models and generative chemistry.',
+              pipeline:['FAIRification','Knowledge Graph','Feature Store','ML Models','Decisions'],
+              takeaways:['FAIR data is the prerequisite for AI.','Knowledge graphs connect entities across datasets.','ML predicts activity, toxicity, and outcomes.','Generative AI proposes novel candidates.','Human-in-the-loop keeps science valid.'] },
+            { n:11, title:'Summary',
+              summary:'Consolidates the course — the science, the data, the standards, and the AI — into a single mental model of modern drug discovery at Excelra.',
+              pipeline:['Science','Data','Standards','Technology','AI'],
+              takeaways:['Discovery is a data problem as much as a science one.','Standards + FAIR data unlock reuse.','Technology ecosystems must modernise.','AI sits on top of well-engineered data.','Excelra weaves all four together.'] },
+            { n:12, title:'References',
+              summary:'Curated references and further reading — the primary sources, standards bodies, and Excelra resources behind every module.',
+              pipeline:['Standards Bodies','Primary Literature','Excelra Resources','Regulators','Further Reading'],
+              takeaways:['CDISC, HL7, and ICH define the standards.','FDA and EMA publish guidance.','Excelra\'s GOSTAR, GOBIOM, CTOD are flagship resources.','Further reading deepens each topic.','Always cite the canonical source.'] }
+        ];
+
+        // Updates the per-module PDF button label to "Get Module_N pdf".
+        function updateModulePdfButton(moduleIndex) {
+            var label = document.getElementById('modulePdfBtnLabel');
+            if (!label) return;
+            var n = (typeof moduleIndex === 'number' ? moduleIndex + 1 : 1);
+            label.textContent = 'Get Module_' + n + ' pdf';
+        }
+
+        // Fetches the Excelra logo as a data URL so jsPDF can embed it
+        // (addImage needs base64/data URL, not a remote URL).
+        function fetchLogoDataUrl() {
+            return new Promise(function(resolve){
+                var url;
+                try { url = new URL('Logo.png', document.baseURI).href; }
+                catch(e){ url = 'Logo.png'; }
+                fetch(url).then(function(r){ return r.blob(); }).then(function(blob){
+                    var fr = new FileReader();
+                    fr.onload = function(){ resolve(fr.result); };
+                    fr.onerror = function(){ resolve(null); };
+                    fr.readAsDataURL(blob);
+                }).catch(function(){ resolve(null); });
+            });
+        }
+
+        async function downloadModulePdf() {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                showNotification('PDF library is still loading — please try again in a moment.');
+                return;
+            }
+            var idx = (typeof currentModuleIndex !== 'undefined') ? currentModuleIndex : 0;
+            var data = MODULE_PDF_CONTENT[idx] || MODULE_PDF_CONTENT[0];
+            var user = (currentUser && currentUser.username) ? currentUser.username : 'Guest';
+            var stamp = new Date().toLocaleString();
+
+            var logo = await fetchLogoDataUrl();
+            var jsPDF = window.jspdf.jsPDF;
+            var doc = new jsPDF({ unit: 'pt', format: 'a4' });
+            var PW = doc.internal.pageSize.getWidth();   // 595
+            var PH = doc.internal.pageSize.getHeight();  // 842
+            var M = 40; // margin
+            var purple = [124, 92, 255];
+            var pink = [199, 125, 255];
+            var ink = [33, 22, 58];
+
+            // ── Top header band ──
+            doc.setFillColor(purple[0], purple[1], purple[2]);
+            doc.rect(0, 0, PW, 64, 'F');
+            doc.setFillColor(pink[0], pink[1], pink[2]);
+            doc.rect(0, 64, PW, 4, 'F');
+            if (logo) { try { doc.addImage(logo, 'PNG', M, 14, 110, 36); } catch(e){} }
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(15);
+            doc.text('Drug Discovery Course', PW - M, 30, { align: 'right' });
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text('Excelra Knowledge Solutions', PW - M, 46, { align: 'right' });
+
+            // ── Module heading ──
+            var y = 100;
+            doc.setTextColor(ink[0], ink[1], ink[2]);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(20);
+            doc.text('Module ' + data.n + ': ' + data.title, M, y);
+            y += 8;
+            doc.setDrawColor(pink[0], pink[1], pink[2]);
+            doc.setLineWidth(2);
+            doc.line(M, y, M + 60, y);
+            y += 22;
+
+            // ── Overview ──
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(purple[0], purple[1], purple[2]);
+            doc.text('Overview', M, y);
+            y += 14;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(60, 50, 80);
+            var overviewLines = doc.splitTextToSize(data.summary, PW - M * 2);
+            doc.text(overviewLines, M, y);
+            y += overviewLines.length * 13 + 18;
+
+            // ── Architectural flow diagram (vertical pipeline) ──
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(purple[0], purple[1], purple[2]);
+            doc.text('Architectural Flow', M, y);
+            y += 14;
+            var boxW = 300, boxH = 34, boxX = (PW - boxW) / 2, gap = 16;
+            for (var i = 0; i < data.pipeline.length; i++) {
+                // guard against running off the page; if near bottom, add page
+                if (y + boxH + (i < data.pipeline.length - 1 ? gap + 10 : 0) > PH - 60) {
+                    doc.addPage(); y = 60;
+                }
+                // box
+                doc.setFillColor(246, 242, 255);
+                doc.setDrawColor(purple[0], purple[1], purple[2]);
+                doc.setLineWidth(1.2);
+                doc.roundedRect(boxX, y, boxW, boxH, 8, 8, 'FD');
+                // number badge
+                doc.setFillColor(purple[0], purple[1], purple[2]);
+                doc.roundedRect(boxX + 8, y + 7, 20, 20, 5, 5, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.text(String(i + 1), boxX + 18, y + 21, { align: 'center' });
+                // label
+                doc.setTextColor(ink[0], ink[1], ink[2]);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.text(data.pipeline[i], boxX + 40, y + 21);
+                y += boxH;
+                // arrow to next
+                if (i < data.pipeline.length - 1) {
+                    var ax = boxX + boxW / 2;
+                    doc.setDrawColor(pink[0], pink[1], pink[2]);
+                    doc.setLineWidth(1.6);
+                    doc.line(ax, y + 3, ax, y + gap - 3);
+                    // arrowhead
+                    doc.line(ax, y + gap - 3, ax - 4, y + gap - 8);
+                    doc.line(ax, y + gap - 3, ax + 4, y + gap - 8);
+                    y += gap;
+                }
+            }
+            y += 22;
+
+            // ── Key takeaways ──
+            // If takeaways would overflow the page, move to a new page.
+            if (y + data.takeaways.length * 18 + 30 > PH - 70) { doc.addPage(); y = 60; }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(purple[0], purple[1], purple[2]);
+            doc.text('Key Takeaways', M, y);
+            y += 16;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(50, 40, 70);
+            for (var t = 0; t < data.takeaways.length; t++) {
+                if (y > PH - 70) { doc.addPage(); y = 60; }
+                // bullet dot
+                doc.setFillColor(purple[0], purple[1], purple[2]);
+                doc.circle(M + 3, y - 3, 2, 'F');
+                var tlines = doc.splitTextToSize(data.takeaways[t], PW - M * 2 - 14);
+                doc.text(tlines, M + 14, y);
+                y += tlines.length * 13 + 6;
+            }
+
+            // ── Footer band on every page (timestamp + user + module) ──
+            var pages = doc.internal.getNumberOfPages();
+            for (var p = 1; p <= pages; p++) {
+                doc.setPage(p);
+                doc.setFillColor(246, 242, 255);
+                doc.rect(0, PH - 44, PW, 44, 'F');
+                doc.setDrawColor(pink[0], pink[1], pink[2]);
+                doc.setLineWidth(1);
+                doc.line(0, PH - 44, PW, PH - 44);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(120, 100, 150);
+                doc.text('Generated by ' + user + '  •  ' + stamp + '  •  Module ' + data.n + ' of 12', M, PH - 24);
+                doc.text('Excelra Knowledge Solutions  •  Page ' + p + ' of ' + pages, PW - M, PH - 24, { align: 'right' });
+            }
+
+            doc.save('Module_' + data.n + '.pdf');
+            showNotification('Module ' + data.n + ' PDF downloaded.');
+        }
+        // expose for the inline onclick
+        window.downloadModulePdf = downloadModulePdf;
 
         function showAboutExcelra() {
             // Pause narration — it shouldn't keep talking behind the About page.
@@ -6616,13 +7798,22 @@
             voiceRecognition.continuous     = true;
             voiceRecognition.interimResults = false;
             voiceRecognition.lang           = 'en-US';
+            bindVoiceHandlers(voiceRecognition);
+        }
 
-            voiceRecognition.onstart = function() {
+        // Binds the start/result/error/end handlers to a recognition object.
+        // Extracted so a stuck engine can be fully recreated (see
+        // attemptVoiceRestart's recreation path) without duplicating ~100
+        // lines of handler logic. Each binding closes over the SAME shared
+        // state (voiceEngineRunning, voiceStarting, etc.) so a recreated
+        // object picks up exactly where the dead one left off.
+        function bindVoiceHandlers(rec) {
+            rec.onstart = function() {
                 voiceStarting = false;
                 markVoiceActivity();
             };
 
-            voiceRecognition.onresult = function(event) {
+            rec.onresult = function(event) {
                 markVoiceActivity();
                 var last = event.results[event.results.length - 1];
                 var transcript = last[0].transcript.trim().toLowerCase();
@@ -6644,7 +7835,7 @@
                 handleVoiceCommand(transcript);
             };
 
-            voiceRecognition.onerror = function(e) {
+            rec.onerror = function(e) {
                 voiceStarting = false;
                 markVoiceActivity();
                 if (e.error === 'no-speech' || e.error === 'aborted') return;
@@ -6672,89 +7863,89 @@
 
             // Counts consecutive failed restart attempts, purely to back off
             // instead of hammering start() in a tight loop if the browser
-            // keeps refusing.
+            // keeps refusing. Shared across recreations via closure.
             var voiceRestartAttempts = 0;
 
             // Actually attempts to restart the engine, retrying itself with
-            // backoff if the browser throws (rather than relying on onend
-            // to fire again, which it won't if start() never succeeded).
-            //
-            // This used to give up permanently after 6 failed attempts
-            // (~7 seconds) and force the user to click the mic button again.
-            // Over a long training session that "give up" threshold was
-            // being hit by ordinary transient hiccups (a stretch of network
-            // trouble, the OS briefly reclaiming the mic, etc.), which is
-            // exactly the "works for a while, then just stops" complaint —
-            // so now it backs off to a steady 4s retry cadence and keeps
-            // trying indefinitely instead of ever fully giving up. Only a
-            // fatal permission/device error (handled in onerror above)
-            // actually stops the engine.
-            function attemptVoiceRestart() {
+            // backoff if the browser throws. If start() keeps throwing across
+            // many consecutive attempts, the recognition object is almost
+            // certainly in a permanently wedged state (a known Chrome failure
+            // mode after long sessions) — so rather than retry forever on a
+            // dead object, RECREATE it from scratch and start fresh. This
+            // recreation path is what finally kills the "works for a while,
+            // then just stops, and clicking the mic again does nothing"
+            // complaint: the dead object is replaced with a live one.
+            rec.attemptVoiceRestart = function() {
                 if (!voiceEngineRunning) { voiceStarting = false; return; }
                 try {
-                    voiceRecognition.start();
+                    rec.start();
                     voiceStarting = false;
                     voiceRestartAttempts = 0;
                     markVoiceActivity();
                 } catch (err) {
                     voiceRestartAttempts++;
+                    if (voiceRestartAttempts > 5) {
+                        // Object is wedged — throw it away and build a new one,
+                        // reusing the exact same handlers/state.
+                        voiceRestartAttempts = 0;
+                        try { rec.onstart = rec.onresult = rec.onerror = rec.onend = null; } catch(e){}
+                        try { rec.abort(); } catch(e){}
+                        var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                        if (SR) {
+                            var fresh = new SR();
+                            fresh.continuous = true; fresh.interimResults = false; fresh.lang = 'en-US';
+                            bindVoiceHandlers(fresh);
+                            voiceRecognition = fresh;   // swap in the live object
+                            voiceStarting = true;
+                            setTimeout(function(){ try{ fresh.start(); voiceStarting=false; markVoiceActivity(); }catch(e2){ setTimeout(voiceRecognition.attemptVoiceRestart, 1500); } }, 400);
+                            return;
+                        }
+                    }
                     var delay = Math.min(200 + voiceRestartAttempts * 300, 4000);
-                    setTimeout(attemptVoiceRestart, delay);
+                    setTimeout(rec.attemptVoiceRestart, delay);
                 }
-            }
+            };
 
-            voiceRecognition.onend = function() {
+            rec.onend = function() {
                 // Keep the underlying engine alive continuously as long as
                 // it's supposed to be running — browsers stop it after a
                 // stretch of silence, and restarting it (rather than leaving
                 // it dead) is what makes "switch on" reliable hands-free.
-                //
-                // BUG FIX: calling recognition.start() synchronously inside
-                // onend can throw "InvalidStateError" if the browser hasn't
-                // fully torn down the previous session yet. That throw used
-                // to be swallowed silently, leaving voiceEngineRunning stuck
-                // at "true" with no engine actually running — so every
-                // future click on the mic button just toggled voiceListening
-                // without ever restarting recognition, i.e. the mic looked
-                // "on" but was permanently dead after the very first use.
-                // Fix: retry on a short delay, and keep retrying with
-                // backoff (via attemptVoiceRestart) instead of giving up
-                // after one silent failure.
                 markVoiceActivity();
                 if (!voiceEngineRunning || voiceStarting) return;
                 voiceStarting = true;
-                setTimeout(attemptVoiceRestart, 200);
+                setTimeout(rec.attemptVoiceRestart, 200);
             };
+        }
 
-            // WATCHDOG — covers the failure mode where the browser stops
-            // delivering any event at all (no onend, no onerror) after the
-            // engine has been running a while, so the restart logic above
-            // never gets a chance to fire and the mic just silently goes
-            // dead while still showing as "on". If nothing has happened for
-            // longer than a real recognition session ever legitimately goes
-            // quiet, force a hard restart.
+        // WATCHDOG + visibility handler are attached to the SAME long-lived
+        // recognition object reference; if a recreation swapped in a new
+        // object, the next watchdog tick calls attemptVoiceRestart via the
+        // CURRENT voiceRecognition reference, which always points at the
+        // live object. (Registered once, in initVoiceControl's closure-free
+        // outer scope so they're not duplicated if init runs again.)
+        var voiceWatchdogStarted = false;
+        function startVoiceWatchdog() {
+            if (voiceWatchdogStarted) return;
+            voiceWatchdogStarted = true;
             setInterval(function() {
                 if (!voiceEngineRunning || voiceStarting) return;
+                if (!voiceRecognition || !voiceRecognition.attemptVoiceRestart) return;
                 if (Date.now() - voiceLastActivity < 20000) return;
-                markVoiceActivity(); // reset before retrying so this can't re-fire every tick
+                markVoiceActivity();
                 try { voiceRecognition.abort(); } catch(e) {}
                 voiceStarting = true;
-                setTimeout(attemptVoiceRestart, 300);
+                setTimeout(function(){ if(voiceRecognition && voiceRecognition.attemptVoiceRestart) voiceRecognition.attemptVoiceRestart(); }, 300);
             }, 6000);
-
-            // Chrome/Edge frequently kill the mic stream outright when a tab
-            // is backgrounded for a while, without ever telling recognition
-            // (no onend/onerror) — so it comes back into view still "on"
-            // but dead. Force a fresh restart the moment the tab regains
-            // focus, rather than waiting on the slower watchdog interval.
             document.addEventListener('visibilitychange', function() {
                 if (document.hidden) return;
                 if (!voiceEngineRunning || voiceStarting) return;
+                if (!voiceRecognition || !voiceRecognition.attemptVoiceRestart) return;
                 if (Date.now() - voiceLastActivity < 5000) return;
                 markVoiceActivity();
                 try { voiceRecognition.abort(); } catch(e) {}
                 voiceStarting = true;
-                setTimeout(attemptVoiceRestart, 300);
+                setTimeout(function(){ if(voiceRecognition && voiceRecognition.attemptVoiceRestart) voiceRecognition.attemptVoiceRestart(); }, 300);
             });
         }
 
@@ -6784,6 +7975,7 @@
                 return;
             }
             if (!voiceRecognition) initVoiceControl();
+            startVoiceWatchdog();   // long-lived recreation-aware watchdog (once)
 
             if (!voiceEngineRunning) {
                 // First-ever activation: browsers require a user gesture to
@@ -6815,6 +8007,132 @@
             t.innerHTML = '<span class="vt-dot"></span><span>' + text + '</span>';
             document.body.appendChild(t);
             setTimeout(function() { t.remove(); }, 3200);
+        }
+
+        // ========== VOICE KEYWORDS POPOVER (hover the mic) ==========
+        // The single source of truth for every spoken keyword. Grouped so
+        // the popover reads cleanly; each row's speaker button narrates the
+        // phrase + its description aloud using the same locked-in narrator
+        // the whole course uses (voice-engine.js).
+        var VOICE_KEYWORDS = [
+            { group: 'Navigation', items: [
+                { say: 'next',      desc: 'Move to the next section within the module.' },
+                { say: 'previous',  desc: 'Go back to the previous section.' },
+                { say: 'switch',     desc: 'Jump straight to the next module.' }
+            ]},
+            { group: 'Playback', items: [
+                { say: 'play',   desc: 'Resume the narration.' },
+                { say: 'pause',  desc: 'Pause the narration.' },
+                { say: 'repeat', desc: 'Replay the current section.' },
+                { say: 'mute',   desc: 'Mute the narrator.' },
+                { say: 'unmute', desc: 'Unmute the narrator.' }
+            ]},
+            { group: 'Quiz & Game', items: [
+                { say: 'open quiz',  desc: 'Start this module\u2019s quiz.' },
+                { say: 'open game',   desc: 'Start this module\u2019s game.' },
+                { say: 'option a',   desc: 'Answer the current question with option A (also b, c, d).' },
+                { say: 'true',       desc: 'Answer a true / false game with true.' },
+                { say: 'false',      desc: 'Answer a true / false game with false.' }
+            ]},
+            { group: 'Jump to', items: [
+                { say: 'go to module 2', desc: 'Open any module by number (1\u201312).' },
+                { say: 'certificate',    desc: 'Open your completion certificate.' }
+            ]},
+            { group: 'Relax & Wake', items: [
+                { say: 'relax',     desc: 'Open Course Relaxer for a breather.' },
+                { say: 'close',     desc: 'Leave Course Relaxer and return to the course.' },
+                { say: 'switch on', desc: 'Wake voice control hands-free.' },
+                { say: 'switch off', desc: 'Put voice control to sleep.' }
+            ]}
+        ];
+        var _vkpBuilt = false;
+        function buildVoiceKeywordsPopover() {
+            if (_vkpBuilt) return;
+            var pop = document.getElementById('voiceKeywordsPopover');
+            if (!pop) return;
+            _vkpBuilt = true;
+            var html = '<div class="vkp-head">' +
+                '<div class="vkp-mic"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg></div>' +
+                '<div><div class="vkp-title">Voice keywords</div><div class="vkp-sub">Hover a row &middot; click \u25B6 to hear it</div></div>' +
+                '</div>';
+            var delay = 0;
+            VOICE_KEYWORDS.forEach(function(g) {
+                html += '<div class="vkp-group"><div class="vkp-group-label">' + g.group + '</div>';
+                g.items.forEach(function(it) {
+                    html += '<div class="vkp-row" style="animation-delay:' + delay + 'ms">' +
+                        '<span class="vkp-phrase">' + it.say + '</span>' +
+                        '<span class="vkp-desc">' + it.desc + '</span>' +
+                        '<button class="vkp-speak" title="Hear this keyword" data-say="' + it.say.replace(/"/g,'&quot;') + '" data-desc="' + it.desc.replace(/"/g,'&quot;') + '">' +
+                        '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"/></svg>' +
+                        '</button></div>';
+                    delay += 35;
+                });
+                html += '</div>';
+            });
+            pop.innerHTML = html;
+            // Wire each speaker button.
+            pop.querySelectorAll('.vkp-speak').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    speakKeyword(btn);
+                });
+            });
+        }
+        // Speaks "Say: <phrase>. <description>" via the locked-in narrator.
+        function speakKeyword(btn) {
+            var say = btn.getAttribute('data-say') || '';
+            var desc = btn.getAttribute('data-desc') || '';
+            var line = 'Say: ' + say + '. ' + desc;
+            // stop any in-flight narration so rapid clicks don't queue up
+            try { if (window.presentationVoice && window.presentationVoice.synth) window.presentationVoice.synth.cancel(); } catch(e){}
+            document.querySelectorAll('.vkp-speak.playing').forEach(function(b){ b.classList.remove('playing'); });
+            btn.classList.add('playing');
+            if (window.presentationVoice && window.presentationVoice.speak) {
+                window.presentationVoice.speak(line).then(function(){
+                    btn.classList.remove('playing');
+                });
+                // safety: clear the playing state if TTS stalls
+                setTimeout(function(){ btn.classList.remove('playing'); }, 6000);
+            } else {
+                setTimeout(function(){ btn.classList.remove('playing'); }, 1500);
+            }
+        }
+        // Open/close the popover on hover + focus (keyboard accessible).
+        var _vkpHideTimer = null;
+        function openVoiceKeywords() {
+            buildVoiceKeywordsPopover();
+            clearTimeout(_vkpHideTimer);
+            var pop = document.getElementById('voiceKeywordsPopover');
+            var btn = document.getElementById('voiceBtn');
+            if (pop) { pop.classList.add('open'); pop.setAttribute('aria-hidden','false'); }
+            if (btn) btn.setAttribute('aria-expanded','true');
+        }
+        function closeVoiceKeywords() {
+            var pop = document.getElementById('voiceKeywordsPopover');
+            var btn = document.getElementById('voiceBtn');
+            if (pop) { pop.classList.remove('open'); pop.setAttribute('aria-hidden','true'); }
+            if (btn) btn.setAttribute('aria-expanded','false');
+        }
+        function initVoicePopover() {
+            var wrap = document.getElementById('voicePopoverWrap');
+            if (!wrap) return;
+            wrap.addEventListener('mouseenter', openVoiceKeywords);
+            wrap.addEventListener('mouseleave', function() {
+                _vkpHideTimer = setTimeout(closeVoiceKeywords, 180);
+            });
+            var btn = document.getElementById('voiceBtn');
+            if (btn) {
+                btn.addEventListener('focus', openVoiceKeywords);
+                btn.addEventListener('blur', function(){ _vkpHideTimer = setTimeout(closeVoiceKeywords, 180); });
+            }
+            // Clicking inside the popover (speaker buttons) shouldn't bubble
+            // to the document and re-close it via any outside handler.
+            var pop = document.getElementById('voiceKeywordsPopover');
+            if (pop) pop.addEventListener('click', function(e){ e.stopPropagation(); });
+            // Esc closes it.
+            document.addEventListener('keydown', function(e){
+                if (e.key === 'Escape') closeVoiceKeywords();
+            });
         }
 
         function handleVoiceCommand(transcript) {
@@ -7099,28 +8417,118 @@
     <div class="tutorial-avatar-bubble" id="tutorialAvatarBubble">
         <div class="tutorial-avatar-bubble-bg">
             <svg class="tutorial-avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="avaFace" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#fffaf6"/>
+                        <stop offset="55%" stop-color="#fdeaea"/>
+                        <stop offset="100%" stop-color="#f6d6d6"/>
+                    </linearGradient>
+                    <linearGradient id="avaHair" x1="0" y1="0" x2="0.5" y2="1">
+                        <stop offset="0%" stop-color="#fff0a8"/>
+                        <stop offset="45%" stop-color="#f7cf52"/>
+                        <stop offset="100%" stop-color="#d59a30"/>
+                    </linearGradient>
+                    <linearGradient id="avaHairShine" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#fff7d6"/>
+                        <stop offset="100%" stop-color="#ffe98a" stop-opacity="0"/>
+                    </linearGradient>
+                    <radialGradient id="avaEye" cx="50%" cy="42%" r="62%">
+                        <stop offset="0%" stop-color="#9fd0ff"/>
+                        <stop offset="50%" stop-color="#2f7be0"/>
+                        <stop offset="100%" stop-color="#0f3f88"/>
+                    </radialGradient>
+                    <linearGradient id="avaLip" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#ffa6cd"/>
+                        <stop offset="100%" stop-color="#ec5fa6"/>
+                    </linearGradient>
+                    <linearGradient id="avaDress" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#9b6bff"/>
+                        <stop offset="100%" stop-color="#c77dff"/>
+                    </linearGradient>
+                    <linearGradient id="avaTiara" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#fff3b0"/>
+                        <stop offset="100%" stop-color="#e8c64a"/>
+                    </linearGradient>
+                    <filter id="avaGlow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="1.4" result="b"/>
+                        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+                    </filter>
+                </defs>
+
                 <g class="avatar-head" id="tutorialAvatarHead">
-                    <circle cx="50" cy="52" r="38" fill="#1e2d4a" stroke="#4a6bff" stroke-width="1.5"/>
-                    <ellipse cx="50" cy="18" rx="28" ry="10" fill="#2a3a5c"/>
-                    <rect x="22" y="14" width="56" height="14" rx="4" fill="#2a3a5c"/>
-                    <ellipse cx="12" cy="52" rx="5" ry="7" fill="#1e2d4a" stroke="#4a6bff" stroke-width="1"/>
-                    <ellipse cx="88" cy="52" rx="5" ry="7" fill="#1e2d4a" stroke="#4a6bff" stroke-width="1"/>
+                    <!-- Long, flowing golden-blonde hair (back mass) -->
+                    <path d="M50 3 C24 3 10 22 10 50 C10 74 18 96 30 99 L46 99 C36 82 32 62 34 44 C38 26 46 16 50 14 C54 16 62 26 66 44 C68 62 64 82 54 99 L70 99 C82 96 90 74 90 50 C90 22 76 3 50 3 Z" fill="url(#avaHair)"/>
+                    <!-- Hair shine streak -->
+                    <path d="M44 12 C36 18 32 30 32 46 C32 60 35 76 42 92" stroke="url(#avaHairShine)" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.75"/>
+                    <!-- Soft wispy strands -->
+                    <path d="M20 60 C22 72 26 84 30 92" stroke="#f7cf52" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+                    <path d="M80 60 C78 72 74 84 70 92" stroke="#f7cf52" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+                    <!-- Soft porcelain face -->
+                    <ellipse cx="50" cy="54" rx="30" ry="33" fill="url(#avaFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
+
+                    <!-- Ears + pearl earrings -->
+                    <ellipse cx="20" cy="56" rx="4" ry="6" fill="url(#avaFace)" stroke="rgba(180,90,140,0.2)" stroke-width="0.8"/>
+                    <ellipse cx="80" cy="56" rx="4" ry="6" fill="url(#avaFace)" stroke="rgba(180,90,140,0.2)" stroke-width="0.8"/>
+                    <circle cx="20" cy="62" r="2.6" fill="#f3e8ff" stroke="#c77dff" stroke-width="0.6"/>
+                    <circle cx="80" cy="62" r="2.6" fill="#f3e8ff" stroke="#c77dff" stroke-width="0.6"/>
+
+                    <!-- Front fringe (side-parted bang sweeping right) -->
+                    <path d="M22 34 C30 14 48 12 56 24 C50 24 44 26 40 30 C34 28 28 30 22 34 Z" fill="url(#avaHair)"/>
+                    <path d="M40 26 C46 18 58 18 64 28 C58 26 52 28 46 32 C44 30 42 28 40 26 Z" fill="#ffe06a" opacity="0.95"/>
+
+                    <!-- Tiara (delicate gold band with a central pink gem + side gems) -->
+                    <path d="M30 26 Q50 12 70 26 L68 28 Q50 16 32 28 Z" fill="url(#avaTiara)"/>
+                    <circle cx="50" cy="18" r="3.2" fill="#ff6fb5" filter="url(#avaGlow)"/>
+                    <circle cx="50" cy="18" r="1.3" fill="#fff" opacity="0.95"/>
+                    <circle cx="38" cy="22" r="1.6" fill="#c77dff"/>
+                    <circle cx="62" cy="22" r="1.6" fill="#c77dff"/>
+
+                    <!-- Lavender eyeshadow -->
+                    <path d="M24 45 Q34 40 46 44 Q40 47 34 47 Q28 47 24 45 Z" fill="#e0c3ff" opacity="0.6"/>
+                    <path d="M54 44 Q66 40 76 45 Q72 47 66 47 Q60 47 54 44 Z" fill="#e0c3ff" opacity="0.6"/>
+
+                    <!-- Slim arched blonde eyebrows -->
+                    <path d="M24 40 Q34 35 46 39" stroke="#c9962a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                    <path d="M54 39 Q66 35 76 40" stroke="#c9962a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+
+                    <!-- Big sparkling blue eyes with long lashes -->
                     <g class="eye-group">
-                        <ellipse cx="36" cy="48" rx="7" ry="8" fill="white"/>
-                        <circle  cx="37" cy="49" r="4" fill="#4a6bff"/>
-                        <circle  cx="38" cy="47" r="1.5" fill="white" opacity="0.7"/>
+                        <ellipse cx="34" cy="49" rx="8" ry="7.5" fill="#ffffff"/>
+                        <circle cx="35" cy="49" r="5" fill="url(#avaEye)"/>
+                        <circle cx="35" cy="49" r="2.2" fill="#0f3f88"/>
+                        <circle cx="36" cy="47.5" r="1.6" fill="#ffffff" opacity="0.95"/>
+                        <circle cx="33" cy="50.5" r="0.7" fill="#ffffff" opacity="0.7"/>
+                        <path d="M27 44 Q34 41 41 44" stroke="#2a1530" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+                        <path d="M27 44 L25 41 M31 42 L30 39 M35 41 L35 38 M39 42 L41 39" stroke="#2a1530" stroke-width="1" stroke-linecap="round"/>
                     </g>
                     <g class="eye-group right">
-                        <ellipse cx="64" cy="48" rx="7" ry="8" fill="white"/>
-                        <circle  cx="65" cy="49" r="4" fill="#4a6bff"/>
-                        <circle  cx="66" cy="47" r="1.5" fill="white" opacity="0.7"/>
+                        <ellipse cx="66" cy="49" rx="8" ry="7.5" fill="#ffffff"/>
+                        <circle cx="65" cy="49" r="5" fill="url(#avaEye)"/>
+                        <circle cx="65" cy="49" r="2.2" fill="#0f3f88"/>
+                        <circle cx="66" cy="47.5" r="1.6" fill="#ffffff" opacity="0.95"/>
+                        <circle cx="63" cy="50.5" r="0.7" fill="#ffffff" opacity="0.7"/>
+                        <path d="M59 44 Q66 41 73 44" stroke="#2a1530" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+                        <path d="M59 44 L57 41 M63 42 L62 39 M67 41 L67 38 M71 42 L73 39" stroke="#2a1530" stroke-width="1" stroke-linecap="round"/>
                     </g>
-                    <path d="M29 38 Q36 34 43 37" stroke="#4a6bff" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <path d="M57 37 Q64 34 71 38" stroke="#4a6bff" stroke-width="2" fill="none" stroke-linecap="round"/>
-                    <path d="M48 54 Q50 60 52 54" stroke="#4a6bff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                    <path id="tutorialAvatarMouthIdle" class="mouth-path" d="M36 66 Q50 72 64 66" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-                    <ellipse id="tutorialAvatarMouthOpen" cx="50" cy="67" rx="10" ry="5" fill="#0a0f1a" stroke="white" stroke-width="1.5" style="display:none;"/>
-                    <path d="M26 88 L50 78 L74 88" stroke="#4a6bff" stroke-width="1.5" fill="none"/>
+
+                    <!-- Dainty nose -->
+                    <path d="M49 54 Q50 59 51 54" stroke="rgba(180,90,140,0.35)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                    <ellipse cx="50" cy="59" rx="2.2" ry="1.3" fill="rgba(200,120,150,0.12)"/>
+
+                    <!-- Pink blush cheeks -->
+                    <ellipse cx="28" cy="60" rx="5.5" ry="3.4" fill="#ff9bc8" opacity="0.45"/>
+                    <ellipse cx="72" cy="60" rx="5.5" ry="3.4" fill="#ff9bc8" opacity="0.45"/>
+
+                    <!-- Glossy pink lips. JS toggles idle smile ↔ open speaking. -->
+                    <path id="tutorialAvatarMouthIdle" class="mouth-path" d="M38 64 Q50 71 62 64" stroke="url(#avaLip)" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+                    <ellipse id="tutorialAvatarMouthOpen" cx="50" cy="66" rx="8.5" ry="5" fill="url(#avaLip)" stroke="#c8448f" stroke-width="1" style="display:none;"/>
+                    <path d="M40 64.5 Q50 66 60 64.5" stroke="#ffffff" stroke-width="0.7" fill="none" opacity="0.6" stroke-linecap="round"/>
+
+                    <!-- Elegant dress shoulders (purple, theme-matched) + sweetheart neckline -->
+                    <path d="M20 92 Q50 78 80 92 L80 100 L20 100 Z" fill="url(#avaDress)"/>
+                    <path d="M38 92 Q50 84 62 92" stroke="#ffe98a" stroke-width="1.2" fill="none" opacity="0.8"/>
+                    <circle cx="50" cy="88" r="1.8" fill="#ffe98a" filter="url(#avaGlow)"/>
                 </g>
             </svg>
         </div>

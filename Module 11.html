@@ -7,24 +7,89 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <script src="devtools-guard.js"></script>
+<script>
+// ── Theme propagation: this same-origin iframe shares localStorage with
+//    the parent course shell, so we mirror its `courseTheme` key here.
+//    Runs before paint (no FOUC), updates live on storage events, and
+//    also accepts postMessage({type:'courseTheme', theme:'light'|'dark'})
+//    from the parent as a belt-and-suspenders path. Also swaps every
+//    img.excelra-logo between Logo.png (light wordmark, for light bg)
+//    and Logo-light.png (light wordmark, for dark bg) so the logo never
+//    sits in a white box when the theme flips dark.
+(function () {
+  function swapLogo(t) {
+    var name = (t === 'dark') ? 'Logo-light.png' : 'Logo.png';
+    var url;
+    try { url = new URL(name, document.baseURI).href; } catch (e) { url = name; }
+    var imgs = document.querySelectorAll('img.excelra-logo');
+    for (var i = 0; i < imgs.length; i++) {
+      if (imgs[i].getAttribute('data-logo-current') !== name) {
+        imgs[i].setAttribute('data-logo-current', name);
+        imgs[i].src = url;
+      }
+    }
+  }
+  function applyTheme(t) {
+    t = (t === 'dark') ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', t);
+    swapLogo(t);
+  }
+  var initial;
+  try { initial = localStorage.getItem('courseTheme'); } catch (e) { initial = null; }
+  if (initial !== 'dark' && initial !== 'light') initial = 'light';
+  applyTheme(initial);
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'courseTheme') applyTheme(e.newValue === 'dark' ? 'dark' : 'light');
+  });
+  window.addEventListener('message', function (e) {
+    if (e.data && e.data.type === 'courseTheme' && (e.data.theme === 'light' || e.data.theme === 'dark')) {
+      applyTheme(e.data.theme);
+    }
+  });
+})();
+</script>
 <title>Module 11: Course Summary | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
   :root {
     --bg: #ffffff;
-    --surface: #f6f8fb;
-    --accent: #2757d6;
-    --accent-soft: rgba(39,87,214,0.08);
-    --accent-glow: rgba(39,87,214,0.18);
-    --highlight: #c2410c;
-    --ink: #16181d;
-    --ink-soft: #3a4150;
-    --muted: #6b7280;
-    --border: #e5e9f0;
+    --surface: #f6f2ff;
+    --accent: #7c5cff;
+    --accent-soft: rgba(124,92,255,0.10);
+    --accent-glow: rgba(124,92,255,0.30);
+    --highlight: #c77dff;
+    --ink: #21163a;
+    --ink-soft: #3a3350;
+    --muted: #7a7390;
+    --border: #ece4f7;
   }
+  [data-theme="dark"] {
+    --bg: #130e22;
+    --surface: #1c1530;
+    --accent: #9b6bff;
+    --accent-soft: rgba(124,92,255,0.16);
+    --accent-glow: rgba(124,92,255,0.40);
+    --highlight: #c77dff;
+    --ink: #f4f0ff;
+    --ink-soft: #d9d0f2;
+    --muted: #a89fc4;
+    --border: #2e2350;
+  }
+  /* The top/bottom bars in light mode fade from solid white to transparent —
+     that gradient is hard-coded as rgba(255,255,255,…) and would be an
+     eye-burning white strip in dark mode, so it is overridden here. The
+     progress-thumb border is also flipped to var(--bg) so the white ring
+     doesn't glow against the dark surface. */
+  [data-theme="dark"] .top-bar {
+    background: linear-gradient(180deg, rgba(19,14,34,0.96) 0%, rgba(19,14,34,0.75) 70%, transparent 100%);
+  }
+  [data-theme="dark"] .bottom-bar {
+    background: linear-gradient(0deg, rgba(19,14,34,0.98) 0%, rgba(19,14,34,0.85) 65%, transparent 100%);
+  }
+  [data-theme="dark"] .progress-fill::after { border-color: var(--bg); }
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; }
+  html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; transition: background 0.4s ease, color 0.3s ease; }
 
   /* Quiet backdrop — a faint fixed grid instead of the old dark particle
      animation, which read as generic "AI slide deck" rather than course material. */
@@ -228,7 +293,7 @@
   .ctrl-btn:hover { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
   .ctrl-btn.active { color:var(--accent); background:var(--accent-soft); border-color:var(--accent); }
   .ctrl-btn.play-btn { width:48px; height:48px; border-radius:14px; font-size:16px; background:var(--accent); color:#fff; border-color:var(--accent); }
-  .ctrl-btn.play-btn:hover { background:#1e46b8; color:#fff; }
+  .ctrl-btn.play-btn:hover { background:#6b4ce6; color:#fff; }
   .audio-wave { display:flex; align-items:center; gap:3px; height:20px; margin-left:8px; }
   .audio-wave .bar { width:3px; border-radius:3px; background:var(--accent); animation:wave 0.8s ease-in-out infinite; }
   .audio-wave .bar:nth-child(1) { height:8px; animation-delay:0s; }
@@ -296,6 +361,7 @@
   <button class="start-btn" id="startBtn" aria-label="Begin presentation"><i class="fas fa-play"></i> Begin Presentation</button>
   <div class="start-brand">
     <span>Built by</span>
+    <img src="Logo.png" alt="Excelra" class="excelra-logo" style="height:20px;width:auto;" data-logo-current="Logo.png">
     <span style="color:var(--ink);font-weight:700;">Excelra</span>
     <span style="color:var(--muted);">— Where Data Means More</span>
   </div>
@@ -353,6 +419,15 @@ const slides = [
     "brand": "Excelra \u2014 Where Data Means More",
     "segments": [
       "Welcome to Module Eleven, the Summary. You've now walked the entire journey \u2014 let's bring it together."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "Course Map",
+    "title": "What You've <span class=\"hl\">Learned</span>",
+    "content": "<div style=\"display:flex;flex-direction:column;align-items:center;gap:0;margin:1.6rem auto;max-width:520px;font-family:Inter,sans-serif;\"><div style=\"width:100%;padding:0.7rem 1rem;background:var(--surface);border:1.5px solid var(--accent);border-radius:10px;color:var(--ink);font-weight:700;text-align:center;box-shadow:0 4px 14px var(--accent-glow);\">Foundations</div><div style=\"display:flex;flex-direction:column;align-items:center;\"><div style=\"width:2px;height:10px;background:var(--accent);\"></div><i class=\"fas fa-chevron-down\" style=\"color:var(--accent);font-size:13px;margin:1px 0;\"></i><div style=\"width:2px;height:10px;background:var(--accent);\"></div></div><div style=\"width:100%;padding:0.7rem 1rem;background:var(--surface);border:1.5px solid var(--accent);border-radius:10px;color:var(--ink);font-weight:700;text-align:center;box-shadow:0 4px 14px var(--accent-glow);\">Process</div><div style=\"display:flex;flex-direction:column;align-items:center;\"><div style=\"width:2px;height:10px;background:var(--accent);\"></div><i class=\"fas fa-chevron-down\" style=\"color:var(--accent);font-size:13px;margin:1px 0;\"></i><div style=\"width:2px;height:10px;background:var(--accent);\"></div></div><div style=\"width:100%;padding:0.7rem 1rem;background:var(--surface);border:1.5px solid var(--accent);border-radius:10px;color:var(--ink);font-weight:700;text-align:center;box-shadow:0 4px 14px var(--accent-glow);\">Data</div><div style=\"display:flex;flex-direction:column;align-items:center;\"><div style=\"width:2px;height:10px;background:var(--accent);\"></div><i class=\"fas fa-chevron-down\" style=\"color:var(--accent);font-size:13px;margin:1px 0;\"></i><div style=\"width:2px;height:10px;background:var(--accent);\"></div></div><div style=\"width:100%;padding:0.7rem 1rem;background:var(--surface);border:1.5px solid var(--accent);border-radius:10px;color:var(--ink);font-weight:700;text-align:center;box-shadow:0 4px 14px var(--accent-glow);\">Standards</div><div style=\"display:flex;flex-direction:column;align-items:center;\"><div style=\"width:2px;height:10px;background:var(--accent);\"></div><i class=\"fas fa-chevron-down\" style=\"color:var(--accent);font-size:13px;margin:1px 0;\"></i><div style=\"width:2px;height:10px;background:var(--accent);\"></div></div><div style=\"width:100%;padding:0.7rem 1rem;background:var(--surface);border:1.5px solid var(--accent);border-radius:10px;color:var(--ink);font-weight:700;text-align:center;box-shadow:0 4px 14px var(--accent-glow);\">Tools</div><div style=\"display:flex;flex-direction:column;align-items:center;\"><div style=\"width:2px;height:10px;background:var(--accent);\"></div><i class=\"fas fa-chevron-down\" style=\"color:var(--accent);font-size:13px;margin:1px 0;\"></i><div style=\"width:2px;height:10px;background:var(--accent);\"></div></div><div style=\"width:100%;padding:0.85rem 1.1rem;background:var(--accent);border:1.5px solid var(--accent);border-radius:10px;color:#fff;font-weight:800;text-align:center;box-shadow:0 6px 18px var(--accent-glow);letter-spacing:0.3px;\">AI</div></div>",
+    "segments": [
+      "This is the full path we walked together — foundations, process, data, standards, tools, and AI."
     ]
   },
   {
@@ -467,6 +542,18 @@ let currentSlide = 0;
 // lessons elsewhere in the course. Progress is remembered per module
 // (scoped by page title, which is unique per module) so it isn't lost
 // on revisiting later.
+// ── Task 13 audit (light-purple theme pass): CONFIRMED this guard
+// already closes every manual forward-skip path — (1) seek-bar preview
+// AND commit are both clamped to maxSectionReached inside
+// previewAt()/commitScrub(); (2) the dedicated Next (#btnNext) click
+// handler short-circuits when nextIndex > maxSectionReached and shows
+// the blocked hint instead of advancing; (3) the ArrowRight keyboard
+// handler does the same; (4) auto-advance via playCurrentSlide() →
+// goToSection() → recordSectionReached() keeps extending the frontier
+// as narration naturally plays through, so playback itself is never
+// blocked. Backwards navigation (Previous button / ArrowLeft) is
+// intentionally left unguarded so replays stay possible. No manual
+// input path lets a learner jump past the furthest section reached.
 const seekGuardKey = 'presentationMaxSection_' + document.title;
 let maxSectionReached = parseInt(localStorage.getItem(seekGuardKey), 10) || 0;
 function recordSectionReached(index) {
@@ -555,6 +642,11 @@ function renderSlide(index) {
     html += `</div>`;
     html += `<div class="diagram-detail"><div class="diagram-detail-label">${s.stages[s.currentIndex].label}</div><div class="diagram-detail-text">${s.detail}</div></div>`;
     slideContent.className = 'slide-content has-diagram';
+  } else if (s.type === 'concept') {
+    html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
+    html += `<h2 class="slide-title">${s.title}</h2>`;
+    html += s.content;
+    slideContent.className = 'slide-content has-diagram';
   } else {
     html = `<div class="slide-label"><span class="line"></span>${s.label}</div>`;
     html += `<h2 class="slide-title">${s.title}</h2>`;
@@ -589,7 +681,7 @@ function animateSlideIn(index) {
 }
 function showSegment(index) {
   const s = slides[currentSlide];
-  if (s.type === 'title' || s.type === 'closing' || s.type === 'diagram') return;
+  if (s.type === 'title' || s.type === 'closing' || s.type === 'diagram' || s.type === 'concept') return;
   if (s.type === 'summary') {
     const cards = slideContent.querySelectorAll('.summary-card');
     if (cards[index]) cards[index].classList.add('visible');
@@ -926,6 +1018,112 @@ window.addEventListener('message', event => {
   if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
+</script>
+<!-- Barbie-doll AI guide — lives inside the presentation -->
+<div id="moduleAvatar" class="module-avatar" aria-hidden="true">
+  <div class="module-avatar-bg">
+    <svg class="module-avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mavaFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffaf6"/><stop offset="55%" stop-color="#fdeaea"/><stop offset="100%" stop-color="#f6d6d6"/></linearGradient>
+        <linearGradient id="mavaHair" x1="0" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="#fff0a8"/><stop offset="45%" stop-color="#f7cf52"/><stop offset="100%" stop-color="#d59a30"/></linearGradient>
+        <linearGradient id="mavaHairShine" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff7d6"/><stop offset="100%" stop-color="#ffe98a" stop-opacity="0"/></linearGradient>
+        <radialGradient id="mavaEye" cx="50%" cy="42%" r="62%"><stop offset="0%" stop-color="#9fd0ff"/><stop offset="50%" stop-color="#2f7be0"/><stop offset="100%" stop-color="#0f3f88"/></radialGradient>
+        <linearGradient id="mavaLip" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffa6cd"/><stop offset="100%" stop-color="#ec5fa6"/></linearGradient>
+        <linearGradient id="mavaDress" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9b6bff"/><stop offset="100%" stop-color="#c77dff"/></linearGradient>
+        <linearGradient id="mavaTiara" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff3b0"/><stop offset="100%" stop-color="#e8c64a"/></linearGradient>
+        <filter id="mavaGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <g class="mava-head" id="mavaHead">
+        <path d="M50 3 C24 3 10 22 10 50 C10 74 18 96 30 99 L46 99 C36 82 32 62 34 44 C38 26 46 16 50 14 C54 16 62 26 66 44 C68 62 64 82 54 99 L70 99 C82 96 90 74 90 50 C90 22 76 3 50 3 Z" fill="url(#mavaHair)"/>
+        <path d="M44 12 C36 18 32 30 32 46 C32 60 35 76 42 92" stroke="url(#mavaHairShine)" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.75"/>
+        <path d="M20 60 C22 72 26 84 30 92" stroke="#f7cf52" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+        <path d="M80 60 C78 72 74 84 70 92" stroke="#f7cf52" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+        <ellipse cx="50" cy="54" rx="30" ry="33" fill="url(#mavaFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
+        <ellipse cx="20" cy="56" rx="4" ry="6" fill="url(#mavaFace)" stroke="rgba(180,90,140,0.2)" stroke-width="0.8"/>
+        <ellipse cx="80" cy="56" rx="4" ry="6" fill="url(#mavaFace)" stroke="rgba(180,90,140,0.2)" stroke-width="0.8"/>
+        <circle cx="20" cy="62" r="2.6" fill="#f3e8ff" stroke="#c77dff" stroke-width="0.6"/>
+        <circle cx="80" cy="62" r="2.6" fill="#f3e8ff" stroke="#c77dff" stroke-width="0.6"/>
+        <path d="M22 34 C30 14 48 12 56 24 C50 24 44 26 40 30 C34 28 28 30 22 34 Z" fill="url(#mavaHair)"/>
+        <path d="M40 26 C46 18 58 18 64 28 C58 26 52 28 46 32 C44 30 42 28 40 26 Z" fill="#ffe06a" opacity="0.95"/>
+        <path d="M30 26 Q50 12 70 26 L68 28 Q50 16 32 28 Z" fill="url(#mavaTiara)"/>
+        <circle cx="50" cy="18" r="3.2" fill="#ff6fb5" filter="url(#mavaGlow)"/>
+        <circle cx="50" cy="18" r="1.3" fill="#fff" opacity="0.95"/>
+        <circle cx="38" cy="22" r="1.6" fill="#c77dff"/>
+        <circle cx="62" cy="22" r="1.6" fill="#c77dff"/>
+        <path d="M24 45 Q34 40 46 44 Q40 47 34 47 Q28 47 24 45 Z" fill="#e0c3ff" opacity="0.6"/>
+        <path d="M54 44 Q66 40 76 45 Q72 47 66 47 Q60 47 54 44 Z" fill="#e0c3ff" opacity="0.6"/>
+        <path d="M24 40 Q34 35 46 39" stroke="#c9962a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <path d="M54 39 Q66 35 76 40" stroke="#c9962a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <g class="mava-eye"><ellipse cx="34" cy="49" rx="8" ry="7.5" fill="#ffffff"/><circle cx="35" cy="49" r="5" fill="url(#mavaEye)"/><circle cx="35" cy="49" r="2.2" fill="#0f3f88"/><circle cx="36" cy="47.5" r="1.6" fill="#ffffff" opacity="0.95"/><circle cx="33" cy="50.5" r="0.7" fill="#ffffff" opacity="0.7"/><path d="M27 44 Q34 41 41 44" stroke="#2a1530" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M27 44 L25 41 M31 42 L30 39 M35 41 L35 38 M39 42 L41 39" stroke="#2a1530" stroke-width="1" stroke-linecap="round"/></g>
+        <g class="mava-eye right"><ellipse cx="66" cy="49" rx="8" ry="7.5" fill="#ffffff"/><circle cx="65" cy="49" r="5" fill="url(#mavaEye)"/><circle cx="65" cy="49" r="2.2" fill="#0f3f88"/><circle cx="66" cy="47.5" r="1.6" fill="#ffffff" opacity="0.95"/><circle cx="63" cy="50.5" r="0.7" fill="#ffffff" opacity="0.7"/><path d="M59 44 Q66 41 73 44" stroke="#2a1530" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M59 44 L57 41 M63 42 L62 39 M67 41 L67 38 M71 42 L73 39" stroke="#2a1530" stroke-width="1" stroke-linecap="round"/></g>
+        <path d="M49 54 Q50 59 51 54" stroke="rgba(180,90,140,0.35)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+        <ellipse cx="50" cy="59" rx="2.2" ry="1.3" fill="rgba(200,120,150,0.12)"/>
+        <ellipse cx="28" cy="60" rx="5.5" ry="3.4" fill="#ff9bc8" opacity="0.45"/>
+        <ellipse cx="72" cy="60" rx="5.5" ry="3.4" fill="#ff9bc8" opacity="0.45"/>
+        <path id="mavaMouthIdle" class="mava-mouth" d="M38 64 Q50 71 62 64" stroke="url(#mavaLip)" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+        <ellipse id="mavaMouthOpen" cx="50" cy="66" rx="8.5" ry="5" fill="url(#mavaLip)" stroke="#c8448f" stroke-width="1" style="display:none;"/>
+        <path d="M40 64.5 Q50 66 60 64.5" stroke="#ffffff" stroke-width="0.7" fill="none" opacity="0.6" stroke-linecap="round"/>
+        <path d="M20 92 Q50 78 80 92 L80 100 L20 100 Z" fill="url(#mavaDress)"/>
+        <path d="M38 92 Q50 84 62 92" stroke="#ffe98a" stroke-width="1.2" fill="none" opacity="0.8"/>
+        <circle cx="50" cy="88" r="1.8" fill="#ffe98a" filter="url(#mavaGlow)"/>
+      </g>
+    </svg>
+  </div>
+</div>
+<style>
+.module-avatar{position:fixed;right:18px;bottom:18px;width:84px;height:84px;z-index:60;pointer-events:none;filter:drop-shadow(0 8px 18px rgba(124,92,255,0.35));animation:mavaFloat 4s ease-in-out 0.3s infinite;}
+@keyframes mavaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.module-avatar-bg{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 50% 38%,#fff 0%,#fff0f7 55%,#ffe0f0 100%);border:3px solid #c77dff;overflow:hidden;box-shadow:0 0 0 4px rgba(255,140,200,0.14),0 8px 22px rgba(199,125,255,0.30),inset 0 0 14px rgba(255,150,210,0.20);}
+.module-avatar.speaking .module-avatar-bg{box-shadow:0 0 0 6px rgba(255,140,200,0.22),0 0 26px 4px rgba(236,95,166,0.6);animation:mavaHalo 1s ease-in-out infinite;}
+@keyframes mavaHalo{0%,100%{box-shadow:0 0 0 5px rgba(255,140,200,0.16)}50%{box-shadow:0 0 0 10px rgba(255,140,200,0.28)}}
+.mava-head{animation:mavaBob 3s ease-in-out infinite;transform-origin:center bottom;}
+.module-avatar.speaking .mava-head{animation:mavaBobSpeak 0.45s ease-in-out infinite;}
+@keyframes mavaBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes mavaBobSpeak{0%,100%{transform:translateY(0) rotate(-0.5deg)}50%{transform:translateY(-3px) rotate(0.5deg)}}
+.mava-eye{animation:mavaBlink 4s ease-in-out infinite;transform-origin:center;}
+.mava-eye.right{animation-delay:0.08s;}
+@keyframes mavaBlink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(0.05)}}
+.module-avatar-svg{width:92%;height:92%;overflow:visible;}
+@media (max-width:640px){.module-avatar{width:64px;height:64px;right:10px;bottom:10px;}}
+</style>
+<script>
+(function(){
+  var av=document.getElementById('moduleAvatar');
+  if(!av) return;
+  var idle=document.getElementById('mavaMouthIdle');
+  var open=document.getElementById('mavaMouthOpen');
+  var head=document.getElementById('mavaHead');
+  var closeT=null, maxT=null, boundaryFired=false, fallbackT=null;
+  function mouthOpen(){ if(idle)idle.style.display='none'; if(open)open.style.display=''; }
+  function mouthClose(){ if(idle)idle.style.display=''; if(open)open.style.display='none'; }
+  function stopMouth(){ if(fallbackT){clearInterval(fallbackT);fallbackT=null;} clearTimeout(closeT); mouthClose(); }
+  function setSpeaking(on){
+    if(on){ av.classList.add('speaking'); boundaryFired=false; clearTimeout(fallbackT); fallbackT=setTimeout(function(){ if(!boundaryFired){ fallbackT=setInterval(function(){ if(idle.style.display==='none') mouthClose(); else mouthOpen(); },150);} },320); }
+    else { av.classList.remove('speaking'); stopMouth(); }
+  }
+  function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;} mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
+  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length; return Math.max(2500, w*450+2500); }
+  // Wrap presentationVoice.speak so the avatar lip-syncs to the module's narration.
+  function hook(){
+    var pv=window.presentationVoice; if(!pv||!pv.speak||pv._mavaHooked) return; pv._mavaHooked=true;
+    var orig=pv.speak;
+    pv.speak=function(text,opts){
+      opts=opts||{};
+      var prevOU=opts.onUtterance;
+      opts.onUtterance=function(utter){
+        if(prevOU)prevOU(utter);
+        var eStart=utter.onstart, eBound=utter.onboundary;
+        utter.onstart=function(e){ if(eStart)eStart(e); setSpeaking(true); };
+        utter.onboundary=function(e){ if(eBound)eBound(e); if(!e.name||e.name==='word') onBoundary(); };
+      };
+      var resolved=false;
+      function fin(){ if(resolved)return; resolved=true; clearTimeout(maxT); setSpeaking(false); }
+      maxT=setTimeout(fin, estimateMs(text));
+      return orig.call(pv,text,opts).then(fin);
+    };
+  }
+  if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
+})();
 </script>
 </body>
 </html>
