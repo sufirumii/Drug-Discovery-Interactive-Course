@@ -1018,169 +1018,272 @@ window.addEventListener('message', event => {
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
-<!-- Doctor AI guide — lives inside the presentation -->
+<!-- Dynamic Doctor AI Avatar — full body, moves to context-appropriate
+     positions inside the presentation, gestures with both hands while
+     explaining. Lip-syncs to narration. -->
 <div id="moduleAvatar" class="module-avatar" aria-hidden="true">
-  <div class="module-avatar-bg">
-    <svg class="module-avatar-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <!-- Skin tone — warm, professional -->
-        <linearGradient id="docFace" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#fdf5ee"/>
-          <stop offset="55%" stop-color="#f6e0d0"/>
-          <stop offset="100%" stop-color="#eac6b2"/>
-        </linearGradient>
-        <!-- Hair — dark brown, professional -->
-        <linearGradient id="docHair" x1="0" y1="0" x2="0.5" y2="1">
-          <stop offset="0%" stop-color="#3a2a20"/>
-          <stop offset="50%" stop-color="#2a1d14"/>
-          <stop offset="100%" stop-color="#1a1108"/>
-        </linearGradient>
-        <linearGradient id="docHairShine" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#5a4030"/>
-          <stop offset="100%" stop-color="#3a2a20" stop-opacity="0"/>
-        </linearGradient>
-        <!-- Eye — calm brown -->
-        <radialGradient id="docEye" cx="50%" cy="42%" r="62%">
-          <stop offset="0%" stop-color="#8b6240"/>
-          <stop offset="55%" stop-color="#5a3a20"/>
-          <stop offset="100%" stop-color="#2a1a10"/>
-        </radialGradient>
-        <!-- Lip — natural pink -->
-        <linearGradient id="docLip" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#d88068"/>
-          <stop offset="100%" stop-color="#b85a48"/>
-        </linearGradient>
-        <!-- White coat -->
-        <linearGradient id="docCoat" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#ffffff"/>
-          <stop offset="60%" stop-color="#f5f3fa"/>
-          <stop offset="100%" stop-color="#e6e2f0"/>
-        </linearGradient>
-        <!-- Coat shadow -->
-        <linearGradient id="docCoatShadow" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#d8d4e6"/>
-          <stop offset="100%" stop-color="#b8b4c8"/>
-        </linearGradient>
-        <!-- Stethoscope -->
-        <linearGradient id="docStetho" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3a4050"/>
-          <stop offset="50%" stop-color="#2a3040"/>
-          <stop offset="100%" stop-color="#1a2030"/>
-        </linearGradient>
-        <!-- Inner shirt — soft purple -->
-        <linearGradient id="docShirt" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#9b6bff"/>
-          <stop offset="100%" stop-color="#7c5cff"/>
-        </linearGradient>
-        <filter id="docGlow" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur stdDeviation="1.4" result="b"/>
-          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
-      </defs>
+  <div class="module-avatar-stage">
+    <!-- Soft shadow under the avatar (grounds it visually) -->
+    <div class="avatar-shadow"></div>
 
-      <!-- Hair back (behind head) -->
-      <path d="M60 8 C36 8 22 26 22 50 C22 64 25 76 30 86 L42 86 C36 76 32 60 34 48 C38 30 46 22 60 20 C74 22 82 30 86 48 C88 60 84 76 78 86 L90 86 C95 76 98 64 98 50 C98 26 84 8 60 8 Z" fill="url(#docHair)"/>
+    <div class="module-avatar-bg">
+      <svg class="module-avatar-svg" viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- Skin tone -->
+          <linearGradient id="docFace2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fdf5ee"/>
+            <stop offset="55%" stop-color="#f6e0d0"/>
+            <stop offset="100%" stop-color="#eac6b2"/>
+          </linearGradient>
+          <linearGradient id="docHand2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fdf5ee"/>
+            <stop offset="100%" stop-color="#e8c0a8"/>
+          </linearGradient>
+          <!-- Hair — dark brown -->
+          <linearGradient id="docHair2" x1="0" y1="0" x2="0.5" y2="1">
+            <stop offset="0%" stop-color="#3a2a20"/>
+            <stop offset="50%" stop-color="#2a1d14"/>
+            <stop offset="100%" stop-color="#1a1108"/>
+          </linearGradient>
+          <linearGradient id="docHairShine2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#5a4030"/>
+            <stop offset="100%" stop-color="#3a2a20" stop-opacity="0"/>
+          </linearGradient>
+          <!-- Eye — calm brown -->
+          <radialGradient id="docEye2" cx="50%" cy="42%" r="62%">
+            <stop offset="0%" stop-color="#8b6240"/>
+            <stop offset="55%" stop-color="#5a3a20"/>
+            <stop offset="100%" stop-color="#2a1a10"/>
+          </radialGradient>
+          <!-- Lip -->
+          <linearGradient id="docLip2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d88068"/>
+            <stop offset="100%" stop-color="#b85a48"/>
+          </linearGradient>
+          <!-- White lab coat -->
+          <linearGradient id="docCoat2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="60%" stop-color="#f5f3fa"/>
+            <stop offset="100%" stop-color="#e6e2f0"/>
+          </linearGradient>
+          <linearGradient id="docCoatShadow2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d8d4e6"/>
+            <stop offset="100%" stop-color="#b8b4c8"/>
+          </linearGradient>
+          <!-- Stethoscope -->
+          <linearGradient id="docStetho2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a4050"/>
+            <stop offset="50%" stop-color="#2a3040"/>
+            <stop offset="100%" stop-color="#1a2030"/>
+          </linearGradient>
+          <!-- Inner shirt — soft purple -->
+          <linearGradient id="docShirt2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#9b6bff"/>
+            <stop offset="100%" stop-color="#7c5cff"/>
+          </linearGradient>
+          <!-- Pants -->
+          <linearGradient id="docPants2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3a3550"/>
+            <stop offset="100%" stop-color="#251f3a"/>
+          </linearGradient>
+          <filter id="docGlow2" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="1.4" result="b"/>
+            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
 
-      <!-- Hand — left, animated wave/explain -->
-      <g class="doc-hand doc-hand-left" id="docHandLeft">
-        <path d="M16 86 Q12 80 16 74 Q22 70 28 76 Q26 84 22 88 Z" fill="url(#docFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.6"/>
-        <path d="M14 84 Q10 78 14 72" stroke="rgba(180,90,140,0.25)" stroke-width="0.5" fill="none"/>
-      </g>
+        <!-- ── PANTS / LEGS (visible at the bottom) ── -->
+        <path d="M58 175 L56 215 L74 215 L76 175 Z" fill="url(#docPants2)"/>
+        <path d="M84 175 L86 215 L104 215 L102 175 Z" fill="url(#docPants2)"/>
+        <!-- Shoes -->
+        <ellipse cx="65" cy="216" rx="11" ry="4" fill="#1a1108"/>
+        <ellipse cx="95" cy="216" rx="11" ry="4" fill="#1a1108"/>
 
-      <!-- Hand — right, animated point/explain -->
-      <g class="doc-hand doc-hand-right" id="docHandRight">
-        <path d="M104 86 Q108 80 104 74 Q98 70 92 76 Q94 84 98 88 Z" fill="url(#docFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.6"/>
-        <path d="M106 84 Q110 78 106 72" stroke="rgba(180,90,140,0.25)" stroke-width="0.5" fill="none"/>
-      </g>
+        <!-- ── LAB COAT — body (full torso) ── -->
+        <path d="M44 100 Q36 110 32 130 L28 178 L60 178 L60 100 Z" fill="url(#docCoat2)" stroke="#c8c4d6" stroke-width="0.8"/>
+        <path d="M100 100 Q108 110 112 130 L116 178 L84 178 L84 100 Z" fill="url(#docCoat2)" stroke="#c8c4d6" stroke-width="0.8"/>
+        <!-- Coat center panel (between lapels) -->
+        <path d="M60 100 L60 178 L84 178 L84 100 Z" fill="url(#docCoat2)" stroke="#c8c4d6" stroke-width="0.5"/>
+        <!-- Coat lapels -->
+        <path d="M60 100 L52 130 L60 130 Z" fill="url(#docCoatShadow2)" stroke="#c8c4d6" stroke-width="0.5"/>
+        <path d="M84 100 L92 130 L84 130 Z" fill="url(#docCoatShadow2)" stroke="#c8c4d6" stroke-width="0.5"/>
+        <!-- Inner shirt V -->
+        <path d="M60 100 L72 118 L84 100 Z" fill="url(#docShirt2)"/>
 
-      <!-- Lab coat — body (visible from neck down) -->
-      <path d="M30 86 Q24 90 22 100 L22 110 L98 110 L98 100 Q96 90 90 86 L78 86 Q70 92 60 92 Q50 92 42 86 Z" fill="url(#docCoat)" stroke="#c8c4d6" stroke-width="0.6"/>
+        <!-- Stethoscope — neck + chest piece -->
+        <path d="M62 100 Q56 110 58 124 Q62 138 70 142" stroke="url(#docStetho2)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <path d="M82 100 Q88 110 86 124 Q82 138 74 142" stroke="url(#docStetho2)" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+        <circle cx="72" cy="142" r="4" fill="url(#docStetho2)" stroke="#1a2030" stroke-width="0.8"/>
+        <circle cx="72" cy="142" r="1.8" fill="#5a6070"/>
 
-      <!-- Coat lapels -->
-      <path d="M42 86 L48 100 L52 92 Z" fill="url(#docCoatShadow)" stroke="#c8c4d6" stroke-width="0.4"/>
-      <path d="M78 86 L72 100 L68 92 Z" fill="url(#docCoatShadow)" stroke="#c8c4d6" stroke-width="0.4"/>
+        <!-- Coat buttons -->
+        <circle cx="72" cy="118" r="1.1" fill="#9b6bff"/>
+        <circle cx="72" cy="135" r="1.1" fill="#9b6bff"/>
+        <circle cx="72" cy="152" r="1.1" fill="#9b6bff"/>
+        <circle cx="72" cy="168" r="1.1" fill="#9b6bff"/>
 
-      <!-- Inner shirt -->
-      <path d="M50 86 Q60 92 70 86 L70 100 L50 100 Z" fill="url(#docShirt)"/>
+        <!-- Name badge on coat -->
+        <rect x="42" y="128" width="13" height="8" rx="1.2" fill="#fff" stroke="#9b6bff" stroke-width="0.6"/>
+        <line x1="44" y1="131" x2="53" y2="131" stroke="#9b6bff" stroke-width="0.7"/>
+        <line x1="44" y1="133" x2="51" y2="133" stroke="#c8c4d6" stroke-width="0.5"/>
 
-      <!-- Stethoscope — neck + chest piece -->
-      <path d="M48 86 Q44 92 46 100 Q50 108 56 108" stroke="url(#docStetho)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      <path d="M72 86 Q76 92 74 100 Q70 108 64 108" stroke="url(#docStetho)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      <circle cx="60" cy="108" r="3.2" fill="url(#docStetho)" stroke="#1a2030" stroke-width="0.6"/>
-      <circle cx="60" cy="108" r="1.4" fill="#5a6070"/>
+        <!-- ── LEFT ARM (anatomically right, on screen-left) — animated gesture ── -->
+        <g class="doc-arm doc-arm-left" id="docArmLeft">
+          <!-- Upper arm -->
+          <path d="M44 102 Q28 118 22 138" stroke="url(#docCoat2)" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path d="M44 102 Q28 118 22 138" stroke="#c8c4d6" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.3"/>
+          <!-- Forearm -->
+          <path d="M22 138 Q18 152 24 166" stroke="url(#docCoat2)" stroke-width="12" fill="none" stroke-linecap="round"/>
+          <!-- Hand -->
+          <ellipse class="doc-hand doc-hand-left" cx="26" cy="170" rx="7" ry="8" fill="url(#docHand2)" stroke="rgba(180,90,140,0.2)" stroke-width="0.6"/>
+          <!-- Pointing finger (visible when "pointing" class is on) -->
+          <path class="doc-finger doc-finger-left" d="M26 162 L26 154" stroke="url(#docHand2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        </g>
 
-      <!-- Coat buttons -->
-      <circle cx="60" cy="96" r="0.9" fill="#9b6bff"/>
-      <circle cx="60" cy="102" r="0.9" fill="#9b6bff"/>
+        <!-- ── RIGHT ARM (anatomically left, on screen-right) — animated gesture ── -->
+        <g class="doc-arm doc-arm-right" id="docArmRight">
+          <!-- Upper arm -->
+          <path d="M100 102 Q116 118 122 138" stroke="url(#docCoat2)" stroke-width="14" fill="none" stroke-linecap="round"/>
+          <path d="M100 102 Q116 118 122 138" stroke="#c8c4d6" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.3"/>
+          <!-- Forearm -->
+          <path d="M122 138 Q126 152 120 166" stroke="url(#docCoat2)" stroke-width="12" fill="none" stroke-linecap="round"/>
+          <!-- Hand -->
+          <ellipse class="doc-hand doc-hand-right" cx="118" cy="170" rx="7" ry="8" fill="url(#docHand2)" stroke="rgba(180,90,140,0.2)" stroke-width="0.6"/>
+          <!-- Pointing finger -->
+          <path class="doc-finger doc-finger-right" d="M118 162 L118 154" stroke="url(#docHand2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        </g>
 
-      <!-- Head group — bobs gently when idle, nods when speaking -->
-      <g class="doc-head" id="docHead">
-        <!-- Face -->
-        <ellipse cx="60" cy="54" rx="28" ry="32" fill="url(#docFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
+        <!-- ── NECK ── -->
+        <path d="M64 84 L64 100 L80 100 L80 84 Z" fill="url(#docFace2)" stroke="rgba(180,90,140,0.15)" stroke-width="0.5"/>
 
-        <!-- Hair fringe on top -->
-        <path d="M32 38 Q42 22 60 22 Q78 22 88 38 Q80 30 70 28 Q60 26 50 28 Q40 30 32 38 Z" fill="url(#docHair)"/>
-        <path d="M40 32 Q48 24 60 24 Q72 24 80 32" stroke="url(#docHairShine)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+        <!-- ── HEAD group — bobs gently when idle, nods when speaking ── -->
+        <g class="doc-head" id="docHead">
+          <!-- Hair back -->
+          <path d="M52 12 C36 12 26 26 26 50 C26 60 28 70 32 78 L40 78 C36 70 34 58 36 48 C38 32 44 24 52 22 C60 24 66 32 68 48 C70 58 68 70 64 78 L72 78 C76 70 78 60 78 50 C78 26 68 12 52 12 Z" fill="url(#docHair2)"/>
 
-        <!-- Eyebrows — calm, professional -->
-        <path d="M38 42 Q46 39 54 42" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-        <path d="M66 42 Q74 39 82 42" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <!-- Face -->
+          <ellipse cx="52" cy="50" rx="24" ry="27" fill="url(#docFace2)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
 
-        <!-- Eyes — brown, gentle -->
-        <g class="doc-eye"><ellipse cx="46" cy="50" rx="6" ry="5.5" fill="#ffffff"/><circle cx="47" cy="50" r="3.6" fill="url(#docEye)"/><circle cx="47" cy="50" r="1.6" fill="#1a0a05"/><circle cx="48" cy="48.5" r="1.1" fill="#ffffff" opacity="0.95"/></g>
-        <g class="doc-eye right"><ellipse cx="74" cy="50" rx="6" ry="5.5" fill="#ffffff"/><circle cx="73" cy="50" r="3.6" fill="url(#docEye)"/><circle cx="73" cy="50" r="1.6" fill="#1a0a05"/><circle cx="74" cy="48.5" r="1.1" fill="#ffffff" opacity="0.95"/></g>
+          <!-- Hair fringe on top -->
+          <path d="M30 36 Q40 22 52 22 Q64 22 74 36 Q66 30 58 28 Q52 26 46 28 Q38 30 30 36 Z" fill="url(#docHair2)"/>
+          <path d="M36 32 Q44 24 52 24 Q60 24 68 32" stroke="url(#docHairShine2)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
 
-        <!-- Nose -->
-        <path d="M59 56 Q60 62 61 56" stroke="rgba(180,90,140,0.35)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+          <!-- Eyebrows -->
+          <path d="M34 40 Q42 37 50 40" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <path d="M54 40 Q62 37 70 40" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
 
-        <!-- Subtle blush -->
-        <ellipse cx="40" cy="62" rx="4.5" ry="2.8" fill="#ff9bc8" opacity="0.30"/>
-        <ellipse cx="80" cy="62" rx="4.5" ry="2.8" fill="#ff9bc8" opacity="0.30"/>
+          <!-- Eyes -->
+          <g class="doc-eye"><ellipse cx="42" cy="48" rx="5" ry="4.5" fill="#ffffff"/><circle cx="43" cy="48" r="3" fill="url(#docEye2)"/><circle cx="43" cy="48" r="1.4" fill="#1a0a05"/><circle cx="44" cy="46.5" r="0.9" fill="#ffffff" opacity="0.95"/></g>
+          <g class="doc-eye right"><ellipse cx="62" cy="48" rx="5" ry="4.5" fill="#ffffff"/><circle cx="61" cy="48" r="3" fill="url(#docEye2)"/><circle cx="61" cy="48" r="1.4" fill="#1a0a05"/><circle cx="62" cy="46.5" r="0.9" fill="#ffffff" opacity="0.95"/></g>
 
-        <!-- Mouth — closed idle, opens when speaking -->
-        <path id="mavaMouthIdle" class="mava-mouth" d="M50 66 Q60 71 70 66" stroke="url(#docLip)" stroke-width="3" fill="none" stroke-linecap="round"/>
-        <ellipse id="mavaMouthOpen" cx="60" cy="68" rx="7" ry="4" fill="url(#docLip)" stroke="#a04848" stroke-width="0.8" style="display:none;"/>
-        <path d="M52 66.5 Q60 67.5 68 66.5" stroke="#ffffff" stroke-width="0.6" fill="none" opacity="0.6" stroke-linecap="round"/>
-      </g>
+          <!-- Nose -->
+          <path d="M51 54 Q52 60 53 54" stroke="rgba(180,90,140,0.35)" stroke-width="1" fill="none" stroke-linecap="round"/>
 
-      <!-- Name badge on coat (small detail) -->
-      <rect x="32" y="92" width="10" height="6" rx="1" fill="#fff" stroke="#9b6bff" stroke-width="0.5"/>
-      <line x1="34" y1="94" x2="40" y2="94" stroke="#9b6bff" stroke-width="0.6"/>
-      <line x1="34" y1="96" x2="38" y2="96" stroke="#c8c4d6" stroke-width="0.5"/>
-    </svg>
+          <!-- Subtle blush -->
+          <ellipse cx="36" cy="60" rx="3.5" ry="2.2" fill="#ff9bc8" opacity="0.30"/>
+          <ellipse cx="68" cy="60" rx="3.5" ry="2.2" fill="#ff9bc8" opacity="0.30"/>
+
+          <!-- Mouth — closed idle, opens when speaking -->
+          <path id="mavaMouthIdle" class="mava-mouth" d="M44 64 Q52 69 60 64" stroke="url(#docLip2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          <ellipse id="mavaMouthOpen" cx="52" cy="66" rx="6" ry="3.5" fill="url(#docLip2)" stroke="#a04848" stroke-width="0.7" style="display:none;"/>
+          <path d="M46 64.5 Q52 65.5 58 64.5" stroke="#ffffff" stroke-width="0.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
   </div>
 </div>
 <style>
-/* Doctor AI Avatar — top-tier, professional, animated.
-   Floats in the bottom-right of the presentation area.
-   - Head bobs gently when idle, nods when speaking
-   - Eyes blink naturally
-   - Mouth opens/closes in sync with narration (lip-sync)
-   - Hands gesture (left waves, right points) while speaking
-   - Soft purple halo pulses while speaking
+/* ── Dynamic Doctor AI Avatar — full body, moves to context ──
+   The avatar is anchored to #presentation (which is position:fixed
+   covering the viewport). It can be repositioned per-slide via the
+   .pos-* classes on #moduleAvatar, gliding smoothly via CSS
+   transitions on left/right/top/bottom.
+
+   The avatar shows the doctor's FULL BODY: head, torso, arms, hands,
+   legs, shoes — not just a face. Both arms have animated gestures
+   that change based on slide context (pointing, waving, explaining).
 */
 .module-avatar{
-  position:fixed;right:18px;bottom:18px;
-  width:96px;height:96px;z-index:60;pointer-events:none;
-  filter:drop-shadow(0 8px 18px rgba(124,92,255,0.35));
+  position:fixed;
+  z-index:60;
+  pointer-events:none;
+  /* Default position: bottom-right of the presentation area */
+  right:32px;
+  bottom:90px;
+  width:130px;
+  height:200px;
+  /* Smooth glide between positions. Note: transform is reserved for
+     position-presets (translateY(-50%) for vertical-centering) and the
+     .hidden state (scale(0.5)). The float animation is on the inner
+     .module-avatar-stage element to avoid clobbering transforms here. */
+  transition:left 0.7s cubic-bezier(0.34,1.4,0.64,1),
+             right 0.7s cubic-bezier(0.34,1.4,0.64,1),
+             top 0.7s cubic-bezier(0.34,1.4,0.64,1),
+             bottom 0.7s cubic-bezier(0.34,1.4,0.64,1),
+             opacity 0.4s ease,
+             transform 0.5s ease;
+  filter:drop-shadow(0 10px 22px rgba(124,92,255,0.35));
+}
+@keyframes mavaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* ── Position presets (set via JS based on slide type) ──
+   The avatar is position:fixed relative to the viewport. The bottom-bar
+   (presentation controls) is ~70px tall, so default bottom is 90px to
+   sit just above it. */
+/* Bottom-right: title, closing, content slides — companion position */
+.module-avatar.pos-bottom-right{ right:32px; left:auto; top:auto; bottom:90px; transform:none; }
+/* Bottom-left: alternate companion position (used on some content slides) */
+.module-avatar.pos-bottom-left{ left:32px; right:auto; top:auto; bottom:90px; transform:none; }
+/* Left side, vertically centered: concept/diagram slides — doctor stands
+   to the left, points right at the diagram */
+.module-avatar.pos-left-center{
+  left:32px; right:auto; top:50%; bottom:auto;
+  transform:translateY(-50%) scale(0.92);
+}
+/* Right side, vertically centered: summary slides — doctor stands to the
+   right, points left at the summary cards */
+.module-avatar.pos-right-center{
+  right:32px; left:auto; top:50%; bottom:auto;
+  transform:translateY(-50%) scale(0.92);
+}
+/* Top-right: intro/transition — doctor "welcomes" from the top */
+.module-avatar.pos-top-right{ right:32px; left:auto; top:80px; bottom:auto; transform:none; }
+
+/* Stage wrapper — holds the bg circle + shadow. The float animation
+   lives HERE so it doesn't conflict with the position transforms
+   on .module-avatar itself. */
+.module-avatar-stage{
+  position:relative;
+  width:100%; height:100%;
   animation:mavaFloat 4s ease-in-out 0.3s infinite;
 }
-@keyframes mavaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.avatar-shadow{
+  position:absolute;
+  left:50%; bottom:-4px;
+  transform:translateX(-50%);
+  width:60%; height:10px;
+  background:radial-gradient(ellipse at center, rgba(124,92,255,0.30) 0%, transparent 70%);
+  border-radius:50%;
+  filter:blur(2px);
+}
 .module-avatar-bg{
-  width:100%;height:100%;border-radius:50%;
-  background:radial-gradient(circle at 50% 38%,#fff 0%,#f3eeff 55%,#e8def8 100%);
-  border:3px solid #9b6bff;overflow:hidden;
-  box-shadow:0 0 0 4px rgba(124,92,255,0.14),0 8px 22px rgba(124,92,255,0.30),inset 0 0 14px rgba(124,92,255,0.15);
+  position:relative;
+  width:100%; height:100%;
+  border-radius:18px;
+  background:radial-gradient(ellipse at 50% 30%, #fff 0%, #f3eeff 55%, #e8def8 100%);
+  border:3px solid #9b6bff;
+  overflow:hidden;
+  box-shadow:0 0 0 4px rgba(124,92,255,0.14), 0 8px 22px rgba(124,92,255,0.30), inset 0 0 14px rgba(124,92,255,0.15);
 }
 .module-avatar.speaking .module-avatar-bg{
-  box-shadow:0 0 0 6px rgba(124,92,255,0.22),0 0 28px 4px rgba(124,92,255,0.55);
+  box-shadow:0 0 0 6px rgba(124,92,255,0.22), 0 0 28px 4px rgba(124,92,255,0.55);
   animation:mavaHalo 1s ease-in-out infinite;
 }
 @keyframes mavaHalo{
   0%,100%{box-shadow:0 0 0 5px rgba(124,92,255,0.16),0 0 22px rgba(124,92,255,0.40)}
   50%{box-shadow:0 0 0 10px rgba(124,92,255,0.28),0 0 32px rgba(124,92,255,0.60)}
 }
-.module-avatar-svg{width:96%;height:96%;overflow:visible;}
+.module-avatar-svg{width:100%;height:100%;overflow:visible;}
 
 /* Head bob — gentle when idle, nodding when speaking */
 .doc-head{
@@ -1191,10 +1294,10 @@ window.addEventListener('message', event => {
 .module-avatar.speaking .doc-head{
   animation:docBobSpeak 0.5s ease-in-out infinite;
 }
-@keyframes docBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes docBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-1.5px)}}
 @keyframes docBobSpeak{
-  0%,100%{transform:translateY(0) rotate(-0.8deg)}
-  50%{transform:translateY(-3px) rotate(0.8deg)}
+  0%,100%{transform:translateY(0) rotate(-0.6deg)}
+  50%{transform:translateY(-2px) rotate(0.6deg)}
 }
 
 /* Eye blink */
@@ -1209,44 +1312,119 @@ window.addEventListener('message', event => {
   95%{transform:scaleY(0.05)}
 }
 
-/* Hand gestures — left hand waves gently, right hand points to content */
-.doc-hand{
-  transform-origin:center;
+/* ── ARM GESTURES — the key feature ──
+   Each arm rotates around its shoulder (top of the arm path).
+   Gestures change based on the slide context:
+     - "explaining" (default while speaking): both arms swing gently
+     - "pointing-right": left arm extends right (toward content on right)
+     - "pointing-left": right arm extends left (toward content on left)
+     - "welcoming": both arms open outward
+*/
+.doc-arm{
+  transform-origin:50% 0%;
   transform-box:fill-box;
-  opacity:0.9;
-}
-.doc-hand-left{
-  animation:docHandLeftIdle 3.5s ease-in-out infinite;
-}
-.module-avatar.speaking .doc-hand-left{
-  animation:docHandLeftSpeak 1.2s ease-in-out infinite;
-}
-@keyframes docHandLeftIdle{
-  0%,100%{transform:translateY(0) rotate(0deg)}
-  50%{transform:translateY(-1px) rotate(-2deg)}
-}
-@keyframes docHandLeftSpeak{
-  0%,100%{transform:translate(0,0) rotate(-8deg)}
-  50%{transform:translate(-2px,-3px) rotate(8deg)}
+  transition:transform 0.5s cubic-bezier(0.34,1.4,0.64,1);
 }
 
-.doc-hand-right{
-  animation:docHandRightIdle 3.8s ease-in-out infinite 0.5s;
+/* Default idle: gentle sway */
+.doc-arm-left{
+  animation:armIdleLeft 3.5s ease-in-out infinite;
+  transform-origin:50% 5%;
 }
-.module-avatar.speaking .doc-hand-right{
-  animation:docHandRightSpeak 1.0s ease-in-out infinite;
+.doc-arm-right{
+  animation:armIdleRight 3.8s ease-in-out infinite 0.4s;
+  transform-origin:50% 5%;
 }
-@keyframes docHandRightIdle{
-  0%,100%{transform:translateY(0) rotate(0deg)}
-  50%{transform:translateY(-1px) rotate(2deg)}
+@keyframes armIdleLeft{
+  0%,100%{transform:rotate(0deg)}
+  50%{transform:rotate(-3deg)}
 }
-@keyframes docHandRightSpeak{
-  0%,100%{transform:translate(0,0) rotate(8deg)}
-  50%{transform:translate(2px,-3px) rotate(-8deg)}
+@keyframes armIdleRight{
+  0%,100%{transform:rotate(0deg)}
+  50%{transform:rotate(3deg)}
 }
+
+/* Speaking: both arms gesture more emphatically */
+.module-avatar.speaking .doc-arm-left{
+  animation:armSpeakLeft 0.9s ease-in-out infinite;
+}
+.module-avatar.speaking .doc-arm-right{
+  animation:armSpeakRight 0.9s ease-in-out infinite 0.15s;
+}
+@keyframes armSpeakLeft{
+  0%,100%{transform:rotate(-8deg)}
+  50%{transform:rotate(8deg)}
+}
+@keyframes armSpeakRight{
+  0%,100%{transform:rotate(8deg)}
+  50%{transform:rotate(-8deg)}
+}
+
+/* Pointing-right: left arm reaches across to point rightward
+   (used when standing on the left side of a diagram) */
+.module-avatar.gesture-point-right .doc-arm-left{
+  animation:armPointRight 1.2s ease-in-out infinite;
+  transform-origin:50% 5%;
+}
+.module-avatar.gesture-point-right .doc-arm-right{
+  animation:armIdleRight 3.8s ease-in-out infinite 0.4s;
+}
+@keyframes armPointRight{
+  0%,100%{transform:rotate(20deg) translateY(-2px)}
+  50%{transform:rotate(30deg) translateY(-4px)}
+}
+/* When pointing, extend the left pointing finger */
+.module-avatar.gesture-point-right .doc-finger-left{
+  stroke-width:4.5;
+  filter:drop-shadow(0 0 4px rgba(124,92,255,0.6));
+}
+
+/* Pointing-left: right arm reaches across to point leftward
+   (used when standing on the right side of summary cards) */
+.module-avatar.gesture-point-left .doc-arm-right{
+  animation:armPointLeft 1.2s ease-in-out infinite;
+  transform-origin:50% 5%;
+}
+.module-avatar.gesture-point-left .doc-arm-left{
+  animation:armIdleLeft 3.5s ease-in-out infinite;
+}
+@keyframes armPointLeft{
+  0%,100%{transform:rotate(-20deg) translateY(-2px)}
+  50%{transform:rotate(-30deg) translateY(-4px)}
+}
+.module-avatar.gesture-point-left .doc-finger-right{
+  stroke-width:4.5;
+  filter:drop-shadow(0 0 4px rgba(124,92,255,0.6));
+}
+
+/* Welcoming: both arms open outward (title/closing slides) */
+.module-avatar.gesture-welcome .doc-arm-left{
+  animation:armWelcomeLeft 2.2s ease-in-out infinite;
+}
+.module-avatar.gesture-welcome .doc-arm-right{
+  animation:armWelcomeRight 2.2s ease-in-out infinite 0.2s;
+}
+@keyframes armWelcomeLeft{
+  0%,100%{transform:rotate(-15deg)}
+  50%{transform:rotate(-25deg)}
+}
+@keyframes armWelcomeRight{
+  0%,100%{transform:rotate(15deg)}
+  50%{transform:rotate(25deg)}
+}
+
+/* Hidden on intro/outro video sections */
+.module-avatar.hidden{ opacity:0; pointer-events:none; transform:scale(0.5); }
 
 @media (max-width:640px){
-  .module-avatar{width:72px;height:72px;right:10px;bottom:10px;}
+  .module-avatar{width:90px;height:140px;}
+  .module-avatar.pos-bottom-right{right:14px;bottom:14px;}
+  .module-avatar.pos-bottom-left{left:14px;bottom:14px;}
+  .module-avatar.pos-left-center{left:14px;}
+  .module-avatar.pos-right-center{right:14px;}
+}
+@media (max-width:480px){
+  .module-avatar{width:74px;height:114px;}
 }
 </style>
 <script>
@@ -1256,16 +1434,126 @@ window.addEventListener('message', event => {
   var idle=document.getElementById('mavaMouthIdle');
   var open=document.getElementById('mavaMouthOpen');
   var closeT=null, maxT=null, boundaryFired=false, fallbackT=null;
+
   function mouthOpen(){ if(idle)idle.style.display='none'; if(open)open.style.display=''; }
   function mouthClose(){ if(idle)idle.style.display=''; if(open)open.style.display='none'; }
   function stopMouth(){ if(fallbackT){clearInterval(fallbackT);fallbackT=null;} clearTimeout(closeT); mouthClose(); }
   function setSpeaking(on){
-    if(on){ av.classList.add('speaking'); boundaryFired=false; clearTimeout(fallbackT); fallbackT=setTimeout(function(){ if(!boundaryFired){ fallbackT=setInterval(function(){ if(idle.style.display==='none') mouthClose(); else mouthOpen(); },150);} },320); }
+    if(on){ av.classList.add('speaking'); boundaryFired=false; clearTimeout(fallbackT);
+            fallbackT=setTimeout(function(){ if(!boundaryFired){
+              fallbackT=setInterval(function(){ if(idle.style.display==='none') mouthClose(); else mouthOpen(); },150);
+            } },320); }
     else { av.classList.remove('speaking'); stopMouth(); }
   }
-  function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;} mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
-  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length; return Math.max(2500, w*450+2500); }
-  // Wrap presentationVoice.speak so the avatar lip-syncs to the module's narration.
+  function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;}
+                        mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
+  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
+                             return Math.max(2500, w*450+2500); }
+
+  // ── DYNAMIC POSITIONING ──────────────────────────────────────
+  // Moves the avatar to a context-appropriate position based on the
+  // current slide type. Called from enterSlideSection() below.
+  function clearPositionClasses(){
+    av.classList.remove('pos-bottom-right','pos-bottom-left','pos-left-center','pos-right-center','pos-top-right');
+  }
+  function clearGestureClasses(){
+    av.classList.remove('gesture-point-right','gesture-point-left','gesture-welcome');
+  }
+  function setPosition(posClass){
+    clearPositionClasses();
+    av.classList.add(posClass);
+  }
+  function setGesture(gestureClass){
+    clearGestureClasses();
+    if(gestureClass) av.classList.add(gestureClass);
+  }
+  function show(){ av.classList.remove('hidden'); }
+  function hide(){ av.classList.add('hidden'); }
+
+  // Pick a position + gesture based on the current slide.
+  // Exposed globally so the presentation engine can call it.
+  window.__doctorAvatar = {
+    onSlideEnter: function(slideType){
+      show();
+      switch(slideType){
+        case 'title':
+        case 'closing':
+          setPosition('pos-bottom-right');
+          setGesture('gesture-welcome');
+          break;
+        case 'concept':
+        case 'diagram':
+          // Stand on the left, point right at the diagram/visual
+          setPosition('pos-left-center');
+          setGesture('gesture-point-right');
+          break;
+        case 'summary':
+          // Stand on the right, point left at the summary cards
+          setPosition('pos-right-center');
+          setGesture('gesture-point-left');
+          break;
+        case 'content':
+        default:
+          // Companion position, explaining gesture (default)
+          setPosition('pos-bottom-right');
+          setGesture(null);
+          break;
+      }
+    },
+    onIntroVideo: function(){ hide(); },
+    onOutroVideo: function(){ hide(); },
+    setSpeaking: setSpeaking
+  };
+
+  // ── HOOK INTO THE PRESENTATION ENGINE ────────────────────────
+  // Wrap enterSlideSection so the avatar repositions whenever the
+  // slide changes. Wrap enterIntroSection / enterOutroSection to
+  // hide the avatar during video playback.
+  function hookPresentation(){
+    if (typeof enterSlideSection === 'function' && !window._docAvHooked) {
+      window._docAvHooked = true;
+      var origEnterSlide = enterSlideSection;
+      enterSlideSection = function(){
+        var result = origEnterSlide.apply(this, arguments);
+        // After the slide is rendered, reposition the avatar
+        try {
+          var s = slides[currentSlide];
+          if (s && window.__doctorAvatar) {
+            window.__doctorAvatar.onSlideEnter(s.type);
+          }
+        } catch(e){}
+        return result;
+      };
+      // Wrap enterIntroSection + enterOutroSection
+      if (typeof enterIntroSection === 'function') {
+        var origEnterIntro = enterIntroSection;
+        enterIntroSection = function(){
+          var r = origEnterIntro.apply(this, arguments);
+          if (window.__doctorAvatar) window.__doctorAvatar.onIntroVideo();
+          return r;
+        };
+      }
+      if (typeof enterOutroSection === 'function') {
+        var origEnterOutro = enterOutroSection;
+        enterOutroSection = function(){
+          var r = origEnterOutro.apply(this, arguments);
+          if (window.__doctorAvatar) window.__doctorAvatar.onOutroVideo();
+          return r;
+        };
+      }
+    }
+  }
+  // Try hooking immediately; if not ready, defer to load
+  if (typeof enterSlideSection === 'function') {
+    hookPresentation();
+  } else {
+    window.addEventListener('load', hookPresentation);
+  }
+  // Also retry after a short delay in case the presentation script
+  // loads after this avatar script
+  setTimeout(hookPresentation, 500);
+
+  // ── LIP-SYNC HOOK (unchanged from before) ────────────────────
   function hook(){
     var pv=window.presentationVoice; if(!pv||!pv.speak||pv._mavaHooked) return; pv._mavaHooked=true;
     var orig=pv.speak;
