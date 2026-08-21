@@ -2,7 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Consistent zoom across laptops: viewport-fit=cover handles notches/
+         rounded corners on modern laptops; the explicit width=device-width
+         prevents the browser from applying its own auto-zoom on small
+         laptop screens (common on 1366×768 displays with 125% Windows
+         scaling). The page itself uses rem-based sizing and responsive
+         breakpoints so it renders identically regardless of the laptop's
+         DPI scaling setting. -->
     <!-- Belt-and-suspenders alongside the Cache-Control headers in
          render.yaml: some intermediate caches/proxies pay attention to
          these, even though the real HTTP header is what regular browsers
@@ -160,6 +167,19 @@
             font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
+        html {
+            /* Consistent root font-size across laptops — prevents the page
+               from rendering extra-zoomed-in on small laptop screens
+               (1366×768) or extra-zoomed-out on 4K displays. Browsers
+               default to 16px, but some laptops with high-DPI scaling
+               can shift this; pinning it ensures rem-based sizing stays
+               identical across machines. */
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
         body {
             background: var(--bg);
             min-height: 100vh;
@@ -168,6 +188,24 @@
             overflow-x: hidden;
             color: var(--ink);
             transition: background 0.4s ease, color 0.3s ease;
+            /* Prevent the page from being scaled by browser pinch-zoom on
+               trackpads — keeps the layout stable on laptop touchpads. */
+            touch-action: pan-x pan-y;
+        }
+
+        /* Small-laptop (1366×768) tuning: slightly tighter padding so the
+           layout fits without feeling cramped or triggering horizontal
+           scroll. This is the most common laptop resolution where users
+           report the UI feeling "zoomed in". */
+        @media (max-width: 1400px) and (min-width: 1024px) {
+            .container { padding: 0.6rem 1.5rem 1.5rem !important; gap: 1.2rem !important; }
+            .sidebar { padding: 1.2rem 1.4rem !important; }
+            header { padding: 0.7rem 1.5rem !important; }
+        }
+        @media (max-width: 1200px) and (min-width: 1024px) {
+            .container { padding: 0.5rem 1.2rem 1.2rem !important; gap: 1rem !important; }
+            .sidebar { padding: 1rem 1.2rem !important; }
+            header { padding: 0.6rem 1.2rem !important; }
         }
 
         /* ========== PERMANENT MAIN-UI BACKGROUND / COURSE RELAXER ========== */
@@ -208,6 +246,27 @@
         .relaxer-btn.active {
             background: rgba(124,92,255,0.4);
             border-color: rgba(124,92,255,0.7);
+        }
+
+        /* About Excelra button — uses tokens so it flips cleanly in dark mode */
+        .about-excelra-btn {
+            background: var(--brand-soft);
+            border: 1.5px solid var(--brand-line);
+            color: var(--ink);
+            border-radius: 6px;
+            padding: 0.3rem 0.7rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .about-excelra-btn:hover {
+            background: var(--surface-3);
+            border-color: var(--brand-pink);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(124,92,255,0.25);
         }
 
         /* ========== THEME SWITCH ========== */
@@ -332,6 +391,70 @@
         body.theme-dark .nav-btn { background: var(--surface-2) !important; border-color: var(--hairline-strong) !important; }
         body.theme-dark .nav-btn:hover { background: var(--surface-3) !important; }
         body.theme-dark .logo-text, body.theme-dark .logo-text span { color: var(--ink) !important; }
+
+        /* ── DARK-MODE FIXES: Sidebar, lesson chips, module nav, module-purpose ──
+           These legacy components had hard-coded light-theme colours that became
+           invisible in dark mode. They now flip cleanly using the same surface/ink
+           token system as the rest of the UI. Brand purple stays identical. */
+        body.theme-dark .sidebar { background: var(--surface) !important; box-shadow: var(--shadow) !important; }
+        body.theme-dark .module-nav-back { color: var(--ink-soft) !important; border-color: var(--hairline-strong) !important; background: var(--surface-2) !important; }
+        body.theme-dark .module-nav-back:hover { background: var(--surface-3) !important; color: var(--ink) !important; }
+        body.theme-dark .module-nav-eyebrow { color: var(--brand-pink) !important; }
+        body.theme-dark .module-nav-heading h2 { color: var(--ink) !important; }
+        body.theme-dark .lesson-item { background: var(--surface-2) !important; border-color: var(--hairline) !important; color: var(--ink-soft) !important; }
+        body.theme-dark .lesson-item .lesson-title { color: var(--ink-soft) !important; }
+        body.theme-dark .lesson-item .lesson-duration { color: var(--ink-muted) !important; }
+        body.theme-dark .lesson-item:hover { background: var(--surface-3) !important; border-color: var(--hairline-strong) !important; }
+        body.theme-dark .lesson-item:hover .lesson-title { color: var(--ink) !important; }
+        body.theme-dark .lesson-item.active { background: linear-gradient(120deg, var(--primary) 0%, var(--secondary) 100%) !important; color: #fff !important; border-color: transparent !important; }
+        body.theme-dark .lesson-item.active .lesson-title,
+        body.theme-dark .lesson-item.active .lesson-duration { color: #fff !important; }
+        body.theme-dark .lesson-item.completed { background: rgba(22,163,74,0.18) !important; border-color: rgba(22,163,74,0.45) !important; color: #4ade80 !important; }
+        body.theme-dark .lesson-item.completed .lesson-title,
+        body.theme-dark .lesson-item.completed .lesson-duration { color: #4ade80 !important; }
+        body.theme-dark .lesson-icon { background: var(--surface-3) !important; color: var(--ink-muted) !important; }
+        body.theme-dark .lesson-item.completed .lesson-icon { background: var(--success) !important; color: #fff !important; }
+        body.theme-dark .lesson-item.active .lesson-icon { background: rgba(255,255,255,0.22) !important; color: #fff !important; }
+
+        /* "Why this activity?" panel — text colours flip cleanly */
+        body.theme-dark .module-purpose { background: linear-gradient(135deg, rgba(124,92,255,0.18), rgba(199,125,255,0.20)) !important; border-color: var(--brand-line) !important; }
+        body.theme-dark .module-purpose-toggle { color: #a78bff !important; }
+        body.theme-dark .module-purpose-body { color: var(--ink-soft) !important; }
+
+        /* About Excelra button — fix the inline-styled button so it stays readable in dark mode */
+        body.theme-dark .about-excelra-btn { background: var(--brand-soft) !important; border-color: var(--brand-line) !important; color: var(--ink) !important; }
+        body.theme-dark .about-excelra-btn:hover { background: var(--surface-3) !important; border-color: var(--brand-pink) !important; }
+
+        /* About Excelra page — flip every hard-coded inline colour inside the page */
+        body.theme-dark .about-page * { color: revert-layer; }
+        body.theme-dark .about-page p,
+        body.theme-dark .about-page li,
+        body.theme-dark .about-page span,
+        body.theme-dark .about-page div { color: var(--ink-soft); }
+        body.theme-dark .about-page h1,
+        body.theme-dark .about-page h2,
+        body.theme-dark .about-page h3,
+        body.theme-dark .about-page h4 { color: var(--ink) !important; }
+        body.theme-dark .about-page .about-hero-eyebrow,
+        body.theme-dark .about-page .about-section-eyebrow { color: var(--brand-pink) !important; }
+        body.theme-dark .about-page .about-hero-title { color: var(--ink) !important; }
+        body.theme-dark .about-page .about-hero-sub { color: var(--ink-soft) !important; }
+        body.theme-dark .about-page .about-stat-card,
+        body.theme-dark .about-page .about-card,
+        body.theme-dark .about-page .about-pill-card,
+        body.theme-dark .about-page .about-offer-card { background: var(--surface-2) !important; border-color: var(--hairline-strong) !important; color: var(--ink-soft) !important; box-shadow: 0 4px 18px rgba(0,0,0,0.30) !important; }
+        body.theme-dark .about-page .about-stat-label { color: var(--ink-muted) !important; }
+        body.theme-dark .about-page .about-stat-value { color: var(--ink) !important; }
+        body.theme-dark .about-page .about-tag-pill { background: var(--surface-3) !important; color: var(--ink-soft) !important; border-color: var(--hairline-strong) !important; }
+        body.theme-dark .about-page .about-cta-btn { background: linear-gradient(135deg, var(--primary), var(--secondary)) !important; color: #fff !important; }
+        body.theme-dark .about-page .about-quote { background: var(--surface-2) !important; border-color: var(--brand-line) !important; color: var(--ink) !important; }
+        body.theme-dark .about-page .about-quote-attr { color: var(--ink-muted) !important; }
+        body.theme-dark .about-page .about-presence-pill { background: var(--surface-3) !important; color: var(--ink-soft) !important; border-color: var(--hairline-strong) !important; }
+        body.theme-dark .about-page .about-product-card { background: var(--surface-2) !important; border-color: var(--hairline-strong) !important; }
+        body.theme-dark .about-page .about-product-name { color: var(--ink) !important; }
+        body.theme-dark .about-page .about-product-desc { color: var(--ink-muted) !important; }
+        body.theme-dark .about-page .about-section-title { color: var(--ink) !important; }
+        body.theme-dark .about-page .about-section-body { color: var(--ink-soft) !important; }
 
         /* ========== END THEME SWITCH ========== */
 
@@ -2331,6 +2454,18 @@
             border-bottom: 1px solid var(--hairline);
         }
         .about-page-logo { height: 34px; width: auto; display: block; }
+        .about-topbar-eyebrow {
+            font-family: var(--font-mono);
+            font-size: 0.72rem; font-weight: 700;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: var(--ink-muted);
+            display: block;
+        }
+        .about-topbar-sub {
+            font-size: 0.88rem;
+            color: var(--ink-soft);
+            display: block;
+        }
         .about-page-close {
             background: linear-gradient(135deg,var(--primary),var(--secondary)); color: white; border: none; border-radius: 8px;
             padding: 0.65rem 1.4rem; font-weight: 700; font-size: 0.85rem; cursor: pointer;
@@ -2373,32 +2508,45 @@
             padding: 0.4rem 0.9rem; border-radius: 20px;
             background: var(--brand-soft); border: 1px solid var(--brand-line); color: var(--primary);
         }
-        /* DNA double helix — animated, whitish-light-purple. The two strands
-           twist via a 3D rotation; rungs connect base pairs. Pure SVG+CSS. */
+        /* DNA double helix — STATIC, elegant, premium. The two strands
+           remain still but the whole graphic gets a subtle lift + glow
+           when hovered, signaling interactivity without feeling busy. */
         .dna-wrap {
-            width: 100%; max-width: 360px; margin: 0 auto;
+            width: 100%; max-width: 380px; margin: 0 auto;
             aspect-ratio: 1 / 1.05;
             position: relative;
             display: flex; align-items: center; justify-content: center;
+            transition: transform 0.6s cubic-bezier(.22,1,.36,1), filter 0.6s ease;
         }
+        .dna-wrap::before {
+            content: '';
+            position: absolute; inset: -10%;
+            background: radial-gradient(circle at 50% 50%, rgba(124,92,255,0.18), transparent 60%);
+            border-radius: 50%;
+            z-index: -1;
+            transition: opacity 0.5s ease;
+            opacity: 0.6;
+        }
+        .dna-wrap:hover { transform: translateY(-6px) scale(1.02); filter: drop-shadow(0 18px 32px rgba(124,92,255,0.28)); }
+        .dna-wrap:hover::before { opacity: 1; }
         .dna-svg { width: 100%; height: 100%; overflow: visible; }
         .dna-strand-a, .dna-strand-b {
-            fill: none; stroke-width: 5; stroke-linecap: round;
+            fill: none; stroke-width: 5.5; stroke-linecap: round;
         }
         .dna-strand-a { stroke: url(#dnaGradA); }
         .dna-strand-b { stroke: url(#dnaGradB); }
-        .dna-rung { stroke: rgba(124,92,255,0.45); stroke-width: 2.4; stroke-linecap: round; }
-        .dna-node { fill: #fff; stroke: var(--primary); stroke-width: 2; }
+        .dna-rung { stroke: rgba(124,92,255,0.50); stroke-width: 2.4; stroke-linecap: round; transition: stroke 0.4s ease; }
+        .dna-node { fill: #fff; stroke: var(--primary); stroke-width: 2; transition: transform 0.4s ease, fill 0.4s ease; transform-origin: center; transform-box: fill-box; }
         .dna-node.alt { fill: #f0e6ff; stroke: var(--brand-pink); }
-        /* Slow twist: rotate the whole helix group around its vertical axis. */
-        .dna-helix { transform-origin: 50% 50%; animation: dnaTwist 9s linear infinite; }
-        @keyframes dnaTwist { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
-        /* Floating particles around the helix for life. */
-        .dna-particle { fill: var(--brand-pink); opacity: 0.5; }
-        .dna-particle.p1 { animation: dnaFloat 6s ease-in-out infinite; }
-        .dna-particle.p2 { animation: dnaFloat 7.5s ease-in-out infinite 0.6s; }
-        .dna-particle.p3 { animation: dnaFloat 5.5s ease-in-out infinite 1.2s; }
-        @keyframes dnaFloat { 0%,100% { transform: translateY(0); opacity: 0.35; } 50% { transform: translateY(-14px); opacity: 0.7; } }
+        .dna-wrap:hover .dna-node { transform: scale(1.18); }
+        .dna-wrap:hover .dna-rung { stroke: rgba(199,125,255,0.65); }
+        /* Subtle, slow background glow drift — barely perceptible, keeps the
+           graphic feeling alive without the distracting 3D twist. */
+        @keyframes dnaGlowPulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50%      { opacity: 0.8; transform: scale(1.04); }
+        }
+        .dna-bg-glow { animation: dnaGlowPulse 7s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
         @media (max-width: 820px) {
             .about-hero { grid-template-columns: 1fr; gap: 2rem; padding: 3rem 6vw 2.5rem; text-align: center; }
             .about-hero-lede { margin: 0 auto; }
@@ -2425,6 +2573,339 @@
         .about-text {
             max-width: 820px;
             margin: 0 auto;
+        }
+
+        /* ── Restructured About Excelra page — class-based styling ──
+           Replaces the previous inline-styled cards so the page reads
+           cleanly in BOTH themes and supports hover lifts + accents. */
+        .about-page .about-hero-eyebrow,
+        .about-page .about-section-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.6rem;
+            font-family: var(--font-mono);
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+            color: var(--primary); margin-bottom: 1rem;
+        }
+        .about-page .about-hero-eyebrow::before,
+        .about-page .about-section-eyebrow::before {
+            content: ''; width: 26px; height: 2px;
+            background: linear-gradient(90deg, var(--primary), var(--brand-pink));
+            border-radius: 2px;
+        }
+        .about-page .about-hero-title {
+            font-family: var(--font-display);
+            font-weight: 300;
+            font-size: clamp(2.2rem, 5vw, 3.4rem);
+            line-height: 1.05;
+            letter-spacing: -0.02em;
+            margin: 0.5rem 0 1.2rem;
+            color: var(--ink);
+            background: linear-gradient(120deg, #7c3aed 0%, #c77dff 55%, #f0a6ff 100%);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .about-page .about-hero-sub {
+            font-size: 1.12rem; line-height: 1.65;
+            color: var(--ink-soft); max-width: 540px;
+            margin-bottom: 1.4rem;
+        }
+        .about-page .about-section-title {
+            font-family: var(--font-display);
+            font-size: clamp(1.6rem, 3vw, 2.2rem);
+            font-weight: 500;
+            color: var(--ink);
+            margin: 0 0 0.8rem;
+            letter-spacing: -0.01em;
+        }
+        .about-page .about-section-body {
+            font-size: 1rem; line-height: 1.7;
+            color: var(--ink-soft);
+            margin-bottom: 1.5rem;
+        }
+        .about-page .about-quote {
+            background: var(--surface-2);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            padding: 1.3rem 1.6rem;
+            margin-bottom: 2rem;
+            font-family: var(--font-display);
+            font-style: italic;
+            font-weight: 500;
+            font-size: 1.3rem;
+            color: var(--ink);
+            line-height: 1.55;
+            box-shadow: 0 4px 16px rgba(124,92,255,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .about-page .about-quote:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 24px rgba(124,92,255,0.16);
+        }
+        .about-page .about-quote-attr {
+            display: block;
+            margin-top: 0.6rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 1.5px; text-transform: uppercase;
+            color: var(--ink-muted);
+        }
+        .about-page .about-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .about-page .about-stat-card {
+            background: var(--surface-2);
+            border: 1px solid var(--hairline);
+            border-radius: 12px;
+            padding: 1.1rem 1.2rem;
+            transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .about-page .about-stat-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--brand-pink));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(.22,1,.36,1);
+        }
+        .about-page .about-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(124,92,255,0.16);
+            border-color: var(--brand-line);
+        }
+        .about-page .about-stat-card:hover::before { transform: scaleX(1); }
+        .about-page .about-stat-label {
+            font-family: var(--font-mono);
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.2px;
+            color: var(--ink-muted);
+            margin-bottom: 0.4rem;
+        }
+        .about-page .about-stat-value {
+            font-family: var(--font-display);
+            font-size: 1.4rem; font-weight: 600;
+            color: var(--ink);
+            line-height: 1.2;
+        }
+        .about-page .about-stat-sub {
+            font-size: 0.85rem;
+            color: var(--ink-muted);
+            margin-top: 4px;
+        }
+        .about-page .about-subsection-title {
+            font-size: 0.85rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--ink);
+            margin-bottom: 0.9rem;
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .about-page .about-subsection-title::before {
+            content: ''; width: 8px; height: 8px;
+            background: linear-gradient(135deg, var(--primary), var(--brand-pink));
+            border-radius: 2px;
+            transform: rotate(45deg);
+        }
+        .about-page .about-products-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.8rem;
+            margin-bottom: 2rem;
+        }
+        .about-page .about-product-card {
+            display: flex; gap: 1rem;
+            padding: 1.1rem 1.2rem;
+            background: var(--surface-2);
+            border: 1px solid var(--hairline);
+            border-radius: 12px;
+            align-items: flex-start;
+            transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .about-page .about-product-card::after {
+            content: '';
+            position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+            background: linear-gradient(180deg, var(--primary), var(--brand-pink));
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.4s cubic-bezier(.22,1,.36,1);
+        }
+        .about-page .about-product-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 8px 22px rgba(124,92,255,0.14);
+            border-color: var(--brand-line);
+        }
+        .about-page .about-product-card:hover::after { transform: scaleY(1); }
+        .about-page .about-product-badge {
+            width: 44px; height: 44px; min-width: 44px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 0.95rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(124,92,255,0.25);
+        }
+        .about-page .about-product-badge.gs { background: linear-gradient(135deg, #7c5cff, #c77dff); }
+        .about-page .about-product-badge.gb { background: linear-gradient(135deg, #16a34a, #0d9488); }
+        .about-page .about-product-badge.ct { background: linear-gradient(135deg, #f97316, #dc2626); }
+        .about-page .about-product-name {
+            font-family: var(--font-display);
+            font-weight: 600; font-size: 1.1rem;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+        .about-page .about-product-desc {
+            font-size: 0.9rem; line-height: 1.55;
+            color: var(--ink-muted);
+        }
+        .about-page .about-offer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 0.7rem;
+            margin-bottom: 2rem;
+        }
+        .about-page .about-offer-card {
+            padding: 0.85rem 1.05rem;
+            background: var(--surface-2);
+            border: 1px solid var(--hairline);
+            border-radius: 10px;
+            font-size: 0.92rem; font-weight: 600;
+            color: var(--ink);
+            transition: transform 0.3s cubic-bezier(.22,1,.36,1), background 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            padding-left: 2.4rem;
+        }
+        .about-page .about-offer-card::before {
+            content: '';
+            position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%);
+            width: 10px; height: 10px;
+            background: linear-gradient(135deg, var(--primary), var(--brand-pink));
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px var(--brand-soft);
+            transition: transform 0.3s ease;
+        }
+        .about-page .about-offer-card:hover {
+            transform: translateY(-2px);
+            background: var(--surface-3);
+            border-color: var(--brand-line);
+            box-shadow: 0 6px 16px rgba(124,92,255,0.12);
+        }
+        .about-page .about-offer-card:hover::before { transform: translateY(-50%) scale(1.25); }
+        .about-page .about-presence-row {
+            display: flex; gap: 0.6rem; flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .about-page .about-presence-pill {
+            padding: 0.5rem 1rem;
+            background: var(--surface-3);
+            color: var(--ink);
+            border-radius: 24px;
+            font-size: 0.88rem; font-weight: 700;
+            border: 1px solid var(--hairline-strong);
+            transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease, background 0.3s ease;
+            display: inline-flex; align-items: center; gap: 0.45rem;
+        }
+        .about-page .about-presence-pill::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 0 3px rgba(22,163,74,0.18);
+        }
+        .about-page .about-presence-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(124,92,255,0.18);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-color: transparent;
+        }
+        .about-page .about-presence-pill:hover::before {
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
+        }
+        .about-page .about-pill-card {
+            background: var(--surface-2);
+            border: 1px solid var(--hairline);
+            border-radius: 14px;
+            padding: 1.4rem 1.5rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+        .about-page .about-pill-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(124,92,255,0.14);
+            border-color: var(--brand-line);
+        }
+        .about-page .about-cta-row {
+            display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;
+            margin-top: 1.5rem;
+        }
+        .about-page .about-cta-btn {
+            display: inline-flex; align-items: center; gap: 0.55rem;
+            padding: 0.85rem 1.85rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: #fff;
+            border-radius: 10px;
+            font-weight: 700; font-size: 1rem;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease;
+            box-shadow: 0 6px 18px rgba(124,92,255,0.32);
+        }
+        .about-page .about-cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(124,92,255,0.45);
+        }
+        .about-page .about-cta-btn svg { width: 16px; height: 16px; }
+        .about-page .about-cta-secondary {
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            padding: 0.85rem 1.4rem;
+            background: transparent;
+            color: var(--ink-soft);
+            border: 1px solid var(--hairline-strong);
+            border-radius: 10px;
+            font-weight: 600; font-size: 0.95rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .about-page .about-cta-secondary:hover {
+            border-color: var(--brand-line);
+            color: var(--ink);
+            background: var(--brand-soft);
+        }
+        .about-page .about-metric-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0 2rem;
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--brand-soft), rgba(199,125,255,0.08));
+            border: 1px solid var(--brand-line);
+            border-radius: 14px;
+        }
+        .about-page .about-metric-item {
+            text-align: center;
+            padding: 0.4rem 0.6rem;
+        }
+        .about-page .about-metric-value {
+            font-family: var(--font-display);
+            font-size: 1.75rem;
+            font-weight: 600;
+            background: linear-gradient(120deg, var(--primary), var(--brand-pink));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+        .about-page .about-metric-label {
+            font-family: var(--font-mono);
+            font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--ink-muted);
+            margin-top: 0.4rem;
         }
 
         @media (max-width: 900px) {
@@ -2872,13 +3353,7 @@
                 </button>
                 <div class="voice-keywords-popover" id="voiceKeywordsPopover" role="tooltip" aria-hidden="true"></div>
             </div>
-            <button onclick="showAboutExcelra()" title="About Excelra"
-                style="background:rgba(0,0,0,0.05);border:1.5px solid rgba(0,0,0,0.15);
-                       color:#3a4150;border-radius:6px;padding:0.3rem 0.7rem;
-                       font-size:0.72rem;font-weight:600;cursor:pointer;
-                       letter-spacing:0.3px;transition:all 0.2s;white-space:nowrap;"
-                onmouseover="this.style.background='rgba(0,0,0,0.09)'"
-                onmouseout="this.style.background='rgba(0,0,0,0.05)'">
+            <button class="about-excelra-btn" onclick="showAboutExcelra()" title="About Excelra">
                 About Excelra
             </button>
             <div class="user-avatar" onclick="toggleUserMenu()" id="userAvatar">G</div>
@@ -3012,19 +3487,19 @@
             <div style="display:flex;align-items:center;gap:0.9rem;">
                 <img src="Logo.png" alt="Excelra" class="excelra-logo about-page-logo">
                 <div>
-                    <span style="font-size:0.782rem;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#9ca3af;display:block;">Knowledge Solutions</span>
-                    <span style="font-size:0.897rem;color:#9ca3af;">Life Sciences Data &amp; AI Company</span>
+                    <span class="about-topbar-eyebrow">Knowledge Solutions</span>
+                    <span class="about-topbar-sub">Life Sciences Data &amp; AI Company</span>
                 </div>
             </div>
             <button class="about-page-close" onclick="closeAboutExcelra()">← Back to Course</button>
         </div>
 
-        <!-- ── Hero: animated DNA double helix + Excelra tagline ── -->
+        <!-- ── Hero: STATIC DNA double helix + Excelra tagline ── -->
         <section class="about-hero">
             <div class="about-hero-text">
-                <div class="about-eyebrow">Where Data Means More</div>
+                <div class="about-hero-eyebrow">Where Data Means More</div>
                 <h1 class="about-hero-title">Life sciences data,<br><em>beautifully unlocked.</em></h1>
-                <p class="about-hero-lede">Excelra transforms complex scientific data into actionable insight — accelerating drug discovery from early targets to regulatory submission. This course is built on that same belief: that the right data, well-structured, moves medicine forward.</p>
+                <p class="about-hero-sub">Excelra transforms complex scientific data into actionable insight — accelerating drug discovery from early targets to regulatory submission. This course is built on that same belief: that the right data, well-structured, moves medicine forward.</p>
                 <div class="about-hero-pills">
                     <span class="about-hero-pill">Founded 2001</span>
                     <span class="about-hero-pill">1,000+ Scientists</span>
@@ -3032,9 +3507,10 @@
                 </div>
             </div>
             <div class="dna-wrap" aria-hidden="true">
-                <!-- DNA double helix, drawn so the two strands sine-wave across
-                     the vertical, with base-pair rungs + nodes between them.
-                     The whole group slowly twists around its vertical axis. -->
+                <!-- DNA double helix — STATIC. The two strands remain fixed
+                     but the entire graphic lifts and glows on hover, and the
+                     base-pair nodes pulse outward subtly. No 3D twist, no
+                     floating particles — cleaner, more premium. -->
                 <svg class="dna-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
                     <defs>
                         <linearGradient id="dnaGradA" x1="0" y1="0" x2="0" y2="1">
@@ -3050,29 +3526,19 @@
                             <stop offset="100%" stop-color="rgba(199,125,255,0)"/>
                         </radialGradient>
                     </defs>
-                    <circle cx="100" cy="110" r="95" fill="url(#dnaBgGlow)"/>
-                    <!-- floating particles -->
-                    <circle class="dna-particle p1" cx="40"  cy="40"  r="3.5"/>
-                    <circle class="dna-particle p2" cx="165" cy="60"  r="2.8"/>
-                    <circle class="dna-particle p3" cx="155" cy="180" r="3.2"/>
-                    <circle class="dna-particle p2" cx="35"  cy="170" r="2.6"/>
+                    <circle class="dna-bg-glow" cx="100" cy="110" r="95" fill="url(#dnaBgGlow)"/>
                     <g class="dna-helix">
-                        <!-- The two strands are sine paths across y=10..210,
-                             phase-offset by half a period so they braid. -->
                         <path class="dna-strand-a" d="M100 10 C60 35, 60 60, 100 85 C140 110, 140 135, 100 160 C60 185, 60 210, 100 210"/>
                         <path class="dna-strand-b" d="M100 10 C140 35, 140 60, 100 85 C60 110, 60 135, 100 160 C140 185, 140 210, 100 210"/>
-                        <!-- base-pair rungs at the braid crossing points -->
                         <line class="dna-rung" x1="78"  y1="28"  x2="122" y2="28"/>
                         <line class="dna-rung" x1="70"  y1="48"  x2="130" y2="48"/>
                         <line class="dna-rung" x1="78"  y1="68"  x2="122" y2="68"/>
-                        <line class="dna-rung" x1="100" y1="85"  x2="100" y2="85"/>
                         <line class="dna-rung" x1="78"  y1="102" x2="122" y2="102"/>
                         <line class="dna-rung" x1="70"  y1="122" x2="130" y2="122"/>
                         <line class="dna-rung" x1="78"  y1="142" x2="122" y2="142"/>
                         <line class="dna-rung" x1="78"  y1="160" x2="122" y2="160"/>
                         <line class="dna-rung" x1="70"  y1="180" x2="130" y2="180"/>
                         <line class="dna-rung" x1="78"  y1="200" x2="122" y2="200"/>
-                        <!-- nodes (base pairs) -->
                         <circle class="dna-node"      cx="78"  cy="28"  r="4.2"/>
                         <circle class="dna-node alt"  cx="122" cy="28"  r="4.2"/>
                         <circle class="dna-node alt"  cx="70"  cy="48"  r="4.2"/>
@@ -3096,132 +3562,137 @@
             </div>
         </section>
 
-        <!-- Section 1: company overview -->
+        <!-- Section 1: Company Overview — restructured with class-based styling -->
         <section class="about-section reverse">
             <div class="about-text">
+                <div class="about-section-eyebrow">About Us</div>
+                <h2 class="about-section-title">Two decades of turning data into discovery.</h2>
 
-                <div class="about-eyebrow">About Us</div>
+                <blockquote class="about-quote">
+                    "We speak life science data and help you unlock its potential. Where data means more."
+                    <span class="about-quote-attr">— Excelra</span>
+                </blockquote>
 
-                <!-- Tagline -->
-                <div style="margin-bottom:2.25rem;">
-                    <p style="font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:1.65rem; color:#1e2d4a; line-height:1.55; margin:0; padding-left:1.5rem; border-left:3px solid var(--primary);">
-                        "We speak life science data and help you unlock its potential. Where data means more."
-                    </p>
-                </div>
-
-                <!-- Overview grid -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:1.5rem;">
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;padding:1rem;">
-                        <div style="font-size:0.782rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:0.4rem;">Founded</div>
-                        <div style="font-size:1.15rem;font-weight:700;color:#1e2d4a;">2001</div>
-                        <div style="font-size:0.897rem;color:#6b7280;margin-top:2px;">Originally as GVK Informatics</div>
+                <div class="about-stats-grid">
+                    <div class="about-stat-card">
+                        <div class="about-stat-label">Founded</div>
+                        <div class="about-stat-value">2001</div>
+                        <div class="about-stat-sub">Originally as GVK Informatics</div>
                     </div>
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;padding:1rem;">
-                        <div style="font-size:0.782rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:0.4rem;">Headquarters</div>
-                        <div style="font-size:1.15rem;font-weight:700;color:#1e2d4a;">Hyderabad, India</div>
-                        <div style="font-size:0.897rem;color:#6b7280;margin-top:2px;">IDA Nacharam, Telangana</div>
+                    <div class="about-stat-card">
+                        <div class="about-stat-label">Headquarters</div>
+                        <div class="about-stat-value">Hyderabad, India</div>
+                        <div class="about-stat-sub">IDA Nacharam, Telangana</div>
                     </div>
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;padding:1rem;">
-                        <div style="font-size:0.782rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:0.4rem;">Team Size</div>
-                        <div style="font-size:1.15rem;font-weight:700;color:#1e2d4a;">1,000+ Scientists</div>
-                        <div style="font-size:0.897rem;color:#6b7280;margin-top:2px;">Chemists, biologists, data scientists</div>
+                    <div class="about-stat-card">
+                        <div class="about-stat-label">Team Size</div>
+                        <div class="about-stat-value">1,000+ Scientists</div>
+                        <div class="about-stat-sub">Chemists, biologists, data scientists</div>
                     </div>
-                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;padding:1rem;">
-                        <div style="font-size:0.782rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:0.4rem;">Founder</div>
-                        <div style="font-size:1.15rem;font-weight:700;color:#1e2d4a;">Anandbir Brar</div>
-                        <div style="font-size:0.897rem;color:#6b7280;margin-top:2px;">CEO &amp; Board Director</div>
+                    <div class="about-stat-card">
+                        <div class="about-stat-label">Founder</div>
+                        <div class="about-stat-value">Anandbir Brar</div>
+                        <div class="about-stat-sub">CEO &amp; Board Director</div>
                     </div>
                 </div>
 
-                <!-- What we do -->
-                <div style="margin-bottom:1.5rem;">
-                    <h3 style="font-size:1.035rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#374151;margin-bottom:0.85rem;">What Excelra Does</h3>
-                    <p style="font-size:1.012rem;color:#4b5563;line-height:1.7;margin-bottom:0.85rem;">
-                        Excelra is a leading global <strong>life sciences data and AI company</strong> that transforms complex scientific data into actionable insights — empowering pharmaceutical and biotech companies to accelerate drug discovery and improve patient outcomes.
-                    </p>
-                    <p style="font-size:1.012rem;color:#4b5563;line-height:1.7;">
-                        The company combines deep expertise in chemistry, biology, clinical sciences, and data engineering to support every phase of the drug development lifecycle — from early discovery through to regulatory submission.
-                    </p>
+                <div class="about-metric-row">
+                    <div class="about-metric-item">
+                        <div class="about-metric-value">10.6M+</div>
+                        <div class="about-metric-label">Chemical Structures</div>
+                    </div>
+                    <div class="about-metric-item">
+                        <div class="about-metric-value">35M+</div>
+                        <div class="about-metric-label">Bioactivities</div>
+                    </div>
+                    <div class="about-metric-item">
+                        <div class="about-metric-value">79K+</div>
+                        <div class="about-metric-label">Biological Targets</div>
+                    </div>
+                    <div class="about-metric-item">
+                        <div class="about-metric-value">24+</div>
+                        <div class="about-metric-label">Years of Expertise</div>
+                    </div>
                 </div>
 
-                <!-- Flagship Products -->
-                <div>
-                    <h3 style="font-size:1.035rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#374151;margin-bottom:0.85rem;">Flagship Products</h3>
-                    <div style="display:flex;flex-direction:column;gap:0.65rem;">
-                        <div style="display:flex;gap:1rem;padding:0.85rem 1rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;align-items:flex-start;">
-                            <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.862rem;flex-shrink:0;">GS</div>
-                            <div>
-                                <div style="font-weight:700;font-size:1.058rem;color:#1e2d4a;">GOSTAR&reg;</div>
-                                <div style="font-size:0.943rem;color:#6b7280;margin-top:2px;line-height:1.5;">Global Online Structure-Activity Relationship Database — the world's largest curated small molecule drug discovery database, covering over 10.6 million chemical structures, 35 million bioactivities, and 79,000 biological targets across SAR, ADMET, preclinical, clinical, and structural data.</div>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:1rem;padding:0.85rem 1rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;align-items:flex-start;">
-                            <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#16a34a,#0d9488);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.862rem;flex-shrink:0;">GB</div>
-                            <div>
-                                <div style="font-weight:700;font-size:1.058rem;color:#1e2d4a;">GOBIOM&trade;</div>
-                                <div style="font-size:0.943rem;color:#6b7280;margin-top:2px;line-height:1.5;">Comprehensive biomarker repository covering preclinical, clinical, and exploratory phases — enabling biomarker discovery and validation at scale.</div>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:1rem;padding:0.85rem 1rem;background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;align-items:flex-start;">
-                            <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#f97316,#dc2626);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:0.862rem;flex-shrink:0;">CT</div>
-                            <div>
-                                <div style="font-weight:700;font-size:1.058rem;color:#1e2d4a;">CTOD</div>
-                                <div style="font-size:0.943rem;color:#6b7280;margin-top:2px;line-height:1.5;">Clinical Trial Outcome Database — supporting MBMA and clinical data analysis across therapeutic areas.</div>
-                            </div>
+                <h3 class="about-subsection-title">What Excelra Does</h3>
+                <p class="about-section-body">
+                    Excelra is a leading global <strong>life sciences data and AI company</strong> that transforms complex scientific data into actionable insights — empowering pharmaceutical and biotech companies to accelerate drug discovery and improve patient outcomes. The company combines deep expertise in chemistry, biology, clinical sciences, and data engineering to support every phase of the drug development lifecycle, from early discovery through to regulatory submission.
+                </p>
+                <p class="about-section-body">
+                    By integrating proprietary databases, scientific informatics platforms, and AI-driven analytics, Excelra helps organisations reduce attrition, modernise legacy lab systems, and bring new therapies to patients faster. The team's hybrid expertise — scientific domain knowledge paired with modern data engineering — is what makes the company a long-term partner rather than a transactional vendor.
+                </p>
+
+                <h3 class="about-subsection-title">Flagship Products</h3>
+                <div class="about-products-grid">
+                    <div class="about-product-card">
+                        <div class="about-product-badge gs">GS</div>
+                        <div>
+                            <div class="about-product-name">GOSTAR&reg;</div>
+                            <div class="about-product-desc">Global Online Structure-Activity Relationship Database — the world's largest curated small molecule drug discovery database, covering over 10.6 million chemical structures, 35 million bioactivities, and 79,000 biological targets across SAR, ADMET, preclinical, clinical, and structural data.</div>
                         </div>
                     </div>
+                    <div class="about-product-card">
+                        <div class="about-product-badge gb">GB</div>
+                        <div>
+                            <div class="about-product-name">GOBIOM&trade;</div>
+                            <div class="about-product-desc">Comprehensive biomarker repository covering preclinical, clinical, and exploratory phases — enabling biomarker discovery and validation at scale across therapeutic areas.</div>
+                        </div>
+                    </div>
+                    <div class="about-product-card">
+                        <div class="about-product-badge ct">CT</div>
+                        <div>
+                            <div class="about-product-name">CTOD</div>
+                            <div class="about-product-desc">Clinical Trial Outcome Database — supporting MBMA (Model-Based Meta-Analysis) and clinical data analysis across therapeutic areas, powering cross-trial benchmarking and probability-of-success modelling.</div>
+                        </div>
+                    </div>
                 </div>
-
             </div>
         </section>
 
-        <!-- Section 2: services & global presence -->
+        <!-- Section 2: Services & Global Presence -->
         <section class="about-section">
             <div class="about-text">
+                <div class="about-section-eyebrow">What We Offer</div>
+                <h2 class="about-section-title">End-to-end data partnership for life sciences.</h2>
+                <p class="about-section-body">
+                    From early discovery to regulatory submission, Excelra's services span the full drug-development lifecycle. The portfolio combines proprietary data assets with scientific consulting, modern engineering, and AI/ML capabilities — so clients can move from raw experimental data to decision-ready insight on a single, integrated stack.
+                </p>
 
-                <div class="about-eyebrow">What We Offer</div>
-
-                <!-- Services -->
-                <div style="margin-bottom:1.5rem;">
-                    <h3 style="font-size:1.035rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#374151;margin-bottom:0.85rem;">Core Services</h3>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">Bioinformatics &amp; Cheminformatics</div>
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">Scientific Data Management</div>
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">Computational Biology</div>
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">Data FAIRification</div>
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">Cloud Modernisation</div>
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">AI &amp; Advanced Analytics</div>
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">Drug &amp; Biomarker Discovery</div>
-                        <div style="padding:0.6rem 0.85rem;background:#f0f4ff;border-radius:7px;font-size:0.943rem;font-weight:600;color:#1e2d4a;">Lab Informatics (ELN / LIMS)</div>
-                    </div>
+                <h3 class="about-subsection-title">Core Services</h3>
+                <div class="about-offer-grid">
+                    <div class="about-offer-card">Bioinformatics &amp; Cheminformatics</div>
+                    <div class="about-offer-card">Scientific Data Management</div>
+                    <div class="about-offer-card">Computational Biology</div>
+                    <div class="about-offer-card">Data FAIRification</div>
+                    <div class="about-offer-card">Cloud Modernisation</div>
+                    <div class="about-offer-card">AI &amp; Advanced Analytics</div>
+                    <div class="about-offer-card">Drug &amp; Biomarker Discovery</div>
+                    <div class="about-offer-card">Lab Informatics (ELN / LIMS)</div>
                 </div>
 
-                <!-- Global Presence -->
-                <div style="margin-bottom:1.5rem;">
-                    <h3 style="font-size:1.035rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#374151;margin-bottom:0.85rem;">Global Presence</h3>
-                    <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
-                        <span style="padding:0.45rem 0.9rem;background:#1e2d4a;color:white;border-radius:20px;font-size:0.92rem;font-weight:700;">Hyderabad</span>
-                        <span style="padding:0.45rem 0.9rem;background:#1e2d4a;color:white;border-radius:20px;font-size:0.92rem;font-weight:700;">Boston</span>
-                        <span style="padding:0.45rem 0.9rem;background:#1e2d4a;color:white;border-radius:20px;font-size:0.92rem;font-weight:700;">San Francisco</span>
-                        <span style="padding:0.45rem 0.9rem;background:#1e2d4a;color:white;border-radius:20px;font-size:0.92rem;font-weight:700;">Gent, Belgium</span>
-                    </div>
+                <h3 class="about-subsection-title">Global Presence</h3>
+                <div class="about-presence-row">
+                    <span class="about-presence-pill">Hyderabad</span>
+                    <span class="about-presence-pill">Boston</span>
+                    <span class="about-presence-pill">San Francisco</span>
+                    <span class="about-presence-pill">Gent, Belgium</span>
                 </div>
 
-                <!-- Clients / Mission -->
-                <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:1.1rem 1.25rem;margin-bottom:1.5rem;">
-                    <h3 style="font-size:0.977rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#374151;margin-bottom:0.6rem;">Who We Serve</h3>
-                    <p style="font-size:0.989rem;color:#4b5563;line-height:1.7;margin:0;">
+                <div class="about-pill-card">
+                    <h3 class="about-subsection-title">Who We Serve</h3>
+                    <p class="about-section-body" style="margin-bottom:0;">
                         Excelra serves <strong>global pharmaceutical and biotechnology companies</strong>, academic institutions, and agrochemical firms across the USA, Europe, Japan, and the Asia Pacific. Clients include pioneering pharma companies and dynamic biotechs seeking to accelerate drug development through data-driven intelligence.
                     </p>
                 </div>
 
-                <div style="text-align:left;">
-                    <a href="https://www.excelra.com" target="_blank"
-                       style="display:inline-block;padding:0.65rem 1.75rem;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;border-radius:8px;font-weight:700;font-size:1.012rem;text-decoration:none;">
+                <div class="about-cta-row">
+                    <a href="https://www.excelra.com" target="_blank" rel="noopener" class="about-cta-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                         Visit excelra.com
                     </a>
+                    <button class="about-cta-secondary" onclick="closeAboutExcelra()">Back to Course</button>
                 </div>
-
             </div>
         </section>
     </div>
@@ -5876,16 +6347,37 @@
 
             const lesson = courseData.modules[currentModuleIndex] && courseData.modules[currentModuleIndex].lessons[currentLessonIndex];
             const hasReferences = lesson && Array.isArray(lesson.references) && lesson.references.length > 0;
+
+            // STRICT COMPLETION CHECK:
+            // For lessons that require watching a video/presentation, the
+            // learner MUST have unlocked the lesson first (i.e. actually
+            // watched to the end). There is no way to bypass this — even
+            // if the DOM button is somehow enabled, the server-side check
+            // here still refuses to mark complete.
             if (lesson && lessonRequiresWatchToComplete(lesson, hasReferences) && !lessonUnlocked.has(lessonKey)) {
                 showNotification("Please finish watching before marking this lesson complete.");
+                // Re-disable the button in case it was somehow enabled
+                const btn = document.getElementById('markCompleteBtn');
+                if (btn && !btn.classList.contains('is-done')) {
+                    btn.disabled = true;
+                    btn.title = 'Finish watching to unlock';
+                }
                 return;
             }
+
+            // Double-check: if the lesson has a video URL (presentation iframe),
+            // verify the iframe is actually loaded and was the source of the
+            // completion signal. This prevents marking complete from a stale
+            // unlocked state when the user has navigated away and back.
+            // (Belt-and-suspenders: lessonUnlocked.has(lessonKey) above is the
+            // primary gate; this is an additional safety net.)
 
             onLessonNaturallyCompleted();
             const btn = document.getElementById('markCompleteBtn');
             if (btn) {
                 btn.textContent = '\u2713 Completed';
                 btn.classList.add('is-done');
+                btn.disabled = false;
             }
             updateNextLockState();   // unlock Next now that this lesson is done
         }
@@ -6361,6 +6853,12 @@
             gameState.selectedMatchingItems = [];
             gameState.score = 0;
             gameState.currentQuestion = 0;
+            // STRICT COMPLETION TRACKING: this flag is only set true when the
+            // game's genuine end condition is met (all pairs matched, timer
+            // expired, all questions answered, etc.). completeGame() refuses
+            // to mark the game complete unless this is true — so a user
+            // cannot click "Complete Game" without actually finishing.
+            gameState.gameFinished = false;
 
             // Create game modal
             const gameModal = document.createElement('div');
@@ -6447,6 +6945,9 @@
 
         function endTimedQuiz(moduleIndex) {
             clearInterval(gameState.timer);
+            // Mark the game as genuinely finished — timer expired is a valid
+            // end condition for a timed quiz.
+            gameState.gameFinished = true;
             document.getElementById('completeGameBtn').style.display = 'inline-block';
             showNotification(`Time's up! Click "Complete Game" to see your score.`);
         }
@@ -6554,6 +7055,8 @@
                 }
                 gameState.score = Math.round((correct / items.length) * 100);
                 if (all) {
+                    // All items in correct order — game genuinely finished.
+                    gameState.gameFinished = true;
                     setTimeout(() => completeGame(moduleIndex), 600);
                 } else {
                     // Show reset
@@ -6587,6 +7090,8 @@
             if (i >= qs.length) {
                 const score = window._tfScore || 0;
                 gameState.score = score;
+                // All True/False questions answered — game genuinely finished.
+                gameState.gameFinished = true;
                 gb.innerHTML = '<div style="text-align:center;padding:2rem;">' +
                     '<div style="font-size:2.5rem;font-weight:800;color:var(--primary);margin-bottom:0.5rem;">' + score + '/' + qs.length + '</div>' +
                     '<p style="color:#555;margin-bottom:1.5rem;">True/False completed!</p>' +
@@ -6707,6 +7212,8 @@
                         if (pairEl) pairEl.textContent = gameState.matchedPairs + '/' + window._catTotal;
 
                         if (gameState.matchedPairs === window._catTotal) {
+                            // All items categorized correctly — game genuinely finished.
+                            gameState.gameFinished = true;
                             setTimeout(() => completeGame(moduleIndex), 400);
                         }
                     } else {
@@ -6796,6 +7303,8 @@
 
                 if (ni + 1 >= cards.length) {
                     gameState.score = score;
+                    // All flashcards reviewed — game genuinely finished.
+                    gameState.gameFinished = true;
                     document.getElementById('gameBoard').innerHTML =
                         '<div style="text-align:center;padding:2rem;">' +
                         '<div style="font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:0.5rem;">' + score + '/' + cards.length + ' learned</div>' +
@@ -6849,6 +7358,8 @@
             const total  = (courseData.modules[moduleIndex].game.hotspots || courseData.modules[moduleIndex].game.roles || []).length;
             if (pairEl) pairEl.textContent = gameState.matchedPairs + '/' + total;
             if (gameState.matchedPairs === total) {
+                // All roles revealed — game genuinely finished.
+                gameState.gameFinished = true;
                 setTimeout(() => completeGame(moduleIndex), 400);
             }
         }
@@ -6926,7 +7437,11 @@
                     const total  = (courseData.modules[moduleIndex].game.pairs || []).length;
                     if (pairEl) pairEl.textContent = gameState.matchedPairs + '/' + total;
                     _matchSelected = null;
-                    if (gameState.matchedPairs === total) setTimeout(() => completeGame(moduleIndex), 400);
+                    if (gameState.matchedPairs === total) {
+                        // All pairs matched — game genuinely finished.
+                        gameState.gameFinished = true;
+                        setTimeout(() => completeGame(moduleIndex), 400);
+                    }
                 } else {
                     [_matchSelected, el].forEach(c => { c.style.borderColor = '#dc2626'; c.style.background = '#fff1f2'; });
                     const f = _matchSelected, s = el;
@@ -6959,6 +7474,8 @@
                         '<p style="color:#555;margin:0.75rem 0 1.5rem;">Scenario challenge complete!</p>' +
                         '<button class="btn btn-success" onclick="completeGame(' + moduleIndex + ')">Claim XP</button></div>';
                     gameState.score = score;
+                    // All scenario questions answered — game genuinely finished.
+                    gameState.gameFinished = true;
                     return;
                 }
                 const q = qs[i];
@@ -7055,6 +7572,8 @@
 
             function endSprint(modIdx, sc, total) {
                 gameState.score = sc;
+                // Knowledge sprint finished — game genuinely finished.
+                gameState.gameFinished = true;
                 gb.innerHTML = '<div style="text-align:center;padding:2rem;">' +
                     '<div style="font-size:2.5rem;font-weight:800;color:var(--primary);">' + sc + '/' + total + '</div>' +
                     '<p style="color:#555;margin:0.75rem 0 1.5rem;">Sprint complete!</p>' +
@@ -7094,6 +7613,8 @@
             var terms = g.terms || [];
             if (wsState.idx >= terms.length) {
                 gameState.score = Math.round((wsState.solved / wsState.total) * 100);
+                // All word scramble terms attempted — game genuinely finished.
+                gameState.gameFinished = true;
                 gb.innerHTML = '<div style="text-align:center;padding:2rem;">' +
                     '<div style="font-size:2.2rem;font-weight:800;color:var(--primary);margin-bottom:0.5rem;">' + wsState.solved + '/' + wsState.total + ' solved</div>' +
                     '<p style="color:#555;margin-bottom:1.5rem;">Word Scramble complete!</p>' +
@@ -7205,6 +7726,8 @@
                     showTimedQuizQuestion(moduleIndex, questionIndex + 1);
                 } else {
                     clearInterval(gameState.timer);
+                    // All questions answered — game genuinely finished.
+                    gameState.gameFinished = true;
                     document.getElementById('completeGameBtn').style.display = 'inline-block';
                 }
             }, 1000);
@@ -7234,6 +7757,15 @@
         }
 
         function completeGame(moduleIndex) {
+            // STRICT COMPLETION CHECK: refuse to mark complete unless the
+            // game's genuine end condition has been met. The "Complete Game"
+            // button is hidden until the end condition fires, but a user
+            // could still call this from the console or via a stale click —
+            // this check prevents that bypass.
+            if (!gameState.gameFinished) {
+                showNotification('Please finish the game to earn XP.');
+                return;
+            }
             const module = courseData.modules[moduleIndex];
             const gameKey = moduleIndex + '-game';
             const alreadyCompleted = userProgress.completedGames.has(gameKey);
@@ -7526,59 +8058,813 @@
         }
 
         // ========== PER-MODULE PDF STUDY SHEETS (jsPDF, client-side) ==========
-        // One entry per module. The "pipeline" array drives the architectural
-        // flow diagram drawn on the sheet (boxes + arrows); "takeaways" become
-        // the bullet list. Content is genuinely module-specific so each sheet
-        // is a real study aid, not a template.
+        // Each entry now drives a MULTI-PAGE, deeply detailed study sheet:
+        //   • Cover (header band + logo + module title + learner info)
+        //   • Overview (multi-paragraph rich context)
+        //   • Architectural Diagram (richer than a vertical flow — stage cards
+        //     with descriptions, sub-points, and connecting flow arrows)
+        //   • Deep-Dive Subtopics (multiple sections, each with bullets)
+        //   • Key Takeaways (expanded, full sentences)
+        //   • Glossary (term -> definition pairs)
+        //   • References & Further Reading (with URLs for Module 12)
+        // All content is genuinely module-specific so each sheet is a real
+        // study aid worth keeping, not a template.
         var MODULE_PDF_CONTENT = [
-            { n:1, title:'Introduction',
-              summary:'Introduces the core vocabulary and concepts of modern drug discovery, and the central role large-scale, structured data plays in accelerating it. Sets the frame for the rest of the course.',
-              pipeline:['Research Question','Data Resources','Structured Records','Analysis & Insight','Drug Discovery'],
-              takeaways:['Modern drug discovery increasingly relies on large-scale, structured data.','Data resources span chemical compounds, biological targets, and clinical outcomes.','The course covers the entire discovery process end to end.','Excelra sits at the intersection of science, data, and AI.'] },
-            { n:2, title:'Business Overview',
-              summary:'Frames drug discovery as a business: the economics, the risk, and where data-driven intelligence changes the cost/time curve from target to market.',
-              pipeline:['Target Identification','Lead Discovery','Preclinical','Clinical Trials','Market'],
-              takeaways:['Drug discovery is high-cost, high-risk, and long-cycle.','Data compresses timelines across every phase.','Business context shapes scientific priorities.','ROI depends on data quality at each handoff.'] },
-            { n:3, title:'End-to-End Process',
-              summary:'A walk through the full discovery-to-submission workflow — the stages, the gates between them, and where Excelra\'s data services plug in.',
-              pipeline:['Discovery','Preclinical','Phase I','Phase II','Phase III','Submission'],
-              takeaways:['Each stage has its own data standards and gates.','Handoffs between stages are where data loss happens.','A single FAIR data backbone spans the pipeline.','Excelra supports every phase, not just one.'] },
-            { n:4, title:'Key Terminologies',
-              summary:'The essential vocabulary — target, lead, IND, ADMET, IC50, SAR, FAIR, SEND — that every later module assumes you already know.',
-              pipeline:['Target','Hit','Lead','Candidate','IND'],
-              takeaways:['A target is the biological entity a drug acts on.','IC50 measures a compound\'s potency.','ADMET predicts absorption, distribution, metabolism, excretion, toxicity.','FAIR data is Findable, Accessible, Interoperable, Reusable.'] },
-            { n:5, title:'Stakeholders',
-              summary:'The people and organisations across discovery — scientists, clinicians, regulators, data engineers — and how their roles interlock.',
-              pipeline:['Scientists','Clinicians','Regulators','Data Engineers','Patients'],
-              takeaways:['No single stakeholder owns the whole pipeline.','Regulators define the evidence bar.','Data engineers make science computable.','Patients are the ultimate stakeholder.'] },
-            { n:6, title:'Data Landscape',
-              summary:'The types of data generated across discovery — chemistry, biology, preclinical, clinical, structural — and how they relate.',
-              pipeline:['Chemical Data','Biological Data','Preclinical','Clinical','Real-World'],
-              takeaways:['Chemical data covers structures and bioactivities.','Biological data covers targets and pathways.','Clinical data carries outcomes.','Real-world evidence complements trials.','Volume + variety make integration hard.'] },
-            { n:7, title:'Industry Standards',
-              summary:'The standards that let data move between systems and organisations — CDISC (SDTM/SEND), CDASH, HL7, FAIR, ALCOA — and why they matter.',
-              pipeline:['Collect (CDASH)','Tabulate (SDTM)','Exchange (HL7)','Submit (FDA)','Archive (FAIR)'],
-              takeaways:['Standards make data portable and auditable.','CDISC SDTM/SEND structure regulatory submissions.','FAIR principles guide reuse.','ALCOA guarantees data integrity.'] },
-            { n:8, title:'Technology Ecosystem',
-              summary:'The systems that hold and move discovery data — ELN, LIMS, CTMS, registries, data warehouses — and the modernisation pushing them to the cloud.',
-              pipeline:['ELN (Lab)','LIMS (Samples)','CTMS (Trials)','Warehouse','Cloud / AI'],
-              takeaways:['ELN captures experiments; LIMS captures samples.','CTMS tracks clinical trial operations.','Warehouses unify data for analytics.','Cloud modernisation enables AI at scale.'] },
-            { n:9, title:'Current Industry Challenges',
-              summary:'The hard problems — data silos, integrity, interoperability, scale, cost — and where the industry is feeling the most pressure today.',
-              pipeline:['Silos','Integrity','Interoperability','Scale','Cost & Time'],
-              takeaways:['Silos prevent cross-org insight.','Data integrity failures sink submissions.','Interoperability is still unsolved at scale.','Rising R&D cost pressures every decision.'] },
-            { n:10, title:'Role of Data Engineering & AI',
-              summary:'How modern data engineering and AI/ML accelerate discovery — from FAIRification and knowledge graphs to predictive models and generative chemistry.',
-              pipeline:['FAIRification','Knowledge Graph','Feature Store','ML Models','Decisions'],
-              takeaways:['FAIR data is the prerequisite for AI.','Knowledge graphs connect entities across datasets.','ML predicts activity, toxicity, and outcomes.','Generative AI proposes novel candidates.','Human-in-the-loop keeps science valid.'] },
-            { n:11, title:'Summary',
-              summary:'Consolidates the course — the science, the data, the standards, and the AI — into a single mental model of modern drug discovery at Excelra.',
-              pipeline:['Science','Data','Standards','Technology','AI'],
-              takeaways:['Discovery is a data problem as much as a science one.','Standards + FAIR data unlock reuse.','Technology ecosystems must modernise.','AI sits on top of well-engineered data.','Excelra weaves all four together.'] },
-            { n:12, title:'References',
-              summary:'Curated references and further reading — the primary sources, standards bodies, and Excelra resources behind every module.',
-              pipeline:['Standards Bodies','Primary Literature','Excelra Resources','Regulators','Further Reading'],
-              takeaways:['CDISC, HL7, and ICH define the standards.','FDA and EMA publish guidance.','Excelra\'s GOSTAR, GOBIOM, CTOD are flagship resources.','Further reading deepens each topic.','Always cite the canonical source.'] }
+            {
+                n: 1, title: 'Introduction',
+                summary: 'Introduces the core vocabulary, scientific stakes, and data-driven mindset behind modern drug discovery. Frames Excelra\'s position at the intersection of chemistry, biology, clinical science, and AI — and sets up every later module by naming the systems, roles, and standards that will recur throughout the course.',
+                pipeline: [
+                    { label: 'Research Question', desc: 'Define the unmet medical need, the target hypothesis, and the strategic fit with the portfolio.' },
+                    { label: 'Data Resources', desc: 'Identify the structured databases (chemical, biological, clinical) that will inform decisions.' },
+                    { label: 'Structured Records', desc: 'Standardise experimental observations into FAIR, machine-readable records.' },
+                    { label: 'Analysis & Insight', desc: 'Apply statistical, cheminformatic, and ML methods to extract signal from data.' },
+                    { label: 'Drug Discovery', desc: 'Advance validated candidates through preclinical and clinical development toward the patient.' }
+                ],
+                deepDives: [
+                    { heading: 'Why Data Now Drives Discovery',
+                      body: 'For most of the twentieth century, drug discovery was a low-throughput, intuition-led discipline: a chemist would synthesise a handful of analogues per week, a biologist would test them in a single assay, and decisions rested on the senior scientist\'s judgement. Today, high-throughput screening produces millions of data points per campaign, structural biology routinely resolves protein–ligand complexes at atomic resolution, and clinical trials generate terabytes of patient-level data. The bottleneck has shifted from running experiments to making sense of their output. Organisations that treat discovery as a data problem — not just a chemistry problem — are the ones that consistently compress timelines and reduce attrition.',
+                      bullets: [
+                        'High-throughput screening (HTS) routinely tests 100,000–500,000 compounds per campaign.',
+                        ' cryo-EM and AlphaFold have made structural data near-universal for drugable targets.',
+                        'Electronic health records and real-world evidence (RWE) close the loop between trial and bedside.',
+                        'AI-driven generative chemistry expands the search space far beyond historical collections.'
+                      ]},
+                    { heading: 'The Excelra Lens',
+                      body: 'Excelra\'s thesis is simple: structured, well-governed, FAIR data is the prerequisite for every downstream analytics capability — including AI. The company\'s flagship databases (GOSTAR, GOBIOM, CTOD) and its consulting practice exist to help pharma move from scattered, project-specific data to a connected, queryable knowledge graph that compounds in value over time. This course adopts the same lens: every module highlights where data quality, standards, and engineering make or break a discovery decision.',
+                      bullets: [
+                        'GOSTAR: 10.6M+ chemical structures, 35M+ bioactivities, 79K+ targets.',
+                        'GOBIOM: preclinical-to-clinical biomarker repository.',
+                        'CTOD: clinical-trial-outcome database for cross-trial benchmarking.',
+                        'Excelra serves 18 of the top 20 global pharma companies.'
+                      ]},
+                    { heading: 'What This Course Covers',
+                      body: 'The course walks through the full discovery lifecycle in eleven substantive modules followed by a curated reference library. You will learn the business economics of drug development, the end-to-end scientific workflow, the vocabulary used across functions, the people and organisations that move a molecule forward, the data landscape at each stage, the standards that make data portable, the technology stack that holds it all, the current industry challenges, and the role of data engineering and AI in shaping the next decade of therapeutics.',
+                      bullets: [
+                        'Modules 1–4: framing, business context, end-to-end process, vocabulary.',
+                        'Modules 5–8: people, data landscape, standards, technology stack.',
+                        'Modules 9–11: challenges, AI/data engineering, integrated summary.',
+                        'Module 12: curated references and primary sources.'
+                      ]}
+                ],
+                takeaways: [
+                    'Modern drug discovery is a data problem as much as a chemistry problem — every decision rests on what data exists, how it is structured, and how quickly it can be queried.',
+                    'Large-scale structured resources — covering chemical structures, biological targets, and clinical outcomes — are the substrate on which all modern analytics, including AI, are built.',
+                    'Excelra\'s position at the intersection of science, data, and AI gives it a unique vantage point: the company both builds the databases and advises on the data strategies that consume them.',
+                    'Standards (CDISC, FAIR, ALCOA) are non-negotiable: data that is not standardised cannot be reused, audited, or trusted at submission.',
+                    'The rest of this course deepens each of these threads — by the end, you should be able to map any discovery activity to the data, the stakeholder, the standard, and the technology it depends on.'
+                ],
+                glossary: [
+                    ['Drug Discovery', 'The end-to-end process of identifying a candidate molecule and advancing it through preclinical and clinical studies to regulatory approval.'],
+                    ['FAIR Data', 'Findable, Accessible, Interoperable, Reusable — the four principles that make scientific data reusable beyond its original project.'],
+                    ['Target', 'A biological entity (usually a protein) whose modulation by a small molecule or biologic is expected to alter a disease state.'],
+                    ['Lead', 'A compound with demonstrated activity against the target and a tractable path toward optimisation.'],
+                    ['IND', 'Investigational New Drug application — the regulatory filing that permits first-in-human clinical trials.']
+                ],
+                references: []
+            },
+            {
+                n: 2, title: 'Business Overview',
+                summary: 'Frames drug discovery as a business: a high-cost, high-risk, long-cycle investment that only pays back if a molecule reaches the market. Examines the economics of attrition, where data-driven intelligence changes the cost/time curve, and why portfolio-level decision-making matters more than any single project\'s science.',
+                pipeline: [
+                    { label: 'Target Identification', desc: 'Validate the biological target; ~1 in 10 candidates survive this gate.' },
+                    { label: 'Lead Discovery', desc: 'HTS, virtual screening, and medicinal chemistry produce a lead series.' },
+                    { label: 'Preclinical', desc: 'ADMET, PK/PD, tox — establish safety before first-in-human dosing.' },
+                    { label: 'Clinical Trials', desc: 'Phase I (safety), Phase II (efficacy), Phase III (pivotal) — ~10% cumulative success.' },
+                    { label: 'Market', desc: 'Regulatory approval, launch, and post-market surveillance over the product lifecycle.' }
+                ],
+                deepDives: [
+                    { heading: 'The Economics of Attrition',
+                      body: 'The most-cited figure in pharma R&D is DiMasi\'s estimate of ~$2.6 billion to develop a single approved drug, when capitalised failure costs are included. The dominant driver is attrition: only about 10% of compounds that enter Phase I ever reach the market. Phase II remains the largest graveyard, with efficacy failures accounting for roughly half of all drops. Data quality at the earliest stages — target validation, hit triage, lead optimisation — directly shapes how many compounds survive to later, more expensive stages. A 5% improvement in Phase II success rate can shift a portfolio\'s net present value by hundreds of millions of dollars.',
+                      bullets: [
+                        'Average development time: 10–15 years from target to approval.',
+                        'Phase II success rate: ~30% — the largest single source of attrition.',
+                        'Cost per Phase III trial: $100M–$500M+ depending on therapeutic area.',
+                        'A 1% absolute improvement in Phase II success translates to ~$100M+ in portfolio NPV.'
+                      ]},
+                    { heading: 'Where Data Compresses Time',
+                      body: 'Data-driven intelligence changes the cost/time curve at three points: (1) target identification, where genomics and knowledge graphs shrink the search for druggable biology; (2) lead discovery, where virtual screening and generative chemistry expand the explored chemical space without running more physical assays; and (3) clinical design, where real-world evidence and historical trial data (e.g., CTOD) inform patient stratification and endpoint selection. Each of these compresses weeks-to-months out of the timeline, but only if the underlying data is well-structured and accessible.',
+                      bullets: [
+                        'Knowledge graphs cut target-validation literature review from weeks to days.',
+                        'Active-learning virtual screening can reduce HTS wet-lab runs by 60–80%.',
+                        'Synthetic control arms (from RWE) can shrink Phase II enrolment by 20–30%.',
+                        'Cross-trial benchmarking via CTOD sharpens go/no-go decisions at Phase II.'
+                      ]},
+                    { heading: 'Portfolio Thinking',
+                      body: 'No single project carries a pharma pipeline; a typical mid-sized company runs 30–80 active projects across phases and therapeutic areas. Portfolio-level decision-making — which projects to fund, which to terminate, where to partner — depends on comparable, normalised data across projects. This is why data governance and standardisation matter at the portfolio level: a project whose data sits in a project-specific ELN folder cannot contribute to portfolio analytics, and a project whose endpoints are non-standard cannot be benchmarked against historical trials.',
+                      bullets: [
+                        'Portfolio analytics require normalised data across projects — siloed data is invisible to portfolio reviews.',
+                        'Stage-gate governance uses standardised TPP (Target Product Profile) documents.',
+                        'Risk-adjusted NPV is the dominant portfolio metric — depends on probability-of-success assumptions.',
+                        'Termination decisions are themselves data-driven: kill late, waste money; kill early, lose optionality.'
+                      ]}
+                ],
+                takeaways: [
+                    'Drug discovery is high-cost (~$2.6B capitalised), high-risk (~10% Phase I to approval), and long-cycle (10–15 years) — every decision compounds.',
+                    'Data compresses timelines most at target identification, lead discovery, and clinical design — but only when the underlying data is structured, accessible, and comparable across projects.',
+                    'Business context shapes scientific priorities: portfolio NPV, therapeutic-area strategy, and competitive intelligence all drive which science gets funded.',
+                    'ROI depends on data quality at each handoff — a late-stage failure caused by a missing tox assay or non-standard endpoint is a data failure, not a science failure.',
+                    'Excelra\'s GOSTAR/GOBIOM/CTOD databases directly serve portfolio analytics by providing normalised cross-project and cross-organisation benchmarks.'
+                ],
+                glossary: [
+                    ['Attrition', 'The cumulative loss of compounds as they progress through discovery and development stages; the dominant driver of R&D cost.'],
+                    ['Capitalised Cost', 'The total cost of a drug including the cost of capital for failed projects; the basis of DiMasi\'s $2.6B estimate.'],
+                    ['Probability of Success (PoS)', 'The likelihood that a compound in a given phase will eventually reach the market; used in portfolio NPV calculations.'],
+                    ['Target Product Profile (TPP)', 'A structured document specifying the desired efficacy, safety, and commercial profile of a candidate drug.'],
+                    ['Stage-Gate', 'A governance model where each development phase ends with a data-driven go/no-go decision.']
+                ],
+                references: [
+                    { label: 'DiMasi et al. (2016) — J Health Econ', url: 'https://doi.org/10.1016/j.jhealeco.2016.07.008' },
+                    { label: 'FDA Drug Development & Approval Process', url: 'https://www.fda.gov/patients/drug-development-process' }
+                ]
+            },
+            {
+                n: 3, title: 'End-to-End Process',
+                summary: 'A walk through the full discovery-to-submission workflow — the stages, the gates between them, the data each stage generates, and where Excelra\'s data services plug in. Emphasises the handoff points where data loss most often happens and the FAIR-data backbone that prevents it.',
+                pipeline: [
+                    { label: 'Discovery', desc: 'Target ID, hit identification, lead optimisation — chemistry and biology in the lab.' },
+                    { label: 'Preclinical', desc: 'ADMET, PK/PD, GLP toxicology — establish safety before first-in-human dosing.' },
+                    { label: 'Phase I', desc: 'Safety in healthy volunteers (~20–80 subjects, weeks to months).' },
+                    { label: 'Phase II', desc: 'Efficacy in patients (~100–300, months to a year); the largest attrition gate.' },
+                    { label: 'Phase III', desc: 'Pivotal efficacy and safety in large patient populations (~1,000–3,000, 1–3 years).' },
+                    { label: 'Submission', desc: 'NDA/BLA filing, regulatory review, approval, launch.' }
+                ],
+                deepDives: [
+                    { heading: 'Discovery: From Target to Candidate',
+                      body: 'The discovery phase begins with target identification — choosing the biological entity the drug will modulate — and ends with a candidate molecule nominated for preclinical development. In between sit hit identification (often via HTS or virtual screening of millions of compounds), hit-to-lead (optimising affinity, selectivity, and early ADMET), and lead optimisation (multiparameter optimisation toward the TPP). At each step, data volumes explode: a single HTS campaign generates 100K–500K data points, a lead-optimisation series produces hundreds of analogues with associated assay data, and structural biology adds high-resolution 3D coordinates. The data must flow seamlessly from assay -> ELN -> cheminformatics platform -> cross-functional review.',
+                      bullets: [
+                        'Target identification increasingly uses genomics, CRISPR screens, and knowledge graphs.',
+                        'HTS tests 100K–500K compounds; virtual screening prioritises which to test physically.',
+                        'Hit-to-lead focuses on affinity, selectivity, and early metabolic stability.',
+                        'Lead optimisation is multiparameter: potency, ADMET, synthesizability, IP position.'
+                      ]},
+                    { heading: 'Preclinical: Establishing Safety',
+                      body: 'Before a candidate can be dosed in humans, it must clear preclinical safety assessment. This includes in vitro assays (CYP inhibition, hERG, micronucleus), in vivo pharmacokinetics (rodent and non-rodent), and GLP toxicology studies (typically 2-week and 13-week repeat-dose in two species). The data package — totalling thousands of animals, hundreds of assays, and a regulatory submission (IND in the US, CTA in Europe) — must be reproducible, auditable, and formatted to FDA/EMA expectations. SEND (Standard for Exchange of Nonclinical Data) is now mandatory for most nonclinical submissions.',
+                      bullets: [
+                        'GLP toxicology: 2 species, 2 durations, full histopathology workup.',
+                        'SEND format (CDISC) is required for most nonclinical FDA submissions.',
+                        'ADMET prediction tools flag liabilities early — but wet-lab confirmation is mandatory.',
+                        'PK/PD modelling links exposure to effect — the basis for first-in-human dose selection.'
+                      ]},
+                    { heading: 'Clinical: Three Phases, Three Questions',
+                      body: 'Clinical development asks three sequential questions. Phase I (safety, ~20–80 healthy volunteers) asks: is it safe in humans, and what is the maximum tolerated dose? Phase II (efficacy, ~100–300 patients) asks: does it work in the disease, and what is the optimal dose and schedule? Phase III (pivotal, ~1,000–3,000 patients) asks: is it superior to standard of care in a representative population, and is the safety profile acceptable for approval? Each phase has its own data standards (CDASH for collection, SDTM for tabulation, ADaM for analysis), its own technology (EDC, CTMS, ePRO), and its own regulatory gates.',
+                      bullets: [
+                        'Phase I: safety, PK, MTD — typically first-in-human, single ascending dose then multiple.',
+                        'Phase II: proof-of-concept efficacy, dose-finding — the largest attrition gate (~30% success).',
+                        'Phase III: pivotal trials powering the regulatory submission; usually randomised, double-blind, active comparator.',
+                        'Each phase generates CDASH-collected, SDTM-tabulated, ADaM-analysed data — submitted to FDA/EMA.'
+                      ]},
+                    { heading: 'Submission and Beyond',
+                      body: 'The NDA (small molecule) or BLA (biologic) is a multi-million-page electronic submission built from every dataset generated across the programme. FDA review takes 6–10 months standard, with priority review at 6 months. Post-approval, Phase IV (post-market surveillance) tracks rare adverse events in real-world populations, often via FAERS, EHRs, and registries. The data lifecycle does not end at approval — it continues for the entire commercial life of the product.',
+                      bullets: [
+                        'NDA/BLA submissions are eCTD-formatted, often 100K–500K pages.',
+                        'FDA standard review: 10 months; priority review: 6 months.',
+                        'Phase IV monitors safety in real-world populations; rare AEs (1 in 10,000+) only surface here.',
+                        'Product lifecycle management (line extensions, new indications) depends on the same data backbone.'
+                      ]}
+                ],
+                takeaways: [
+                    'Each stage has its own data standards, gates, and stakeholders — there is no single "discovery data" but a sequence of phase-specific datasets that must interoperate.',
+                    'Handoffs between stages (discovery -> preclinical, preclinical -> clinical) are where data loss most often happens, because each function uses different tools and vocabularies.',
+                    'A single FAIR data backbone spanning discovery to post-market enables portfolio analytics, regulatory reuse, and AI applications.',
+                    'SEND (nonclinical) and SDTM/ADaM (clinical) are the regulatory-submission standards — non-negotiable for FDA/EMA approval.',
+                    'Excelra supports every phase, not just one — the same data engineering and standards expertise applies from HTS data to post-market surveillance.'
+                ],
+                glossary: [
+                    ['HTS', 'High-Throughput Screening — automated testing of 100K–500K compounds against a target assay.'],
+                    ['ADMET', 'Absorption, Distribution, Metabolism, Excretion, Toxicity — the preclinical safety profile of a compound.'],
+                    ['IND', 'Investigational New Drug — FDA application permitting first-in-human clinical trials.'],
+                    ['NDA/BLA', 'New Drug Application / Biologics License Application — the regulatory filing for marketing approval.'],
+                    ['SEND', 'Standard for Exchange of Nonclinical Data — CDISC submission standard for nonclinical studies.'],
+                    ['eCTD', 'Electronic Common Technical Document — the global regulatory submission format.']
+                ],
+                references: [
+                    { label: 'FDA Drug Development Process', url: 'https://www.fda.gov/patients/drug-development-process' },
+                    { label: 'CDISC SEND Standard', url: 'https://www.cdisc.org/standards/foundational/send' },
+                    { label: 'ICH Guidelines', url: 'https://www.ich.org/page/ich-guidelines' }
+                ]
+            },
+            {
+                n: 4, title: 'Key Terminologies',
+                summary: 'The essential vocabulary — target, hit, lead, candidate, IND, ADMET, IC50, SAR, FAIR, SEND, ALCOA — that every later module assumes you already know. Each term is defined in plain language with its scientific and business significance.',
+                pipeline: [
+                    { label: 'Target', desc: 'The biological entity a drug modulates — typically a protein, but also RNA, DNA, or pathway.' },
+                    { label: 'Hit', desc: 'A compound showing activity in the primary screen; usually weak and unoptimised.' },
+                    { label: 'Lead', desc: 'A confirmed, optimisable hit series with a clear SAR and tractable path forward.' },
+                    { label: 'Candidate', desc: 'A lead that has met preclinical nomination criteria and is advancing to IND-enabling studies.' },
+                    { label: 'IND', desc: 'The regulatory filing that permits first-in-human clinical trials.' }
+                ],
+                deepDives: [
+                    { heading: 'The Discovery Vocabulary',
+                      body: 'The discovery pipeline is named by its gates: target -> hit -> lead -> candidate -> IND. Each transition is a multiparameter decision, not a single threshold. A target is "druggable" only if it can be modulated by a small molecule or biologic, expressed in the relevant tissue, and linked to disease biology. A hit must be confirmed (re-tested), counterscreened (not a false positive), and shown to have a structure-activity relationship (SAR). A lead must have acceptable potency, selectivity, and early ADMET. A candidate must meet the full preclinical nomination criteria — typically dozens of assays across ADMET, PK, tox, and CMC.',
+                      bullets: [
+                        'Target druggability depends on binding-site geometry, tissue expression, and disease linkage.',
+                        'Hits require confirmation, counterscreen, and early SAR before promotion to lead.',
+                        'Leads need multiparameter optimisation — potency, selectivity, ADMET, synthesis, IP.',
+                        'Candidates are nominated against a TPP and advance to IND-enabling GLP studies.'
+                      ]},
+                    { heading: 'Potency, Affinity, and Selectivity',
+                      body: 'IC50 (half-maximal inhibitory concentration) is the most-cited potency metric — the concentration at which a compound inhibits 50% of target activity. Ki (inhibition constant) is a thermodynamically more rigorous measure accounting for substrate concentration. Kd (dissociation constant) measures direct binding affinity. Selectivity is the ratio of IC50 against the target of interest versus off-targets; a 30-fold selectivity margin is often the minimum bar for advancement. SAR (Structure-Activity Relationship) is the empirical mapping of structural changes to potency changes — the core intellectual output of medicinal chemistry.',
+                      bullets: [
+                        'IC50: concentration for 50% inhibition — the standard potency metric.',
+                        'Ki / Kd: thermodynamic measures correcting for substrate concentration.',
+                        'Selectivity: ratio of IC50 (off-target) / IC50 (target) — minimum 30-fold for advancement.',
+                        'SAR: structure-activity relationship — the map of how structural changes alter potency.'
+                      ]},
+                    { heading: 'ADMET and PK/PD',
+                      body: 'ADMET (Absorption, Distribution, Metabolism, Excretion, Toxicity) is the umbrella term for the in vivo behaviour of a compound. It is measured through a battery of in vitro assays (CYP inhibition, plasma protein binding, permeability) and in vivo studies (rodent and non-rodent PK). PK (Pharmacokinetics) describes what the body does to the drug — absorption, distribution, metabolism, excretion, quantified as AUC, Cmax, t1/2, bioavailability. PD (Pharmacodynamics) describes what the drug does to the body — the relationship between exposure and pharmacological effect. PK/PD modelling links the two and is the basis for first-in-human dose selection.',
+                      bullets: [
+                        'AUC: area under the concentration-time curve — total exposure.',
+                        'Cmax: peak plasma concentration — relates to acute efficacy and toxicity.',
+                        't1/2: elimination half-life — determines dosing frequency.',
+                        'Bioavailability: fraction of dose reaching systemic circulation — drives oral dosing decisions.'
+                      ]},
+                    { heading: 'Data and Standards Vocabulary',
+                      body: 'FAIR (Findable, Accessible, Interoperable, Reusable) is the data principle that underpins reuse. ALCOA (Attributable, Legible, Contemporaneous, Original, Accurate) — expanded to ALCOA+ with Complete, Consistent, Enduring, Available — is the FDA\'s data integrity expectation for GxP records. CDISC (Clinical Data Interchange Standards Consortium) defines SDTM (Study Data Tabulation Model) for submission datasets and ADaM (Analysis Data Model) for analysis datasets. SEND is the nonclinical equivalent of SDTM. These terms recur in every later module — they are the vocabulary of compliant, reusable discovery data.',
+                      bullets: [
+                        'FAIR: Findable, Accessible, Interoperable, Reusable — the four data-reuse principles.',
+                        'ALCOA+: Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available.',
+                        'CDISC SDTM/ADaM: clinical submission-tabulation and analysis standards.',
+                        'SEND: nonclinical equivalent of SDTM — mandatory for most FDA nonclinical submissions.'
+                      ]}
+                ],
+                takeaways: [
+                    'A target is the biological entity a drug acts on; druggability depends on binding-site geometry, tissue expression, and disease linkage — not all biology is druggable.',
+                    'IC50 measures potency (lower is better); selectivity is the ratio against off-targets — a 30-fold margin is typically the minimum advancement bar.',
+                    'ADMET (Absorption, Distribution, Metabolism, Excretion, Toxicity) predicts in vivo behaviour; PK/PD modelling links exposure to effect and informs first-in-human dose.',
+                    'FAIR data is Findable, Accessible, Interoperable, Reusable; ALCOA+ is the FDA\'s data-integrity expectation for GxP records.',
+                    'CDISC SDTM/ADaM (clinical) and SEND (nonclinical) are the regulatory submission standards; mastery of these acronyms is non-negotiable for any data-driven role in pharma.'
+                ],
+                glossary: [
+                    ['IC50', 'Half-maximal inhibitory concentration — the concentration at which a compound inhibits 50% of target activity.'],
+                    ['SAR', 'Structure-Activity Relationship — the empirical mapping of structural changes to potency changes.'],
+                    ['ADMET', 'Absorption, Distribution, Metabolism, Excretion, Toxicity — in vivo behaviour of a compound.'],
+                    ['PK/PD', 'Pharmacokinetics / Pharmacodynamics — what the body does to the drug / what the drug does to the body.'],
+                    ['FAIR', 'Findable, Accessible, Interoperable, Reusable — the four principles of reusable scientific data.'],
+                    ['ALCOA+', 'Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available — FDA data integrity expectations.'],
+                    ['SDTM', 'Study Data Tabulation Model — CDISC standard for regulatory submission datasets.'],
+                    ['SEND', 'Standard for Exchange of Nonclinical Data — nonclinical equivalent of SDTM.']
+                ],
+                references: [
+                    { label: 'FAIR Data Principles', url: 'https://www.go-fair.org/fair-principles/' },
+                    { label: 'CDISC Standards', url: 'https://www.cdisc.org/standards' },
+                    { label: 'FDA Data Integrity Guidance', url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents' }
+                ]
+            },
+            {
+                n: 5, title: 'Stakeholders',
+                summary: 'The people and organisations across discovery — bench scientists, clinicians, regulators, data engineers, patients — and how their roles interlock. Maps each role to the data it generates, the standards it owns, and the handoffs where data loss most often occurs.',
+                pipeline: [
+                    { label: 'Scientists', desc: 'Bench chemists, biologists, structural biologists — generate experimental data in ELN and assay systems.' },
+                    { label: 'Clinicians', desc: 'Principal investigators and clinical operations — design and run trials, collect EDC data.' },
+                    { label: 'Regulators', desc: 'FDA, EMA, PMDA — define the evidence bar; review submissions; issue guidance.' },
+                    { label: 'Data Engineers', desc: 'Informaticians, data scientists — build the pipelines, warehouses, and ML models that turn data into decisions.' },
+                    { label: 'Patients', desc: 'The ultimate stakeholder — participants in trials, recipients of approved therapies, contributors to real-world data.' }
+                ],
+                deepDives: [
+                    { heading: 'Inside the Pharma Organisation',
+                      body: 'A typical mid-sized pharma R&D organisation has 1,000–5,000 scientists split across medicinal chemistry, biology, DMPK, toxicology, clinical development, biostatistics, data management, regulatory affairs, and CMC (Chemistry, Manufacturing, Controls). Each function speaks its own vocabulary, uses its own tools, and produces its own data formats. The data engineer\'s job is to bridge these — building ELN-to-warehouse pipelines, normalising assay outputs, and creating the cross-functional views that inform portfolio decisions. Without this bridging role, each function\'s data is siloed and invisible to the rest of the organisation.',
+                      bullets: [
+                        'Medicinal chemistry: owns ELN, structure-activity data, synthetic routes.',
+                        'Biology & DMPK: owns assay data, PK/PD models, ADMET predictions.',
+                        'Clinical development: owns EDC, CTMS, ePRO, CDISC submission datasets.',
+                        'Regulatory affairs: owns submission strategy, agency correspondence, label negotiations.',
+                        'Data engineering: bridges all functions — pipelines, warehouses, ML platforms.'
+                      ]},
+                    { heading: 'External Stakeholders',
+                      body: 'Beyond the pharma company itself sit contract research organisations (CROs) who run many trials and preclinical studies on behalf of sponsors; academic collaborators who contribute target biology and early-stage chemistry; patient advocacy groups who shape trial design and recruitment; and regulators (FDA, EMA, PMDA, NMPA) who set the evidence bar. Each external stakeholder introduces a data-handoff challenge: the CRO\'s EDC must flow into the sponsor\'s data warehouse; the academic collaborator\'s cell-line data must be normalised into the sponsor\'s target registry; the regulator\'s submission format (eCTD, SDTM, SEND) must be satisfied. Excelra\'s consulting practice frequently sits at these handoffs.',
+                      bullets: [
+                        'CROs run 30–60% of industry trials; their EDC data must integrate with sponsor systems.',
+                        'Academic collaborators contribute target validation but use non-standard data formats.',
+                        'Patient advocacy groups shape protocol design, eligibility criteria, and recruitment.',
+                        'Regulators (FDA/EMA/PMDA) define submission standards — non-negotiable for approval.'
+                      ]},
+                    { heading: 'Regulators as Stakeholders',
+                      body: 'The FDA (US), EMA (Europe), PMDA (Japan), and NMPA (China) are the four dominant regulatory bodies. They publish guidance documents that define expectations for trial design, data standards, and submission format. Critical guidance includes ICH E6 (GCP), ICH Q9 (Quality Risk Management), 21 CFR Part 11 (Electronic Records), and the FDA\'s Real-World Evidence framework. Sponsors that engage regulators early — through pre-IND meetings, Type C meetings, and scientific advice — typically have smoother regulatory paths. The regulator is not an adversary but a stakeholder whose evidence bar must be understood and met.',
+                      bullets: [
+                        'FDA: pre-IND meetings, Type C meetings, scientific advice — engage early.',
+                        'EMA: scientific advice, protocol assistance, PRIME scheme for unmet need.',
+                        '21 CFR Part 11: electronic records and signatures — applies to all GxP systems.',
+                        'ICH guidelines harmonise expectations across FDA/EMA/PMDA.'
+                      ]},
+                    { heading: 'Patients as Stakeholders',
+                      body: 'Patients are not merely trial subjects — they are increasingly co-designers of clinical research. Patient-reported outcomes (PROs) are now standard endpoints in many therapeutic areas; patient advocacy groups shape eligibility criteria to reduce burden; and real-world data (RWD) from patient registries and EHRs is increasingly accepted as regulatory evidence. The FDA\'s Patient-Focused Drug Development initiative formalises this shift. From a data perspective, PRO and RWD introduce new data types (ePRO instruments, registry schemas) that must be integrated into the standard submission backbone.',
+                      bullets: [
+                        'Patient-reported outcomes (PROs): standard endpoints in oncology, pain, CNS.',
+                        'Patient advocacy groups shape trial design, eligibility, recruitment.',
+                        'Real-world data (RWD) from registries and EHRs increasingly supports regulatory decisions.',
+                        'FDA Patient-Focused Drug Development: a formal framework for patient input.'
+                      ]}
+                ],
+                takeaways: [
+                    'No single stakeholder owns the whole pipeline — discovery is a relay race, and the baton (data) is dropped most often at function handoffs.',
+                    'Regulators define the evidence bar; engaging them early (pre-IND, scientific advice) materially improves the probability of a smooth review.',
+                    'Data engineers make science computable — without their pipelines, warehouses, and integration layers, every function\'s data stays siloed.',
+                    'Patients are the ultimate stakeholder — PROs, advocacy input, and real-world data are reshaping what counts as evidence.',
+                    'Excelra\'s role often sits at the handoffs — between sponsor and CRO, between academic collaborator and pharma, between discovery and clinical.'
+                ],
+                glossary: [
+                    ['CRO', 'Contract Research Organisation — runs preclinical or clinical studies on behalf of a sponsor.'],
+                    ['EDC', 'Electronic Data Capture — the system used to collect clinical trial data at sites.'],
+                    ['CTMS', 'Clinical Trial Management System — tracks trial operations, sites, milestones.'],
+                    ['PRO / ePRO', 'Patient-Reported Outcome / electronic PRO — symptom and quality-of-life data reported by the patient.'],
+                    ['RWD / RWE', 'Real-World Data / Real-World Evidence — data from EHRs, registries, claims; used to support regulatory decisions.']
+                ],
+                references: [
+                    { label: 'FDA Patient-Focused Drug Development', url: 'https://www.fda.gov/drugs/development-approval-process-drugs/fda-patient-focused-drug-development' },
+                    { label: 'ICH Guidelines', url: 'https://www.ich.org/page/ich-guidelines' },
+                    { label: '21 CFR Part 11', url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/part-11-electronic-records-electronic-signatures-scope-and-application' }
+                ]
+            },
+            {
+                n: 6, title: 'Data Landscape',
+                summary: 'The types of data generated across discovery — chemical, biological, preclinical, clinical, structural, real-world — and how they relate. Maps each data type to the systems that hold it, the standards that govern it, and the analytics that consume it.',
+                pipeline: [
+                    { label: 'Chemical Data', desc: 'Structures, bioactivities, SAR — the substrate of medicinal chemistry.' },
+                    { label: 'Biological Data', desc: 'Targets, pathways, omics — the substrate of target identification.' },
+                    { label: 'Preclinical', desc: 'ADMET, PK, tox — the in vivo behaviour of the candidate.' },
+                    { label: 'Clinical', desc: 'EDC, ePRO, imaging — patient-level trial data.' },
+                    { label: 'Real-World', desc: 'EHR, claims, registries — evidence from clinical practice.' }
+                ],
+                deepDives: [
+                    { heading: 'Chemical Data',
+                      body: 'Chemical data is the substrate of medicinal chemistry. It includes 2D structures (SMILES, InChI), 3D conformers, calculated physicochemical properties (logP, MW, HBD/HBA, PSA), and measured bioactivities (IC50, Ki, Kd) against specific targets. Curated databases like GOSTAR (Excelra), ChEMBL (EMBL-EBI), and PubChem (NIH) aggregate published and patented bioactivity data; proprietary in-house collections add the company\'s own experimental data. The volume is enormous: GOSTAR alone covers 10.6M+ chemical structures with 35M+ bioactivity measurements across 79K+ biological targets.',
+                      bullets: [
+                        'SMILES / InChI: standard line notations for 2D chemical structures.',
+                        'Physicochemical properties: logP, MW, HBD/HBA, PSA — the Lipinski/Veber space.',
+                        'Bioactivity: IC50, Ki, Kd — measured against specific targets.',
+                        'GOSTAR: 10.6M+ structures, 35M+ bioactivities, 79K+ targets — the largest curated SAR database.'
+                      ]},
+                    { heading: 'Biological Data',
+                      body: 'Biological data covers the targets and pathways that drugs modulate. It includes gene and protein sequences (RefSeq, UniProt), structural biology (PDB, AlphaFold DB), pathway maps (KEGG, Reactome), and omics data (genomics, transcriptomics, proteomics). Target identification increasingly relies on human genetics — rare loss-of-function variants that protect against disease are powerful drug-target evidence (e.g., PCSK9 for cardiovascular disease). CRISPR screens systematically knock out every gene in a cell line to identify essential genes and druggable dependencies. The volume of biological data doubles roughly every 12 months, driven by sequencing costs that have fallen faster than Moore\'s law.',
+                      bullets: [
+                        'UniProt: the canonical protein sequence and annotation database.',
+                        'PDB + AlphaFold DB: 3D structures for nearly every ordered human protein.',
+                        'KEGG / Reactome: curated pathway maps for cellular processes.',
+                        'CRISPR screens: genome-wide loss-of-function data for target identification.'
+                      ]},
+                    { heading: 'Preclinical and Clinical Data',
+                      body: 'Preclinical data covers ADMET assays (CYP inhibition, hERG, micronucleus), in vivo pharmacokinetics (rodent and non-rodent), and GLP toxicology (2-week and 13-week repeat-dose in two species). SEND is the FDA submission standard. Clinical data is collected in EDC systems at trial sites, transmitted to the sponsor\'s data management group, cleaned, coded (MedDRA for adverse events, WHODrug for concomitant medications), and tabulated in SDTM. ADaM datasets then power the statistical analyses that appear in the clinical study report (CSR) and the NDA/BLA submission.',
+                      bullets: [
+                        'Preclinical: SEND-format submission datasets for nonclinical studies.',
+                        'Clinical: CDASH collect -> SDTM tabulate -> ADaM analyse -> CSR report.',
+                        'MedDRA: standard adverse-event coding (System Organ Class, Preferred Term).',
+                        'WHODrug: standard concomitant medication coding.'
+                      ]},
+                    { heading: 'Real-World Data',
+                      body: 'Real-world data (RWD) is data collected outside the controlled clinical trial setting — electronic health records, insurance claims, patient registries, wearable sensors, and social media. Real-world evidence (RWE) is the evidence derived from analysing RWD. The FDA\'s 21st Century Cures Act framework formalises the use of RWE in regulatory decisions, particularly for label expansions, post-market safety, and synthetic control arms. Integrating RWD with trial data requires careful attention to coding standards (ICD-10, SNOMED CT, LOINC), provenance, and bias adjustment.',
+                      bullets: [
+                        'EHR: electronic health records — Epic, Cerner, Allscripts.',
+                        'Claims data: insurance billing codes — ICD-10, CPT, HCPCS.',
+                        'Patient registries: disease-specific longitudinal cohorts.',
+                        'Synthetic control arms: historical patient data replacing placebo arms in rare diseases.'
+                      ]}
+                ],
+                takeaways: [
+                    'Chemical data covers structures, bioactivities, and SAR — GOSTAR\'s 10.6M+ structures and 35M+ bioactivities are the largest curated collection.',
+                    'Biological data covers targets, pathways, and omics — AlphaFold has made structural data near-universal for drugable targets.',
+                    'Clinical data carries outcomes — collected via CDASH, tabulated in SDTM, analysed in ADaM, reported in the CSR.',
+                    'Real-world evidence complements trials — increasingly accepted by FDA for label expansions and synthetic control arms.',
+                    'Volume plus variety makes integration hard — the data engineer\'s value is in normalising these heterogeneous sources into a queryable knowledge graph.'
+                ],
+                glossary: [
+                    ['SMILES', 'Simplified Molecular-Input Line-Entry System — a line notation for 2D chemical structures.'],
+                    ['UniProt', 'The canonical protein sequence and annotation database, maintained by EBI/PIR/SIB.'],
+                    ['PDB', 'Protein Data Bank — the global archive of 3D structures from X-ray crystallography and cryo-EM.'],
+                    ['MedDRA', 'Medical Dictionary for Regulatory Activities — standard adverse-event coding.'],
+                    ['ICD-10', 'International Classification of Diseases, 10th Revision — WHO standard for diagnosis coding.']
+                ],
+                references: [
+                    { label: 'ChEMBL', url: 'https://www.ebi.ac.uk/chembl/' },
+                    { label: 'PubChem', url: 'https://pubchem.ncbi.nlm.nih.gov/' },
+                    { label: 'UniProt', url: 'https://www.uniprot.org/' },
+                    { label: 'AlphaFold DB', url: 'https://alphafold.ebi.ac.uk/' },
+                    { label: 'FDA Real-World Evidence', url: 'https://www.fda.gov/science-research/science-and-research-special-topics/real-world-evidence' }
+                ]
+            },
+            {
+                n: 7, title: 'Industry Standards',
+                summary: 'The standards that let data move between systems and organisations — CDISC (SDTM/SEND/CDASH/ADaM), HL7, FAIR, ALCOA, ICD-10, SNOMED CT, LOINC, MedDRA — and why they matter. Standards are the unsung infrastructure of pharma: invisible when they work, catastrophic when they don\'t.',
+                pipeline: [
+                    { label: 'Collect (CDASH)', desc: 'Standardised data collection at the source — EDC forms, ELN templates.' },
+                    { label: 'Tabulate (SDTM)', desc: 'Submission-format tabulation — the regulatory dataset standard.' },
+                    { label: 'Exchange (HL7)', desc: 'Healthcare data interchange between systems — EHR, lab, imaging.' },
+                    { label: 'Submit (FDA)', desc: 'eCTD submission to FDA/EMA — the regulatory deliverable.' },
+                    { label: 'Archive (FAIR)', desc: 'Long-term reuse of data — FAIR principles ensure data stays queryable.' }
+                ],
+                deepDives: [
+                    { heading: 'CDISC: The Clinical Data Standards Family',
+                      body: 'CDISC (Clinical Data Interchange Standards Consortium) is the dominant standards body for clinical research. CDASH (Clinical Data Acquisition Standards Harmonization) defines what to collect at the source — standard fields for demographics, adverse events, concomitant medications, and so on. SDTM (Study Data Tabulation Model) defines how submitted datasets are structured — domains like DM (demographics), AE (adverse events), VS (vital signs), each with required variables. ADaM (Analysis Data Model) defines analysis-ready datasets derived from SDTM. SEND is the nonclinical equivalent of SDTM. The FDA requires SDTM and SEND for most submissions; non-compliance is a rejection trigger.',
+                      bullets: [
+                        'CDASH: standard fields for source data collection in EDC.',
+                        'SDTM: standard submission datasets (DM, AE, VS, LB, etc.).',
+                        'ADaM: analysis-ready datasets derived from SDTM.',
+                        'SEND: nonclinical equivalent of SDTM — mandatory for most FDA nonclinical submissions.'
+                      ]},
+                    { heading: 'Healthcare Interchange Standards',
+                      body: 'HL7 (Health Level 7) is the dominant standard for healthcare data interchange. HL7 v2 is a pipe-delimited messaging standard still widely used in hospital systems. HL7 v3 is a more rigorous XML-based standard. FHIR (Fast Healthcare Interoperability Resources) is the modern REST-based standard, increasingly adopted by EHR vendors (Epic, Cerner) and required by the ONC interoperability rule. Within HL7 messages, coded elements use ICD-10 (diagnoses), SNOMED CT (clinical findings), LOINC (lab tests), and RxNorm (medications). The interaction between CDISC and HL7 standards at the trial-to-EHR boundary is a frequent pain point.',
+                      bullets: [
+                        'HL7 v2: pipe-delimited messaging — still widely deployed but aging.',
+                        'HL7 FHIR: modern REST-based API standard — required by ONC interoperability rule.',
+                        'ICD-10: WHO diagnosis coding — used in billing and EHR.',
+                        'SNOMED CT: comprehensive clinical terminology — findings, procedures, specimens.',
+                        'LOINC: lab test coding — universal in clinical labs.'
+                      ]},
+                    { heading: 'Data Integrity and FAIR',
+                      body: 'ALCOA+ (Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available) is the FDA\'s data integrity expectation for all GxP records. It applies to every system that touches regulated data — ELN, LIMS, EDC, CTMS, eTMF. Practically, ALCOA+ means audit trails (who changed what, when), electronic signatures (21 CFR Part 11), validated systems, and secure long-term retention. FAIR (Findable, Accessible, Interoperable, Reusable) is a complementary principle focused on reuse rather than integrity. FAIR data has persistent identifiers (DOIs), rich metadata, open standards where possible, and clear licences. ALCOA+ without FAIR produces compliant but unusable data; FAIR without ALCOA+ produces reusable but non-compliant data.',
+                      bullets: [
+                        'ALCOA+: FDA data integrity expectations for GxP records.',
+                        '21 CFR Part 11: electronic records and signatures — audit trails, validation.',
+                        'FAIR: Findable, Accessible, Interoperable, Reusable — reuse principles.',
+                        'ALCOA+ and FAIR together produce data that is both compliant and reusable.'
+                      ]},
+                    { heading: 'Controlled Terminology',
+                      body: 'CDISC controlled terminology (CT) is the standardised vocabulary used within SDTM, SEND, and ADaM datasets — every code in a sex field is "F" or "M", every race code is from a fixed list, every unit is from a UCUM subset. CT is updated quarterly by CDISC in partnership with NCI EVS (Enterprise Vocabulary Services). MedDRA is the adverse-event coding dictionary (System Organ Class -> High Level Group Term -> High Level Term -> Preferred Term -> Lowest Level Term). WHODrug is the concomitant medication dictionary. Using the right CT is not optional — submissions with non-standard codes are rejected or delayed.',
+                      bullets: [
+                        'CDISC CT: quarterly-updated standardised vocabulary for SDTM/SEND/ADaM.',
+                        'MedDRA: 5-level adverse-event coding hierarchy.',
+                        'WHODrug: concomitant medication coding dictionary.',
+                        'UCUM: Unified Code for Units of Measure — standard for clinical units.'
+                      ]}
+                ],
+                takeaways: [
+                    'Standards make data portable and auditable — without CDISC, FDA submissions would be unreviewable.',
+                    'CDISC SDTM/SEND structure regulatory submissions — non-compliance is a rejection trigger, not a polite suggestion.',
+                    'FAIR principles guide reuse; ALCOA+ guarantees integrity — both are needed for compliant, reusable data.',
+                    'HL7 FHIR is the modern healthcare interchange standard, increasingly required for EHR interoperability.',
+                    'Controlled terminology (CDISC CT, MedDRA, WHODrug) is the vocabulary layer — non-standard codes break submissions.'
+                ],
+                glossary: [
+                    ['CDISC', 'Clinical Data Interchange Standards Consortium — the dominant clinical research standards body.'],
+                    ['SDTM', 'Study Data Tabulation Model — CDISC submission dataset standard.'],
+                    ['CDASH', 'Clinical Data Acquisition Standards Harmonization — CDISC source-data-collection standard.'],
+                    ['ADaM', 'Analysis Data Model — CDISC analysis-ready dataset standard.'],
+                    ['SEND', 'Standard for Exchange of Nonclinical Data — nonclinical SDTM equivalent.'],
+                    ['HL7 FHIR', 'Fast Healthcare Interoperability Resources — modern REST-based healthcare API standard.'],
+                    ['MedDRA', 'Medical Dictionary for Regulatory Activities — adverse-event coding.'],
+                    ['ALCOA+', 'FDA data integrity expectations: Attributable, Legible, Contemporaneous, Original, Accurate + Complete, Consistent, Enduring, Available.']
+                ],
+                references: [
+                    { label: 'CDISC Standards', url: 'https://www.cdisc.org/standards' },
+                    { label: 'HL7 FHIR', url: 'https://hl7.org/fhir/' },
+                    { label: 'FAIR Data Principles', url: 'https://www.go-fair.org/fair-principles/' },
+                    { label: 'MedDRA', url: 'https://www.meddra.org/' },
+                    { label: '21 CFR Part 11', url: 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfcfr/CFRSearch.cfm?CFRPart=11' }
+                ]
+            },
+            {
+                n: 8, title: 'Technology Ecosystem',
+                summary: 'The systems that hold and move discovery data — ELN, LIMS, CTMS, EDC, eTMF, registries, data warehouses, lakehouses — and the modernisation pushing them to the cloud. Maps each system to the data it owns, the integrations it requires, and the migration path from legacy on-prem to modern cloud-native.',
+                pipeline: [
+                    { label: 'ELN (Lab)', desc: 'Electronic Lab Notebook — captures experiments, synthesis, observations.' },
+                    { label: 'LIMS (Samples)', desc: 'Laboratory Information Management — tracks samples, assays, results.' },
+                    { label: 'CTMS (Trials)', desc: 'Clinical Trial Management — sites, milestones, monitoring visits.' },
+                    { label: 'Warehouse', desc: 'Enterprise data warehouse — unifies cross-functional data for analytics.' },
+                    { label: 'Cloud / AI', desc: 'Cloud-native lakehouse + ML platform — the modern target architecture.' }
+                ],
+                deepDives: [
+                    { heading: 'Lab Systems: ELN and LIMS',
+                      body: 'The Electronic Lab Notebook (ELN) is the chemist\'s and biologist\'s primary system — capturing experimental design, observations, raw data, and conclusions in a structured, searchable, ALCOA+-compliant form. Vendors include IDBS E-WorkBook, PerkinElmer Signals Notebook, Dassault Biovia, and Dotmatics. LIMS (Laboratory Information Management System) tracks samples, assays, and results — particularly important in DMPK and bioanalysis where every sample must be traceable from collection to result. Vendors include LabWare, STARLIMS (Abbott), and LabVantage. The ELN-LIMS boundary is the most common integration point in discovery IT, and the most common source of data friction.',
+                      bullets: [
+                        'ELN: IDBS E-WorkBook, PerkinElmer Signals, Dassault Biovia, Dotmatics.',
+                        'LIMS: LabWare, STARLIMS, LabVantage — sample and assay lifecycle.',
+                        'Integration: ELN captures the experiment; LIMS captures the sample/result — they must reconcile.',
+                        'ALCOA+: both systems must meet FDA data-integrity expectations.'
+                      ]},
+                    { heading: 'Clinical Systems: EDC, CTMS, eTMF',
+                      body: 'Clinical trials run on three core systems. EDC (Electronic Data Capture) collects patient-level data at sites — vendors include Medidata Rave, Veevo CDMS, and Oracle InForm. CTMS (Clinical Trial Management System) tracks trial operations — sites, monitors, milestones, enrolment — with Veeva CTMS, Medidata CTMS, and Oracle Sieval as leaders. eTMF (electronic Trial Master File) is the document archive for the trial — Veeva eTMF and Phlexglobal are common. The three systems must be integrated: a site activation in CTMS must create a site file in eTMF; an SAE in EDC must trigger a safety document in eTMF. DCT (Decentralised Clinical Trial) platforms like Medable and Science 37 extend the stack to remote patient interactions.',
+                      bullets: [
+                        'EDC: Medidata Rave, Veeva CDMS, Oracle InForm — patient data collection.',
+                        'CTMS: Veeva CTMS, Medidata CTMS, Oracle Sieval — trial operations.',
+                        'eTMF: Veeva eTMF, Phlexglobal — trial document archive.',
+                        'DCT: Medable, Science 37 — decentralised / remote trial capabilities.'
+                      ]},
+                    { heading: 'Registries and Master Data',
+                      body: 'Master data management (MDM) sits underneath the operational systems, providing the canonical reference for subjects (patients), sites, investigators, compounds, studies, and SAEs. A subject registry (often called SDTM DM domain) assigns a unique subject ID across trials. A compound registry tracks every molecule from synthesis through development. A study registry tracks every trial from concept to CSR. Without MDM, cross-study analytics are impossible — every "subject 001" could be a different person. Vendors include Veeva Vault, Oracle MDM, and Informatica.',
+                      bullets: [
+                        'Subject registry: unique patient IDs across trials — prerequisite for longitudinal analytics.',
+                        'Compound registry: canonical molecule identifiers — links chemistry to biology to clinical.',
+                        'Study registry: trial metadata — drives portfolio dashboards.',
+                        'Veeva Vault: dominant platform for pharma master data.'
+                      ]},
+                    { heading: 'Warehouses, Lakehouses, and the Cloud Migration',
+                      body: 'The enterprise data warehouse (EDW) was the traditional analytics target — a structured, schema-on-write store typically running on Oracle or Teradata. The modern architecture is the lakehouse — a cloud-native store (Databricks Delta Lake, Snowflake, AWS Athena) that combines the schema flexibility of a data lake with the transactional guarantees of a warehouse. The migration from on-prem EDW to cloud lakehouse is the single largest IT initiative at most pharma companies today. It enables ML at scale (training data is queryable), reduces time-to-insight (no overnight ETL batch), and lowers total cost of ownership (pay-per-use compute). Excelra\'s cloud modernisation practice frequently delivers this migration.',
+                      bullets: [
+                        'EDW: traditional structured warehouse — Oracle, Teradata, on-prem.',
+                        'Lakehouse: cloud-native (Databricks, Snowflake, Athena) — schema-on-read + ACID.',
+                        'Benefits: queryable training data, real-time analytics, pay-per-use compute.',
+                        'Excelra cloud modernisation practice: migration + governance + analytics.'
+                      ]}
+                ],
+                takeaways: [
+                    'ELN captures experiments; LIMS captures samples — their integration is the most common pain point in discovery IT.',
+                    'CTMS tracks clinical trial operations; EDC captures patient data; eTMF archives trial documents — the three must be integrated.',
+                    'Warehouses unify data for analytics; lakehouses (Databricks, Snowflake) are the modern cloud-native target.',
+                    'Cloud modernisation enables AI at scale by making training data queryable and reducing ETL friction.',
+                    'Master data management (subject, compound, study registries) is the prerequisite for cross-study analytics.'
+                ],
+                glossary: [
+                    ['ELN', 'Electronic Lab Notebook — captures experiments and observations in a structured, searchable form.'],
+                    ['LIMS', 'Laboratory Information Management System — tracks samples, assays, results.'],
+                    ['EDC', 'Electronic Data Capture — collects patient-level clinical trial data at sites.'],
+                    ['CTMS', 'Clinical Trial Management System — tracks trial operations, sites, milestones.'],
+                    ['eTMF', 'Electronic Trial Master File — document archive for a clinical trial.'],
+                    ['MDM', 'Master Data Management — canonical reference for subjects, compounds, studies.'],
+                    ['Lakehouse', 'Cloud-native architecture combining data-lake flexibility with warehouse transactional guarantees.']
+                ],
+                references: [
+                    { label: 'Databricks Lakehouse', url: 'https://www.databricks.com/learn/data-lakehouse' },
+                    { label: 'Veeva Vault', url: 'https://www.veeva.com/products/vault/' },
+                    { label: 'Medidata Solutions', url: 'https://www.medidata.com/' }
+                ]
+            },
+            {
+                n: 9, title: 'Current Industry Challenges',
+                summary: 'The hard problems the industry faces today — data silos, integrity failures, interoperability gaps, scalability limits, rising cost and time pressures — and where the pressure is most acute. Frames each challenge as both a problem and an opportunity for data engineering.',
+                pipeline: [
+                    { label: 'Silos', desc: 'Project- and function-specific data stores invisible to portfolio analytics.' },
+                    { label: 'Integrity', desc: 'ALCOA+ failures, audit-trail gaps, regulatory findings.' },
+                    { label: 'Interoperability', desc: 'Non-standard formats block cross-system data exchange.' },
+                    { label: 'Scale', desc: 'Volume, variety, velocity exceed legacy on-prem capacity.' },
+                    { label: 'Cost & Time', desc: 'Rising R&D spend, flat productivity, patent cliffs.' }
+                ],
+                deepDives: [
+                    { heading: 'Data Silos',
+                      body: 'A typical mid-sized pharma has 50–200 distinct data systems — ELN, LIMS, EDC, CTMS, eTMF, plus countless spreadsheet-based registries. Each system serves a function, but most are not integrated with the others. The result: a chemist cannot easily query which compounds have been tested against a given target across projects; a clinical operations leader cannot easily benchmark enrolment timelines across trials; a portfolio reviewer cannot easily compute risk-adjusted NPV across the active pipeline. Silos are not a technology problem alone — they are an organisational and governance problem. The fix requires both technical integration (data warehouses, APIs, MDM) and governance (data stewards, ownership, access policies).',
+                      bullets: [
+                        '50–200 distinct systems per mid-sized pharma — most not integrated.',
+                        'Silos block cross-project analytics, portfolio benchmarking, and AI training.',
+                        'Fix requires both technical integration (warehouses, MDM) and governance (stewards, policies).',
+                        'Excelra\'s data FAIRification practice targets silo reduction directly.'
+                      ]},
+                    { heading: 'Data Integrity',
+                      body: 'FDA Warning Letters and 483 observations frequently cite data integrity failures: missing audit trails, shared user accounts, backdated entries, deleted records. The root causes are often cultural (scientists not trained on ALCOA+) and technical (legacy systems without audit-trail capability). The fix requires validated systems with 21 CFR Part 11-compliant audit trails, role-based access control, periodic data integrity audits, and a culture that treats data as evidence rather than as personal notes. The cost of failure is high: a single Warning Letter can delay a product launch by 12–24 months and cost hundreds of millions in remediation.',
+                      bullets: [
+                        'FDA 483 observations and Warning Letters frequently cite data integrity failures.',
+                        'Root causes: cultural (no ALCOA+ training) + technical (no audit trails).',
+                        'Fix: validated systems, Part 11 compliance, role-based access, periodic audits.',
+                        'Cost of failure: 12–24 month launch delay, hundreds of millions in remediation.'
+                      ]},
+                    { heading: 'Interoperability',
+                      body: 'Even when systems are integrated, they often speak different languages. EDC vendors use proprietary formats; ELN vendors export in vendor-specific XML; EHR systems use HL7 v2 with site-specific Z-segments. The result: every integration is a custom project, every cross-system query requires a data engineer, and every analytical pipeline starts with bespoke ETL. The FHIR standard and CDISC interoperability initiatives aim to reduce this friction, but adoption is uneven. Excelra\'s standards consulting practice helps organisations map their internal vocabularies to CDISC, HL7 FHIR, and SNOMED CT.',
+                      bullets: [
+                        'EDC vendors use proprietary formats — every integration is custom.',
+                        'HL7 v2 Z-segments break interoperability between EHR systems.',
+                        'FHIR adoption is uneven — modern but not yet universal.',
+                        'CDISC interoperability initiatives aim to bridge clinical research and healthcare.'
+                      ]},
+                    { heading: 'Scale and Cost',
+                      body: 'The volume of pharma data doubles roughly every 18 months, driven by omics (sequencing), imaging (cryo-EM, MRI), and real-world sources (EHR, wearables). Legacy on-prem systems cannot scale at this rate — storage costs grow linearly, compute costs grow superlinearly, and ETL batch windows overflow nightly schedules. Cloud-native lakehouses (Databricks, Snowflake) solve the scaling problem with elastic compute and storage separation, but introduce new challenges: cost governance (cloud bills can spiral), data governance (multi-cloud replication), and skills gaps (data engineering talent is scarce). The industry\'s R&D spend has grown ~3% per year while output (new drug approvals) has been roughly flat — Eroom\'s law, the inverse of Moore\'s law.',
+                      bullets: [
+                        'Data volume doubles every ~18 months — legacy on-prem cannot scale.',
+                        'Cloud-native lakehouses solve scaling but introduce cost governance challenges.',
+                        'Data engineering talent is scarce — salaries up 40% in 5 years.',
+                        'Eroom\'s law: R&D spend grows, output flat — the productivity paradox.'
+                      ]}
+                ],
+                takeaways: [
+                    'Silos prevent cross-org insight — both technical integration (warehouses, MDM) and governance (stewards, policies) are required to break them.',
+                    'Data integrity failures sink submissions — FDA Warning Letters can delay launches by 12–24 months.',
+                    'Interoperability is still unsolved at scale — every integration remains a custom project.',
+                    'Rising R&D cost pressures every decision — Eroom\'s law (inverse of Moore\'s) defines the productivity paradox.',
+                    'Each challenge is an opportunity for data engineering — Excelra\'s FAIRification, standards, and cloud-modernisation practices directly address them.'
+                ],
+                glossary: [
+                    ['Silo', 'A data store that is not integrated with other organisational data — invisible to cross-functional analytics.'],
+                    ['Warning Letter', 'FDA enforcement action citing serious regulatory violations; can delay product launches.'],
+                    ['483 Observation', 'FDA inspection finding documenting conditions that may violate the Food, Drug, and Cosmetic Act.'],
+                    ['Eroom\'s Law', 'The inverse of Moore\'s law: R&D spend rises while output stays flat — pharma\'s productivity paradox.'],
+                    ['FAIRification', 'The process of transforming existing data to meet FAIR (Findable, Accessible, Interoperable, Reusable) principles.']
+                ],
+                references: [
+                    { label: 'FDA Warning Letters', url: 'https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters' },
+                    { label: 'FAIR Data Principles', url: 'https://www.go-fair.org/fair-principles/' },
+                    { label: 'ONC Interoperability Rule', url: 'https://www.healthit.gov/topic/laws-regulation-and-policy/onc-cures-act-final-rule' }
+                ]
+            },
+            {
+                n: 10, title: 'Role of Data Engineering & AI',
+                summary: 'How modern data engineering and AI/ML accelerate discovery — from FAIRification and knowledge graphs to predictive models and generative chemistry. Frames AI as sitting on top of well-engineered data, not as a replacement for it.',
+                pipeline: [
+                    { label: 'FAIRification', desc: 'Standardise, annotate, and expose existing data as FAIR resources.' },
+                    { label: 'Knowledge Graph', desc: 'Connect entities (compounds, targets, pathways, trials) into a queryable graph.' },
+                    { label: 'Feature Store', desc: 'Curate ML-ready features with consistent definitions across teams.' },
+                    { label: 'ML Models', desc: 'Predict activity, toxicity, PK, clinical outcomes; generate novel candidates.' },
+                    { label: 'Decisions', desc: 'Human-in-the-loop: AI proposes, scientists decide, data accumulates.' }
+                ],
+                deepDives: [
+                    { heading: 'FAIRification: The Foundation',
+                      body: 'AI is only as good as the data it trains on. FAIRification — the process of transforming existing data to meet FAIR principles — is the unglamorous but essential foundation. It involves: identifying persistent identifiers (DOIs, InChIKeys, UniProt IDs); adding rich metadata (provenance, assay type, organism, cell line); mapping to standard ontologies (CDISC, SNOMED CT, ChEBI); and exposing via standard APIs (FHIR, REST). The result is data that can be discovered by humans and machines, queried across projects, and reused as ML training data. FAIRification is rarely a single project — it is a continuous practice embedded in data engineering.',
+                      bullets: [
+                        'Persistent identifiers: DOIs, InChIKeys, UniProt IDs, ORCID.',
+                        'Rich metadata: provenance, assay type, organism, cell line, concentration units.',
+                        'Ontology mapping: CDISC, SNOMED CT, ChEBI, MedDRA.',
+                        'Standard APIs: FHIR for healthcare, REST for research data.'
+                      ]},
+                    { heading: 'Knowledge Graphs',
+                      body: 'A knowledge graph connects entities — compounds, targets, pathways, diseases, trials, publications — into a queryable network. Queries that would take weeks of literature review become seconds of graph traversal: "find all compounds active against targets in the EGFR pathway with known resistance mutations and clinical trial evidence in non-small-cell lung cancer". Vendors include Neo4j, Amazon Neptune, and TigerGraph; pharma implementations include AstraZeneca\'s ACT graph and Novartis\'s KGE (Knowledge Graph Engine). Excelra\'s GOSTAR is itself a curated knowledge graph of chemistry-biology relationships. The combination of FAIRified internal data with curated external databases (GOSTAR, ChEMBL, GOBIOM) gives the most powerful knowledge graph substrate.',
+                      bullets: [
+                        'Nodes: compounds, targets, pathways, diseases, trials, publications.',
+                        'Edges: "inhibits", "is in pathway", "treats disease", "failed in Phase II for".',
+                        'Vendors: Neo4j, Amazon Neptune, TigerGraph, Stardog.',
+                        'Pharma implementations: AstraZeneca ACT, Novartis KGE.'
+                      ]},
+                    { heading: 'Predictive ML: ADMET, Activity, Toxicity',
+                      body: 'Predictive ML models estimate properties before wet-lab measurement, reducing the number of compounds that need to be synthesised and tested. ADMET models predict absorption, distribution, metabolism, excretion, toxicity from chemical structure alone — using graph neural networks (GNNs) trained on historical ADMET data. Activity models predict IC50 against specific targets — useful for virtual screening of large libraries. Toxicity models predict organ toxicity (cardiotoxicity via hERG, hepatotoxicity via DILI) from structure and omics data. The training data is the limiting factor: a model trained on 1,000 compounds is far less reliable than one trained on 100,000. Curated databases like GOSTAR and ChEMBL are the dominant training-data sources.',
+                      bullets: [
+                        'ADMET models: graph neural networks on structure → predicted PK/tox.',
+                        'Activity models: predict IC50 against specific targets — virtual screening.',
+                        'Toxicity models: hERG (cardiotoxicity), DILI (hepatotoxicity), genotoxicity.',
+                        'Training data is the limiting factor — GOSTAR, ChEMBL are dominant sources.'
+                      ]},
+                    { heading: 'Generative Chemistry and AlphaFold',
+                      body: 'Generative AI models design novel chemical structures with desired properties — a paradigm shift from screening existing collections to creating new ones. Vendors include Insilico Medicine, Recursion, and Atomwise; big pharma runs internal generative chemistry programmes. AlphaFold (DeepMind) solved the protein-structure prediction problem in 2021 — its database now contains predicted structures for nearly every ordered human protein. This makes structure-based drug design possible for targets without experimental structures, dramatically expanding the druggable target space. The combination of generative chemistry (designing the molecule) with AlphaFold structures (knowing the target) and predictive ADMET (anticipating in vivo behaviour) is the modern AI-driven discovery stack.',
+                      bullets: [
+                        'Generative chemistry: design novel structures with desired properties.',
+                        'AlphaFold DB: predicted 3D structures for nearly every ordered human protein.',
+                        'Structure-based drug design now possible for targets without experimental structures.',
+                        'Combined stack: generative chemistry + AlphaFold target + predictive ADMET.'
+                      ]},
+                    { heading: 'Human-in-the-Loop',
+                      body: 'AI does not replace the scientist — it augments them. The dominant pattern is human-in-the-loop: AI proposes (e.g., a list of 100 virtual screening hits, or 50 generative compounds), the scientist triages and selects (perhaps 10 for synthesis), the wet-lab data is fed back into the model, and the cycle repeats. This active-learning loop typically outperforms either pure AI or pure human selection. The data engineer\'s job is to make the loop fast — data flows from assay to model to recommendation in hours, not weeks. Excelra\'s consulting practice frequently builds these loops for clients.',
+                      bullets: [
+                        'Human-in-the-loop: AI proposes, scientist selects, data feeds back.',
+                        'Active learning: model improves with each wet-lab cycle.',
+                        'Cycle time matters: hours, not weeks, from assay to recommendation.',
+                        'Excelra builds active-learning loops for client discovery programmes.'
+                      ]}
+                ],
+                takeaways: [
+                    'FAIR data is the prerequisite for AI — without standardised, well-described, queryable data, ML models cannot be trained or trusted.',
+                    'Knowledge graphs connect entities across datasets — queries that took weeks of literature review become seconds of graph traversal.',
+                    'ML predicts activity, toxicity, and outcomes — graph neural networks on structure predict ADMET; curated databases are the training data.',
+                    'Generative AI proposes novel candidates; AlphaFold expanded the druggable target space — together they form the modern AI discovery stack.',
+                    'Human-in-the-loop keeps science valid — AI proposes, scientists decide, data accumulates, models improve.'
+                ],
+                glossary: [
+                    ['Knowledge Graph', 'A queryable network of entities (compounds, targets, pathways) and their relationships.'],
+                    ['Graph Neural Network (GNN)', 'ML architecture that operates on graph-structured data — used for molecular property prediction.'],
+                    ['AlphaFold', 'DeepMind\'s protein-structure prediction system; its DB covers nearly every ordered human protein.'],
+                    ['Generative Chemistry', 'AI design of novel chemical structures with desired properties — a paradigm shift from screening.'],
+                    ['Active Learning', 'ML paradigm where the model selects which examples to label next, optimising wet-lab use.'],
+                    ['Feature Store', 'Centralised repository of ML-ready features with consistent definitions across teams.']
+                ],
+                references: [
+                    { label: 'AlphaFold DB', url: 'https://alphafold.ebi.ac.uk/' },
+                    { label: 'Jumper et al. (2021) — Nature', url: 'https://doi.org/10.1038/s41586-021-03819-2' },
+                    { label: 'Insilico Medicine', url: 'https://insilico.com/' },
+                    { label: 'Neo4j Graph Database', url: 'https://neo4j.com/' },
+                    { label: 'FAIR Data Principles', url: 'https://www.go-fair.org/fair-principles/' }
+                ]
+            },
+            {
+                n: 11, title: 'Summary',
+                summary: 'Consolidates the entire course — the science, the data, the standards, the technology, and the AI — into a single mental model of modern drug discovery at Excelra. Each thread is revisited briefly and then woven into the integrated view that defines Excelra\'s value proposition.',
+                pipeline: [
+                    { label: 'Science', desc: 'Target -> hit -> lead -> candidate -> IND -> approval — the discovery pipeline.' },
+                    { label: 'Data', desc: 'Chemistry, biology, preclinical, clinical, real-world — the data landscape.' },
+                    { label: 'Standards', desc: 'CDISC, HL7, FAIR, ALCOA+ — the standards that make data portable and compliant.' },
+                    { label: 'Technology', desc: 'ELN, LIMS, EDC, CTMS, warehouse, cloud — the systems that hold and move data.' },
+                    { label: 'AI', desc: 'Knowledge graphs, predictive ML, generative chemistry, AlphaFold — the AI layer on top.' }
+                ],
+                deepDives: [
+                    { heading: 'The Five-Layer Mental Model',
+                      body: 'Modern drug discovery at Excelra can be understood as five layers stacked on top of each other. The science layer is the discovery pipeline — target to approval — and the people who run it. The data layer is the landscape of chemical, biological, preclinical, clinical, and real-world data generated across that pipeline. The standards layer (CDISC, HL7, FAIR, ALCOA+) makes that data portable, compliant, and reusable. The technology layer (ELN, LIMS, EDC, CTMS, warehouse, cloud) holds and moves the data. The AI layer (knowledge graphs, predictive ML, generative chemistry, AlphaFold) turns the data into decisions. Each layer depends on the layer below — AI without standards is unreliable, standards without data is empty, data without science is irrelevant.',
+                      bullets: [
+                        'Science: the pipeline and the people — Module 5 (Stakeholders) and Module 3 (Process).',
+                        'Data: the landscape — Module 6 (Data Landscape).',
+                        'Standards: CDISC, HL7, FAIR, ALCOA+ — Module 7 (Standards).',
+                        'Technology: ELN, LIMS, EDC, CTMS, warehouse, cloud — Module 8 (Technology).',
+                        'AI: knowledge graphs, ML, generative chemistry — Module 10 (AI).'
+                      ]},
+                    { heading: 'Where Excelra Fits',
+                      body: 'Excelra is uniquely positioned across all five layers. Its flagship databases (GOSTAR, GOBIOM, CTOD) sit in the data layer — curated, standardised, queryable collections of chemistry-biology-clinical relationships. Its standards consulting practice sits in the standards layer — helping clients adopt CDISC, FAIR, ALCOA+. Its cloud modernisation and informatics practice sits in the technology layer — building and migrating ELN, LIMS, warehouse, and lakehouse systems. Its AI/ML practice sits in the AI layer — building knowledge graphs, predictive models, and active-learning loops. Few competitors span all five layers; most sit in only one or two.',
+                      bullets: [
+                        'Data: GOSTAR (10.6M structures), GOBIOM (biomarkers), CTOD (clinical outcomes).',
+                        'Standards: CDISC, FAIR, ALCOA+ consulting and implementation.',
+                        'Technology: ELN, LIMS, warehouse, cloud lakehouse modernisation.',
+                        'AI: knowledge graphs, predictive ML, active-learning loops.'
+                      ]},
+                    { heading: 'The Course in One Sentence',
+                      body: 'Modern drug discovery is a data problem as much as a science problem, and Excelra is the data partner that makes the science faster, cheaper, and more reliable — by building the curated databases, applying the standards, modernising the technology, and deploying the AI that together turn raw experimental output into approved therapies.',
+                      bullets: [
+                        'Discovery = science + data + standards + technology + AI.',
+                        'Excelra = the data partner spanning all five layers.',
+                        'The five-layer model recurs throughout every Excelra engagement.',
+                        'Mastery of the model is the goal of this course.'
+                      ]},
+                    { heading: 'What to Do Next',
+                      body: 'After completing this module, you should be able to: (1) describe the discovery pipeline end to end; (2) map any discovery activity to the data, stakeholder, standard, and technology it depends on; (3) explain where AI accelerates discovery and where it does not; (4) identify the typical failure modes (silos, integrity, interoperability, scale, cost); and (5) position Excelra\'s products and services against the five-layer model. The next step is to apply this framework to a real project — pick a discovery programme you know and map each activity to the five layers. The reference module that follows provides the primary sources to deepen any thread.',
+                      bullets: [
+                        'Map any discovery activity to the five-layer model.',
+                        'Identify typical failure modes (silos, integrity, interoperability, scale, cost).',
+                        'Position Excelra products against the model.',
+                        'Apply the framework to a real project to internalise it.'
+                      ]}
+                ],
+                takeaways: [
+                    'Discovery is a data problem as much as a science one — the bottleneck has shifted from running experiments to making sense of their output.',
+                    'Standards (CDISC, FAIR, ALCOA+) and well-engineered data together unlock reuse, audit, and AI — neither alone is sufficient.',
+                    'Technology ecosystems (ELN, LIMS, EDC, CTMS, warehouse, cloud) must modernise to support AI at scale.',
+                    'AI sits on top of well-engineered data — knowledge graphs, predictive ML, and generative chemistry accelerate but do not replace the scientist.',
+                    'Excelra weaves all five layers — science, data, standards, technology, AI — into a single integrated value proposition.'
+                ],
+                glossary: [
+                    ['Five-Layer Model', 'Excelra\'s framework: Science, Data, Standards, Technology, AI — each layer depends on the one below.'],
+                    ['GOSTAR', 'Global Online Structure-Activity Relationship Database — 10.6M+ structures, 35M+ bioactivities.'],
+                    ['GOBIOM', 'Excelra\'s biomarker repository covering preclinical to exploratory phases.'],
+                    ['CTOD', 'Clinical Trial Outcome Database — supports MBMA and cross-trial benchmarking.'],
+                    ['Active-Learning Loop', 'AI proposes, scientist selects, wet-lab data feeds back, model improves — the modern discovery cycle.']
+                ],
+                references: [
+                    { label: 'Excelra.com', url: 'https://www.excelra.com/' },
+                    { label: 'GOSTAR', url: 'https://www.excelra.com/gostar/' },
+                    { label: 'GOBIOM', url: 'https://www.excelra.com/gobiom/' },
+                    { label: 'AlphaFold DB', url: 'https://alphafold.ebi.ac.uk/' },
+                    { label: 'CDISC Standards', url: 'https://www.cdisc.org/standards' }
+                ]
+            },
+            {
+                n: 12, title: 'References & Further Reading',
+                summary: 'Curated references and further reading — the primary sources, standards bodies, regulators, databases, and Excelra resources behind every module. Each reference is clickable in supported PDF viewers, so you can jump directly to the canonical source.',
+                pipeline: [
+                    { label: 'Standards Bodies', desc: 'CDISC, HL7, ICH — define the vocabularies and formats.' },
+                    { label: 'Primary Literature', desc: 'Peer-reviewed papers underlying the course\'s claims.' },
+                    { label: 'Excelra Resources', desc: 'GOSTAR, GOBIOM, CTOD — the company\'s flagship databases.' },
+                    { label: 'Regulators', desc: 'FDA, EMA, PMDA — guidance documents and submission standards.' },
+                    { label: 'Further Reading', desc: 'Public databases, textbooks, and tutorials for deeper study.' }
+                ],
+                deepDives: [
+                    { heading: 'How to Use This Module',
+                      body: 'This module is a curated reference library — every link below is a source used or recommended in the preceding eleven modules. Click any entry to open the canonical source in your browser. The references are grouped into five categories: standards bodies (CDISC, HL7, ICH), primary literature (DiMasi, Jumper et al.), Excelra resources (GOSTAR, GOBIOM, CTOD), regulators (FDA, EMA, PMDA), and public databases for further reading (ChEMBL, PubChem, UniProt, AlphaFold DB). Treat this as your starting point for any deeper investigation — the course has covered the frameworks; the sources below provide the primary evidence.',
+                      bullets: [
+                        'Every link is clickable in supported PDF viewers.',
+                        'Five categories: standards, literature, Excelra, regulators, databases.',
+                        'Use as a starting point for deeper investigation of any course topic.',
+                        'Cite the canonical source when applying course concepts in your own work.'
+                      ]},
+                    { heading: 'Why Citations Matter',
+                      body: 'In a regulated industry, citations are not academic flourish — they are the audit trail. A claim about ADMET prediction accuracy should cite the original paper; a statement about FDA submission requirements should link to the guidance document; a mention of GOSTAR should point to the database itself. This course follows that standard: every module\'s PDF includes a references section, and this module consolidates them. When you apply these concepts in your own work, do the same — cite the primary source, not the secondary summary.',
+                      bullets: [
+                        'Citations are the audit trail in a regulated industry.',
+                        'Cite the primary source, not the secondary summary.',
+                        'Each module\'s PDF includes its own references section.',
+                        'This module consolidates all course references in one place.'
+                      ]}
+                ],
+                takeaways: [
+                    'CDISC, HL7, and ICH define the standards that govern clinical research data.',
+                    'FDA and EMA publish the guidance documents that define regulatory expectations.',
+                    'Excelra\'s GOSTAR, GOBIOM, and CTOD are flagship curated databases for drug discovery.',
+                    'Public databases (ChEMBL, PubChem, UniProt, AlphaFold DB) provide open-access reference data.',
+                    'Always cite the canonical source — in a regulated industry, citations are the audit trail.'
+                ],
+                glossary: [
+                    ['CDISC', 'Clinical Data Interchange Standards Consortium — the dominant clinical research standards body.'],
+                    ['HL7', 'Health Level 7 — the dominant healthcare data interchange standards body.'],
+                    ['ICH', 'International Council for Harmonisation — harmonises regulatory expectations across FDA/EMA/PMDA.'],
+                    ['GOSTAR', 'Excelra\'s Global Online Structure-Activity Relationship Database.'],
+                    ['AlphaFold DB', 'DeepMind\'s predicted protein structure database — covers nearly every ordered human protein.']
+                ],
+                references: [
+                    { label: 'CDISC Standards Portal', url: 'https://www.cdisc.org/standards' },
+                    { label: 'CDISC SDTM', url: 'https://www.cdisc.org/standards/foundational/sdtm' },
+                    { label: 'CDISC SEND', url: 'https://www.cdisc.org/standards/foundational/send' },
+                    { label: 'CDISC CDASH', url: 'https://www.cdisc.org/standards/foundational/cdash' },
+                    { label: 'CDISC ADaM', url: 'https://www.cdisc.org/standards/foundational/adam' },
+                    { label: 'HL7 FHIR', url: 'https://hl7.org/fhir/' },
+                    { label: 'ICH Guidelines', url: 'https://www.ich.org/page/ich-guidelines' },
+                    { label: 'FAIR Data Principles', url: 'https://www.go-fair.org/fair-principles/' },
+                    { label: '21 CFR Part 11 (Electronic Records)', url: 'https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfcfr/CFRSearch.cfm?CFRPart=11' },
+                    { label: 'FDA Drug Development Process', url: 'https://www.fda.gov/patients/drug-development-process' },
+                    { label: 'FDA Real-World Evidence', url: 'https://www.fda.gov/science-research/science-and-research-special-topics/real-world-evidence' },
+                    { label: 'FDA Patient-Focused Drug Development', url: 'https://www.fda.gov/drugs/development-approval-process-drugs/fda-patient-focused-drug-development' },
+                    { label: 'FDA Warning Letters', url: 'https://www.fda.gov/inspections-compliance-enforcement-and-criminal-investigations/compliance-actions-and-activities/warning-letters' },
+                    { label: 'EMA Scientific Advice', url: 'https://www.ema.europa.eu/en/human-regulatory-overview/research-development/scientific-advice-protocol-assistance' },
+                    { label: 'PMDA (Japan)', url: 'https://www.pmda.go.jp/english/' },
+                    { label: 'MedDRA', url: 'https://www.meddra.org/' },
+                    { label: 'WHODrug', url: 'https://www.who-umc.org/whodrug/' },
+                    { label: 'SNOMED CT', url: 'https://www.snomed.org/' },
+                    { label: 'LOINC', url: 'https://loinc.org/' },
+                    { label: 'ICD-10 (WHO)', url: 'https://www.who.int/standards/classifications/classification-of-diseases' },
+                    { label: 'ChEMBL (EBI)', url: 'https://www.ebi.ac.uk/chembl/' },
+                    { label: 'PubChem (NIH)', url: 'https://pubchem.ncbi.nlm.nih.gov/' },
+                    { label: 'UniProt', url: 'https://www.uniprot.org/' },
+                    { label: 'Protein Data Bank (PDB)', url: 'https://www.rcsb.org/' },
+                    { label: 'AlphaFold DB', url: 'https://alphafold.ebi.ac.uk/' },
+                    { label: 'Jumper et al. (2021) — AlphaFold paper, Nature', url: 'https://doi.org/10.1038/s41586-021-03819-2' },
+                    { label: 'DiMasi et al. (2016) — Cost of drug development, J Health Econ', url: 'https://doi.org/10.1016/j.jhealeco.2016.07.008' },
+                    { label: 'KEGG Pathways', url: 'https://www.genome.jp/kegg/pathway.html' },
+                    { label: 'Reactome', url: 'https://reactome.org/' },
+                    { label: 'Databricks Lakehouse', url: 'https://www.databricks.com/learn/data-lakehouse' },
+                    { label: 'Snowflake', url: 'https://www.snowflake.com/' },
+                    { label: 'Veeva Vault', url: 'https://www.veeva.com/products/vault/' },
+                    { label: 'Medidata Solutions', url: 'https://www.medidata.com/' },
+                    { label: 'Excelra.com', url: 'https://www.excelra.com/' },
+                    { label: 'GOSTAR (Excelra)', url: 'https://www.excelra.com/gostar/' },
+                    { label: 'GOBIOM (Excelra)', url: 'https://www.excelra.com/gobiom/' },
+                    { label: 'CTOD (Excelra)', url: 'https://www.excelra.com/' }
+                ]
+            }
         ];
 
         // Updates the per-module PDF button label to "Get Module_N pdf".
@@ -7620,132 +8906,359 @@
             var doc = new jsPDF({ unit: 'pt', format: 'a4' });
             var PW = doc.internal.pageSize.getWidth();   // 595
             var PH = doc.internal.pageSize.getHeight();  // 842
-            var M = 40; // margin
+            var M = 44; // margin
             var purple = [124, 92, 255];
             var pink = [199, 125, 255];
             var ink = [33, 22, 58];
+            var inkSoft = [60, 50, 80];
+            var inkMuted = [120, 110, 140];
+            var lavenderBg = [246, 242, 255];
+            var lavenderBgDeep = [238, 230, 250];
 
-            // ── Top header band ──
-            doc.setFillColor(purple[0], purple[1], purple[2]);
-            doc.rect(0, 0, PW, 64, 'F');
-            doc.setFillColor(pink[0], pink[1], pink[2]);
-            doc.rect(0, 64, PW, 4, 'F');
-            if (logo) { try { doc.addImage(logo, 'PNG', M, 14, 110, 36); } catch(e){} }
-            doc.setTextColor(255, 255, 255);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(15);
-            doc.text('Drug Discovery Course', PW - M, 30, { align: 'right' });
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.text('Excelra Knowledge Solutions', PW - M, 46, { align: 'right' });
-
-            // ── Module heading ──
-            var y = 100;
-            doc.setTextColor(ink[0], ink[1], ink[2]);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(20);
-            doc.text('Module ' + data.n + ': ' + data.title, M, y);
-            y += 8;
-            doc.setDrawColor(pink[0], pink[1], pink[2]);
-            doc.setLineWidth(2);
-            doc.line(M, y, M + 60, y);
-            y += 22;
-
-            // ── Overview ──
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(purple[0], purple[1], purple[2]);
-            doc.text('Overview', M, y);
-            y += 14;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.setTextColor(60, 50, 80);
-            var overviewLines = doc.splitTextToSize(data.summary, PW - M * 2);
-            doc.text(overviewLines, M, y);
-            y += overviewLines.length * 13 + 18;
-
-            // ── Architectural flow diagram (vertical pipeline) ──
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(purple[0], purple[1], purple[2]);
-            doc.text('Architectural Flow', M, y);
-            y += 14;
-            var boxW = 300, boxH = 34, boxX = (PW - boxW) / 2, gap = 16;
-            for (var i = 0; i < data.pipeline.length; i++) {
-                // guard against running off the page; if near bottom, add page
-                if (y + boxH + (i < data.pipeline.length - 1 ? gap + 10 : 0) > PH - 60) {
-                    doc.addPage(); y = 60;
-                }
-                // box
-                doc.setFillColor(246, 242, 255);
-                doc.setDrawColor(purple[0], purple[1], purple[2]);
-                doc.setLineWidth(1.2);
-                doc.roundedRect(boxX, y, boxW, boxH, 8, 8, 'FD');
-                // number badge
+            // ── Helper: draw header band + logo on every page ──
+            function drawHeader(pageNum, totalPages) {
+                // Purple header band with pink underline stripe
                 doc.setFillColor(purple[0], purple[1], purple[2]);
-                doc.roundedRect(boxX + 8, y + 7, 20, 20, 5, 5, 'F');
+                doc.rect(0, 0, PW, 56, 'F');
+                doc.setFillColor(pink[0], pink[1], pink[2]);
+                doc.rect(0, 56, PW, 3, 'F');
+                // Logo (now has transparent background — no white box)
+                if (logo) { try { doc.addImage(logo, 'PNG', M, 12, 110, 34); } catch(e){} }
+                // Right-aligned title
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
-                doc.setFontSize(11);
-                doc.text(String(i + 1), boxX + 18, y + 21, { align: 'center' });
-                // label
+                doc.setFontSize(13);
+                doc.text('Drug Discovery Course', PW - M, 24, { align: 'right' });
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.text('Excelra Knowledge Solutions', PW - M, 38, { align: 'right' });
+                // Module indicator on the right side of the header
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.text('Module ' + data.n + ' / 12', PW - M, 50, { align: 'right' });
+            }
+
+            // ── Helper: draw footer band on every page ──
+            function drawFooter(pageNum, totalPages) {
+                doc.setFillColor(lavenderBg[0], lavenderBg[1], lavenderBg[2]);
+                doc.rect(0, PH - 36, PW, 36, 'F');
+                doc.setDrawColor(pink[0], pink[1], pink[2]);
+                doc.setLineWidth(0.8);
+                doc.line(0, PH - 36, PW, PH - 36);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(7.5);
+                doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
+                doc.text('Generated by ' + user + '  •  ' + stamp, M, PH - 20);
+                doc.text('Excelra Knowledge Solutions  •  Page ' + pageNum + ' of ' + totalPages, PW - M, PH - 20, { align: 'right' });
+            }
+
+            // ── Helper: section heading with purple accent bar ──
+            function sectionHeading(text, y) {
+                if (y > PH - 100) { doc.addPage(); y = 80; }
+                doc.setFillColor(purple[0], purple[1], purple[2]);
+                doc.rect(M, y - 9, 3, 12, 'F');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(13);
+                doc.setTextColor(purple[0], purple[1], purple[2]);
+                doc.text(text, M + 10, y);
+                return y + 18;
+            }
+
+            // ── Helper: paragraph text with auto-wrap and page break ──
+            function paragraph(text, y, fontSize) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(fontSize || 10);
+                doc.setTextColor(inkSoft[0], inkSoft[1], inkSoft[2]);
+                var lines = doc.splitTextToSize(text, PW - M * 2);
+                for (var i = 0; i < lines.length; i++) {
+                    if (y > PH - 60) { doc.addPage(); y = 80; }
+                    doc.text(lines[i], M, y);
+                    y += (fontSize || 10) * 1.35;
+                }
+                return y + 8;
+            }
+
+            // ── Helper: bullet list item ──
+            function bulletItem(text, y, fontSize) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(fontSize || 10);
+                doc.setTextColor(inkSoft[0], inkSoft[1], inkSoft[2]);
+                var lines = doc.splitTextToSize(text, PW - M * 2 - 18);
+                if (y + lines.length * (fontSize || 10) * 1.35 > PH - 60) { doc.addPage(); y = 80; }
+                // bullet dot
+                doc.setFillColor(pink[0], pink[1], pink[2]);
+                doc.circle(M + 4, y - 3, 2.2, 'F');
+                // text
+                doc.text(lines, M + 14, y);
+                y += lines.length * (fontSize || 10) * 1.35 + 4;
+                return y;
+            }
+
+            // ── PAGE 1: Cover + Overview + Module metadata ──
+            drawHeader(1, 1);
+            var y = 90;
+
+            // Module title block
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(pink[0], pink[1], pink[2]);
+            doc.text('MODULE ' + data.n, M, y);
+            y += 22;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(26);
+            doc.setTextColor(ink[0], ink[1], ink[2]);
+            var titleLines = doc.splitTextToSize(data.title, PW - M * 2);
+            doc.text(titleLines[0], M, y);
+            y += titleLines.length * 28 + 4;
+
+            // Pink underline accent
+            doc.setDrawColor(pink[0], pink[1], pink[2]);
+            doc.setLineWidth(2.5);
+            doc.line(M, y, M + 72, y);
+            y += 22;
+
+            // Learner info card
+            doc.setFillColor(lavenderBg[0], lavenderBg[1], lavenderBg[2]);
+            doc.setDrawColor(purple[0], purple[1], purple[2]);
+            doc.setLineWidth(0.8);
+            doc.roundedRect(M, y, PW - M * 2, 56, 6, 6, 'FD');
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
+            doc.text('LEARNER', M + 14, y + 16);
+            doc.text('GENERATED', PW / 2, y + 16);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(ink[0], ink[1], ink[2]);
+            doc.text(user, M + 14, y + 36);
+            doc.text(stamp, PW / 2, y + 36);
+            y += 76;
+
+            // Overview
+            y = sectionHeading('Overview', y);
+            y = paragraph(data.summary, y, 10.5);
+            y += 8;
+
+            // ── Architectural Flow Diagram (richer stage cards, not just boxes) ──
+            y = sectionHeading('Architectural Flow', y);
+
+            // Two-column stage card layout
+            var stageW = (PW - M * 2 - 16) / 2;  // each card width
+            var stageGap = 16;
+            var stageY = y;
+            var stagesPerRow = 2;
+
+            for (var i = 0; i < data.pipeline.length; i++) {
+                var stage = data.pipeline[i];
+                var col = i % stagesPerRow;
+                var row = Math.floor(i / stagesPerRow);
+                var sx = M + col * (stageW + stageGap);
+                var sy = y + row * 84;
+
+                // Check page break before drawing
+                if (sy + 76 > PH - 60) {
+                    doc.addPage();
+                    y = 80;
+                    sy = y;
+                    row = 0;
+                }
+
+                // Card background — alternating shades for visual variety
+                var cardBg = (i % 2 === 0) ? lavenderBg : lavenderBgDeep;
+                doc.setFillColor(cardBg[0], cardBg[1], cardBg[2]);
+                doc.setDrawColor(purple[0], purple[1], purple[2]);
+                doc.setLineWidth(1.1);
+                doc.roundedRect(sx, sy, stageW, 76, 8, 8, 'FD');
+
+                // Number badge — gradient-look via two rectangles
+                doc.setFillColor(purple[0], purple[1], purple[2]);
+                doc.roundedRect(sx + 8, sy + 8, 26, 26, 5, 5, 'F');
+                doc.setFillColor(pink[0], pink[1], pink[2]);
+                doc.roundedRect(sx + 8, sy + 8, 26, 5, 5, 5, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(12);
+                doc.text(String(i + 1), sx + 21, sy + 26, { align: 'center' });
+
+                // Label
                 doc.setTextColor(ink[0], ink[1], ink[2]);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(11);
-                doc.text(data.pipeline[i], boxX + 40, y + 21);
-                y += boxH;
-                // arrow to next
-                if (i < data.pipeline.length - 1) {
-                    var ax = boxX + boxW / 2;
-                    doc.setDrawColor(pink[0], pink[1], pink[2]);
-                    doc.setLineWidth(1.6);
-                    doc.line(ax, y + 3, ax, y + gap - 3);
-                    // arrowhead
-                    doc.line(ax, y + gap - 3, ax - 4, y + gap - 8);
-                    doc.line(ax, y + gap - 3, ax + 4, y + gap - 8);
-                    y += gap;
+                doc.text(stage.label, sx + 42, sy + 22);
+
+                // Description
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8.5);
+                doc.setTextColor(inkSoft[0], inkSoft[1], inkSoft[2]);
+                var descLines = doc.splitTextToSize(stage.desc, stageW - 18);
+                // Cap to 4 lines to fit the card
+                var maxLines = Math.min(descLines.length, 4);
+                for (var d = 0; d < maxLines; d++) {
+                    doc.text(descLines[d], sx + 10, sy + 42 + d * 10);
+                }
+
+                // If last card in a row, advance y
+                if (col === stagesPerRow - 1 || i === data.pipeline.length - 1) {
+                    y = sy + 76 + 10;
                 }
             }
-            y += 22;
 
-            // ── Key takeaways ──
-            // If takeaways would overflow the page, move to a new page.
-            if (y + data.takeaways.length * 18 + 30 > PH - 70) { doc.addPage(); y = 60; }
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(11);
-            doc.setTextColor(purple[0], purple[1], purple[2]);
-            doc.text('Key Takeaways', M, y);
-            y += 16;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.setTextColor(50, 40, 70);
-            for (var t = 0; t < data.takeaways.length; t++) {
-                if (y > PH - 70) { doc.addPage(); y = 60; }
-                // bullet dot
-                doc.setFillColor(purple[0], purple[1], purple[2]);
-                doc.circle(M + 3, y - 3, 2, 'F');
-                var tlines = doc.splitTextToSize(data.takeaways[t], PW - M * 2 - 14);
-                doc.text(tlines, M + 14, y);
-                y += tlines.length * 13 + 6;
+            // Flow arrow connecting stages vertically (subtle accent on the side)
+            doc.setDrawColor(pink[0], pink[1], pink[2]);
+            doc.setLineWidth(1.4);
+            doc.setLineDashPattern([2, 2], 0);
+            var arrowX = M - 12;
+            var arrowY1 = y - (data.pipeline.length / 2) * 84 + 30;
+            var arrowY2 = y - 10;
+            // Only draw the side arrow if we drew more than 2 stages and there's room
+            if (data.pipeline.length > 2 && arrowY2 > arrowY1) {
+                doc.line(arrowX, arrowY1, arrowX, arrowY2);
+                doc.line(arrowX, arrowY2, arrowX - 3, arrowY2 + 5);
+                doc.line(arrowX, arrowY2, arrowX + 3, arrowY2 + 5);
+            }
+            doc.setLineDashPattern([], 0);
+            y += 14;
+
+            // ── Deep-Dive Subtopics (each on its own section, possibly new page) ──
+            if (data.deepDives && data.deepDives.length > 0) {
+                doc.addPage();
+                y = 80;
+                y = sectionHeading('Deep Dive', y);
+                y = paragraph('A detailed examination of the most important concepts in this module, with sub-points and examples.', y, 9.5);
+                y += 6;
+
+                for (var d = 0; d < data.deepDives.length; d++) {
+                    var dd = data.deepDives[d];
+
+                    // Page break if not enough room for heading + paragraph start
+                    if (y > PH - 180) { doc.addPage(); y = 80; }
+
+                    // Subsection heading with diamond accent
+                    doc.setFillColor(pink[0], pink[1], pink[2]);
+                    doc.saveGraphicsState();
+                    // Draw a small diamond (rotated square)
+                    var dx = M + 4, dy = y - 6;
+                    doc.triangle(dx, dy - 4, dx + 4, dy, dx, dy + 4, 'F');
+                    doc.triangle(dx, dy - 4, dx + 4, dy, dx + 8, dy - 4, 'F');
+                    doc.restoreGraphicsState();
+
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(12);
+                    doc.setTextColor(ink[0], ink[1], ink[2]);
+                    var ddHeadingLines = doc.splitTextToSize(dd.heading, PW - M * 2 - 16);
+                    doc.text(ddHeadingLines[0], M + 14, y);
+                    y += ddHeadingLines.length * 15 + 4;
+
+                    // Body paragraph
+                    y = paragraph(dd.body, y, 10);
+                    y += 4;
+
+                    // Sub-bullets
+                    if (dd.bullets && dd.bullets.length > 0) {
+                        for (var b = 0; b < dd.bullets.length; b++) {
+                            y = bulletItem(dd.bullets[b], y, 9.5);
+                        }
+                    }
+                    y += 14;
+                }
             }
 
-            // ── Footer band on every page (timestamp + user + module) ──
+            // ── Key Takeaways ──
+            if (y > PH - 120) { doc.addPage(); y = 80; } else { y += 6; }
+            y = sectionHeading('Key Takeaways', y);
+            for (var t = 0; t < data.takeaways.length; t++) {
+                y = bulletItem(data.takeaways[t], y, 10);
+            }
+            y += 10;
+
+            // ── Glossary ──
+            if (data.glossary && data.glossary.length > 0) {
+                if (y > PH - 120) { doc.addPage(); y = 80; }
+                y = sectionHeading('Glossary', y);
+                for (var g = 0; g < data.glossary.length; g++) {
+                    var term = data.glossary[g][0];
+                    var defn = data.glossary[g][1];
+                    if (y > PH - 60) { doc.addPage(); y = 80; }
+                    // Term in bold purple
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(10);
+                    doc.setTextColor(purple[0], purple[1], purple[2]);
+                    doc.text(term, M, y);
+                    // Definition wrapped after the term
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(9.5);
+                    doc.setTextColor(inkSoft[0], inkSoft[1], inkSoft[2]);
+                    var termWidth = doc.getTextWidth(term) + 6;
+                    var defLines = doc.splitTextToSize(defn, PW - M * 2 - termWidth);
+                    if (defLines.length === 1) {
+                        doc.text(defLines[0], M + termWidth, y);
+                        y += 16;
+                    } else {
+                        // First line beside the term, rest indented
+                        doc.text(defLines[0], M + termWidth, y);
+                        y += 12;
+                        for (var dl = 1; dl < defLines.length; dl++) {
+                            if (y > PH - 60) { doc.addPage(); y = 80; }
+                            doc.text(defLines[dl], M + termWidth, y);
+                            y += 12;
+                        }
+                        y += 6;
+                    }
+                }
+                y += 6;
+            }
+
+            // ── References & Further Reading (clickable for all modules that have them, especially Module 12) ──
+            if (data.references && data.references.length > 0) {
+                if (y > PH - 120) { doc.addPage(); y = 80; }
+                y = sectionHeading('References & Further Reading', y);
+                y = paragraph('Click any reference to open the canonical source in your browser.', y, 9);
+                y += 4;
+
+                for (var r = 0; r < data.references.length; r++) {
+                    var ref = data.references[r];
+                    if (y > PH - 50) { doc.addPage(); y = 80; }
+                    // Number badge
+                    doc.setFillColor(purple[0], purple[1], purple[2]);
+                    doc.circle(M + 4, y - 3, 2.5, 'F');
+                    // Reference label as clickable link
+                    doc.setTextColor(purple[0], purple[1], purple[2]);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(9.5);
+                    var refLabel = '[' + (r + 1) + '] ' + ref.label;
+                    var refLines = doc.splitTextToSize(refLabel, PW - M * 2 - 18);
+                    doc.textWithLink(refLines[0], M + 14, y, { url: ref.url });
+                    // URL in smaller text below
+                    doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.textWithLink(ref.url, M + 14, y + 11, { url: ref.url });
+                    y += refLines.length * 12 + 12;
+                }
+            }
+
+            // ── Final flourish: Excelra tagline (last page) ──
+            if (y > PH - 100) { doc.addPage(); y = 80; }
+            y += 20;
+            doc.setDrawColor(pink[0], pink[1], pink[2]);
+            doc.setLineWidth(1.5);
+            doc.line(M, y, M + 40, y);
+            y += 18;
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(10);
+            doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
+            doc.text('Where Data Means More — Excelra Knowledge Solutions', M, y);
+
+            // ── Draw header + footer on every page now that we know the total count ──
             var pages = doc.internal.getNumberOfPages();
             for (var p = 1; p <= pages; p++) {
                 doc.setPage(p);
-                doc.setFillColor(246, 242, 255);
-                doc.rect(0, PH - 44, PW, 44, 'F');
-                doc.setDrawColor(pink[0], pink[1], pink[2]);
-                doc.setLineWidth(1);
-                doc.line(0, PH - 44, PW, PH - 44);
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(8);
-                doc.setTextColor(120, 100, 150);
-                doc.text('Generated by ' + user + '  •  ' + stamp + '  •  Module ' + data.n + ' of 12', M, PH - 24);
-                doc.text('Excelra Knowledge Solutions  •  Page ' + p + ' of ' + pages, PW - M, PH - 24, { align: 'right' });
+                drawHeader(p, pages);
+                drawFooter(p, pages);
             }
 
-            doc.save('Module_' + data.n + '.pdf');
+            doc.save('Module_' + data.n + '_' + data.title.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf');
             showNotification('Module ' + data.n + ' PDF downloaded.');
         }
         // expose for the inline onclick
@@ -8406,9 +9919,28 @@
 
         // Listen for the "finished" signal each narrated module presentation
         // posts to its parent page when it plays through to the end.
+        // SECURITY: verify the message came from the iframe currently
+        // loaded in #lessonVideo — this prevents a stale iframe (or a
+        // manually crafted message) from unlocking a different lesson.
         window.addEventListener('message', function(event) {
             if (!event.data || event.data.type !== 'presentation-complete') return;
-            unlockLesson(`${currentModuleIndex}-${currentLessonIndex}`);
+            // Verify the message source is the iframe element we currently
+            // expect to be playing this lesson's presentation.
+            var lessonIframe = document.getElementById('lessonVideo');
+            if (!lessonIframe || event.source !== lessonIframe.contentWindow) {
+                // Not from the active lesson iframe — ignore.
+                return;
+            }
+            // Only unlock if the lesson actually requires watching AND isn't
+            // already unlocked. Belt-and-suspenders: the iframe itself only
+            // posts this when its outro video ends, so this is the
+            // authoritative "presentation finished" signal.
+            var lessonKey = `${currentModuleIndex}-${currentLessonIndex}`;
+            var lesson = courseData.modules[currentModuleIndex] && courseData.modules[currentModuleIndex].lessons[currentLessonIndex];
+            var hasReferences = lesson && Array.isArray(lesson.references) && lesson.references.length > 0;
+            if (lesson && lessonRequiresWatchToComplete(lesson, hasReferences)) {
+                unlockLesson(lessonKey);
+            }
         });
     </script>
     <!-- Onboarding Tutorial -->

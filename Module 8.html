@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -998,72 +998,236 @@ window.addEventListener('message', event => {
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
-<!-- Barbie-doll AI guide — lives inside the presentation -->
+<!-- Doctor AI guide — lives inside the presentation -->
 <div id="moduleAvatar" class="module-avatar" aria-hidden="true">
   <div class="module-avatar-bg">
-    <svg class="module-avatar-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <svg class="module-avatar-svg" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="mavaFace" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fffaf6"/><stop offset="55%" stop-color="#fdeaea"/><stop offset="100%" stop-color="#f6d6d6"/></linearGradient>
-        <linearGradient id="mavaHair" x1="0" y1="0" x2="0.5" y2="1"><stop offset="0%" stop-color="#fff0a8"/><stop offset="45%" stop-color="#f7cf52"/><stop offset="100%" stop-color="#d59a30"/></linearGradient>
-        <linearGradient id="mavaHairShine" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff7d6"/><stop offset="100%" stop-color="#ffe98a" stop-opacity="0"/></linearGradient>
-        <radialGradient id="mavaEye" cx="50%" cy="42%" r="62%"><stop offset="0%" stop-color="#9fd0ff"/><stop offset="50%" stop-color="#2f7be0"/><stop offset="100%" stop-color="#0f3f88"/></radialGradient>
-        <linearGradient id="mavaLip" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffa6cd"/><stop offset="100%" stop-color="#ec5fa6"/></linearGradient>
-        <linearGradient id="mavaDress" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9b6bff"/><stop offset="100%" stop-color="#c77dff"/></linearGradient>
-        <linearGradient id="mavaTiara" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff3b0"/><stop offset="100%" stop-color="#e8c64a"/></linearGradient>
-        <filter id="mavaGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <!-- Skin tone — warm, professional -->
+        <linearGradient id="docFace" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fdf5ee"/>
+          <stop offset="55%" stop-color="#f6e0d0"/>
+          <stop offset="100%" stop-color="#eac6b2"/>
+        </linearGradient>
+        <!-- Hair — dark brown, professional -->
+        <linearGradient id="docHair" x1="0" y1="0" x2="0.5" y2="1">
+          <stop offset="0%" stop-color="#3a2a20"/>
+          <stop offset="50%" stop-color="#2a1d14"/>
+          <stop offset="100%" stop-color="#1a1108"/>
+        </linearGradient>
+        <linearGradient id="docHairShine" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5a4030"/>
+          <stop offset="100%" stop-color="#3a2a20" stop-opacity="0"/>
+        </linearGradient>
+        <!-- Eye — calm brown -->
+        <radialGradient id="docEye" cx="50%" cy="42%" r="62%">
+          <stop offset="0%" stop-color="#8b6240"/>
+          <stop offset="55%" stop-color="#5a3a20"/>
+          <stop offset="100%" stop-color="#2a1a10"/>
+        </radialGradient>
+        <!-- Lip — natural pink -->
+        <linearGradient id="docLip" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d88068"/>
+          <stop offset="100%" stop-color="#b85a48"/>
+        </linearGradient>
+        <!-- White coat -->
+        <linearGradient id="docCoat" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffffff"/>
+          <stop offset="60%" stop-color="#f5f3fa"/>
+          <stop offset="100%" stop-color="#e6e2f0"/>
+        </linearGradient>
+        <!-- Coat shadow -->
+        <linearGradient id="docCoatShadow" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d8d4e6"/>
+          <stop offset="100%" stop-color="#b8b4c8"/>
+        </linearGradient>
+        <!-- Stethoscope -->
+        <linearGradient id="docStetho" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3a4050"/>
+          <stop offset="50%" stop-color="#2a3040"/>
+          <stop offset="100%" stop-color="#1a2030"/>
+        </linearGradient>
+        <!-- Inner shirt — soft purple -->
+        <linearGradient id="docShirt" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#9b6bff"/>
+          <stop offset="100%" stop-color="#7c5cff"/>
+        </linearGradient>
+        <filter id="docGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="1.4" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
       </defs>
-      <g class="mava-head" id="mavaHead">
-        <path d="M50 3 C24 3 10 22 10 50 C10 74 18 96 30 99 L46 99 C36 82 32 62 34 44 C38 26 46 16 50 14 C54 16 62 26 66 44 C68 62 64 82 54 99 L70 99 C82 96 90 74 90 50 C90 22 76 3 50 3 Z" fill="url(#mavaHair)"/>
-        <path d="M44 12 C36 18 32 30 32 46 C32 60 35 76 42 92" stroke="url(#mavaHairShine)" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.75"/>
-        <path d="M20 60 C22 72 26 84 30 92" stroke="#f7cf52" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
-        <path d="M80 60 C78 72 74 84 70 92" stroke="#f7cf52" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
-        <ellipse cx="50" cy="54" rx="30" ry="33" fill="url(#mavaFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
-        <ellipse cx="20" cy="56" rx="4" ry="6" fill="url(#mavaFace)" stroke="rgba(180,90,140,0.2)" stroke-width="0.8"/>
-        <ellipse cx="80" cy="56" rx="4" ry="6" fill="url(#mavaFace)" stroke="rgba(180,90,140,0.2)" stroke-width="0.8"/>
-        <circle cx="20" cy="62" r="2.6" fill="#f3e8ff" stroke="#c77dff" stroke-width="0.6"/>
-        <circle cx="80" cy="62" r="2.6" fill="#f3e8ff" stroke="#c77dff" stroke-width="0.6"/>
-        <path d="M22 34 C30 14 48 12 56 24 C50 24 44 26 40 30 C34 28 28 30 22 34 Z" fill="url(#mavaHair)"/>
-        <path d="M40 26 C46 18 58 18 64 28 C58 26 52 28 46 32 C44 30 42 28 40 26 Z" fill="#ffe06a" opacity="0.95"/>
-        <path d="M30 26 Q50 12 70 26 L68 28 Q50 16 32 28 Z" fill="url(#mavaTiara)"/>
-        <circle cx="50" cy="18" r="3.2" fill="#ff6fb5" filter="url(#mavaGlow)"/>
-        <circle cx="50" cy="18" r="1.3" fill="#fff" opacity="0.95"/>
-        <circle cx="38" cy="22" r="1.6" fill="#c77dff"/>
-        <circle cx="62" cy="22" r="1.6" fill="#c77dff"/>
-        <path d="M24 45 Q34 40 46 44 Q40 47 34 47 Q28 47 24 45 Z" fill="#e0c3ff" opacity="0.6"/>
-        <path d="M54 44 Q66 40 76 45 Q72 47 66 47 Q60 47 54 44 Z" fill="#e0c3ff" opacity="0.6"/>
-        <path d="M24 40 Q34 35 46 39" stroke="#c9962a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <path d="M54 39 Q66 35 76 40" stroke="#c9962a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-        <g class="mava-eye"><ellipse cx="34" cy="49" rx="8" ry="7.5" fill="#ffffff"/><circle cx="35" cy="49" r="5" fill="url(#mavaEye)"/><circle cx="35" cy="49" r="2.2" fill="#0f3f88"/><circle cx="36" cy="47.5" r="1.6" fill="#ffffff" opacity="0.95"/><circle cx="33" cy="50.5" r="0.7" fill="#ffffff" opacity="0.7"/><path d="M27 44 Q34 41 41 44" stroke="#2a1530" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M27 44 L25 41 M31 42 L30 39 M35 41 L35 38 M39 42 L41 39" stroke="#2a1530" stroke-width="1" stroke-linecap="round"/></g>
-        <g class="mava-eye right"><ellipse cx="66" cy="49" rx="8" ry="7.5" fill="#ffffff"/><circle cx="65" cy="49" r="5" fill="url(#mavaEye)"/><circle cx="65" cy="49" r="2.2" fill="#0f3f88"/><circle cx="66" cy="47.5" r="1.6" fill="#ffffff" opacity="0.95"/><circle cx="63" cy="50.5" r="0.7" fill="#ffffff" opacity="0.7"/><path d="M59 44 Q66 41 73 44" stroke="#2a1530" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M59 44 L57 41 M63 42 L62 39 M67 41 L67 38 M71 42 L73 39" stroke="#2a1530" stroke-width="1" stroke-linecap="round"/></g>
-        <path d="M49 54 Q50 59 51 54" stroke="rgba(180,90,140,0.35)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
-        <ellipse cx="50" cy="59" rx="2.2" ry="1.3" fill="rgba(200,120,150,0.12)"/>
-        <ellipse cx="28" cy="60" rx="5.5" ry="3.4" fill="#ff9bc8" opacity="0.45"/>
-        <ellipse cx="72" cy="60" rx="5.5" ry="3.4" fill="#ff9bc8" opacity="0.45"/>
-        <path id="mavaMouthIdle" class="mava-mouth" d="M38 64 Q50 71 62 64" stroke="url(#mavaLip)" stroke-width="3.4" fill="none" stroke-linecap="round"/>
-        <ellipse id="mavaMouthOpen" cx="50" cy="66" rx="8.5" ry="5" fill="url(#mavaLip)" stroke="#c8448f" stroke-width="1" style="display:none;"/>
-        <path d="M40 64.5 Q50 66 60 64.5" stroke="#ffffff" stroke-width="0.7" fill="none" opacity="0.6" stroke-linecap="round"/>
-        <path d="M20 92 Q50 78 80 92 L80 100 L20 100 Z" fill="url(#mavaDress)"/>
-        <path d="M38 92 Q50 84 62 92" stroke="#ffe98a" stroke-width="1.2" fill="none" opacity="0.8"/>
-        <circle cx="50" cy="88" r="1.8" fill="#ffe98a" filter="url(#mavaGlow)"/>
+
+      <!-- Hair back (behind head) -->
+      <path d="M60 8 C36 8 22 26 22 50 C22 64 25 76 30 86 L42 86 C36 76 32 60 34 48 C38 30 46 22 60 20 C74 22 82 30 86 48 C88 60 84 76 78 86 L90 86 C95 76 98 64 98 50 C98 26 84 8 60 8 Z" fill="url(#docHair)"/>
+
+      <!-- Hand — left, animated wave/explain -->
+      <g class="doc-hand doc-hand-left" id="docHandLeft">
+        <path d="M16 86 Q12 80 16 74 Q22 70 28 76 Q26 84 22 88 Z" fill="url(#docFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.6"/>
+        <path d="M14 84 Q10 78 14 72" stroke="rgba(180,90,140,0.25)" stroke-width="0.5" fill="none"/>
       </g>
+
+      <!-- Hand — right, animated point/explain -->
+      <g class="doc-hand doc-hand-right" id="docHandRight">
+        <path d="M104 86 Q108 80 104 74 Q98 70 92 76 Q94 84 98 88 Z" fill="url(#docFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.6"/>
+        <path d="M106 84 Q110 78 106 72" stroke="rgba(180,90,140,0.25)" stroke-width="0.5" fill="none"/>
+      </g>
+
+      <!-- Lab coat — body (visible from neck down) -->
+      <path d="M30 86 Q24 90 22 100 L22 110 L98 110 L98 100 Q96 90 90 86 L78 86 Q70 92 60 92 Q50 92 42 86 Z" fill="url(#docCoat)" stroke="#c8c4d6" stroke-width="0.6"/>
+
+      <!-- Coat lapels -->
+      <path d="M42 86 L48 100 L52 92 Z" fill="url(#docCoatShadow)" stroke="#c8c4d6" stroke-width="0.4"/>
+      <path d="M78 86 L72 100 L68 92 Z" fill="url(#docCoatShadow)" stroke="#c8c4d6" stroke-width="0.4"/>
+
+      <!-- Inner shirt -->
+      <path d="M50 86 Q60 92 70 86 L70 100 L50 100 Z" fill="url(#docShirt)"/>
+
+      <!-- Stethoscope — neck + chest piece -->
+      <path d="M48 86 Q44 92 46 100 Q50 108 56 108" stroke="url(#docStetho)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <path d="M72 86 Q76 92 74 100 Q70 108 64 108" stroke="url(#docStetho)" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+      <circle cx="60" cy="108" r="3.2" fill="url(#docStetho)" stroke="#1a2030" stroke-width="0.6"/>
+      <circle cx="60" cy="108" r="1.4" fill="#5a6070"/>
+
+      <!-- Coat buttons -->
+      <circle cx="60" cy="96" r="0.9" fill="#9b6bff"/>
+      <circle cx="60" cy="102" r="0.9" fill="#9b6bff"/>
+
+      <!-- Head group — bobs gently when idle, nods when speaking -->
+      <g class="doc-head" id="docHead">
+        <!-- Face -->
+        <ellipse cx="60" cy="54" rx="28" ry="32" fill="url(#docFace)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
+
+        <!-- Hair fringe on top -->
+        <path d="M32 38 Q42 22 60 22 Q78 22 88 38 Q80 30 70 28 Q60 26 50 28 Q40 30 32 38 Z" fill="url(#docHair)"/>
+        <path d="M40 32 Q48 24 60 24 Q72 24 80 32" stroke="url(#docHairShine)" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+        <!-- Eyebrows — calm, professional -->
+        <path d="M38 42 Q46 39 54 42" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+        <path d="M66 42 Q74 39 82 42" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+
+        <!-- Eyes — brown, gentle -->
+        <g class="doc-eye"><ellipse cx="46" cy="50" rx="6" ry="5.5" fill="#ffffff"/><circle cx="47" cy="50" r="3.6" fill="url(#docEye)"/><circle cx="47" cy="50" r="1.6" fill="#1a0a05"/><circle cx="48" cy="48.5" r="1.1" fill="#ffffff" opacity="0.95"/></g>
+        <g class="doc-eye right"><ellipse cx="74" cy="50" rx="6" ry="5.5" fill="#ffffff"/><circle cx="73" cy="50" r="3.6" fill="url(#docEye)"/><circle cx="73" cy="50" r="1.6" fill="#1a0a05"/><circle cx="74" cy="48.5" r="1.1" fill="#ffffff" opacity="0.95"/></g>
+
+        <!-- Nose -->
+        <path d="M59 56 Q60 62 61 56" stroke="rgba(180,90,140,0.35)" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+
+        <!-- Subtle blush -->
+        <ellipse cx="40" cy="62" rx="4.5" ry="2.8" fill="#ff9bc8" opacity="0.30"/>
+        <ellipse cx="80" cy="62" rx="4.5" ry="2.8" fill="#ff9bc8" opacity="0.30"/>
+
+        <!-- Mouth — closed idle, opens when speaking -->
+        <path id="mavaMouthIdle" class="mava-mouth" d="M50 66 Q60 71 70 66" stroke="url(#docLip)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse id="mavaMouthOpen" cx="60" cy="68" rx="7" ry="4" fill="url(#docLip)" stroke="#a04848" stroke-width="0.8" style="display:none;"/>
+        <path d="M52 66.5 Q60 67.5 68 66.5" stroke="#ffffff" stroke-width="0.6" fill="none" opacity="0.6" stroke-linecap="round"/>
+      </g>
+
+      <!-- Name badge on coat (small detail) -->
+      <rect x="32" y="92" width="10" height="6" rx="1" fill="#fff" stroke="#9b6bff" stroke-width="0.5"/>
+      <line x1="34" y1="94" x2="40" y2="94" stroke="#9b6bff" stroke-width="0.6"/>
+      <line x1="34" y1="96" x2="38" y2="96" stroke="#c8c4d6" stroke-width="0.5"/>
     </svg>
   </div>
 </div>
 <style>
-.module-avatar{position:fixed;right:18px;bottom:18px;width:84px;height:84px;z-index:60;pointer-events:none;filter:drop-shadow(0 8px 18px rgba(124,92,255,0.35));animation:mavaFloat 4s ease-in-out 0.3s infinite;}
+/* Doctor AI Avatar — top-tier, professional, animated.
+   Floats in the bottom-right of the presentation area.
+   - Head bobs gently when idle, nods when speaking
+   - Eyes blink naturally
+   - Mouth opens/closes in sync with narration (lip-sync)
+   - Hands gesture (left waves, right points) while speaking
+   - Soft purple halo pulses while speaking
+*/
+.module-avatar{
+  position:fixed;right:18px;bottom:18px;
+  width:96px;height:96px;z-index:60;pointer-events:none;
+  filter:drop-shadow(0 8px 18px rgba(124,92,255,0.35));
+  animation:mavaFloat 4s ease-in-out 0.3s infinite;
+}
 @keyframes mavaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.module-avatar-bg{width:100%;height:100%;border-radius:50%;background:radial-gradient(circle at 50% 38%,#fff 0%,#fff0f7 55%,#ffe0f0 100%);border:3px solid #c77dff;overflow:hidden;box-shadow:0 0 0 4px rgba(255,140,200,0.14),0 8px 22px rgba(199,125,255,0.30),inset 0 0 14px rgba(255,150,210,0.20);}
-.module-avatar.speaking .module-avatar-bg{box-shadow:0 0 0 6px rgba(255,140,200,0.22),0 0 26px 4px rgba(236,95,166,0.6);animation:mavaHalo 1s ease-in-out infinite;}
-@keyframes mavaHalo{0%,100%{box-shadow:0 0 0 5px rgba(255,140,200,0.16)}50%{box-shadow:0 0 0 10px rgba(255,140,200,0.28)}}
-.mava-head{animation:mavaBob 3s ease-in-out infinite;transform-origin:center bottom;}
-.module-avatar.speaking .mava-head{animation:mavaBobSpeak 0.45s ease-in-out infinite;}
-@keyframes mavaBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-@keyframes mavaBobSpeak{0%,100%{transform:translateY(0) rotate(-0.5deg)}50%{transform:translateY(-3px) rotate(0.5deg)}}
-.mava-eye{animation:mavaBlink 4s ease-in-out infinite;transform-origin:center;}
-.mava-eye.right{animation-delay:0.08s;}
-@keyframes mavaBlink{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(0.05)}}
-.module-avatar-svg{width:92%;height:92%;overflow:visible;}
-@media (max-width:640px){.module-avatar{width:64px;height:64px;right:10px;bottom:10px;}}
+.module-avatar-bg{
+  width:100%;height:100%;border-radius:50%;
+  background:radial-gradient(circle at 50% 38%,#fff 0%,#f3eeff 55%,#e8def8 100%);
+  border:3px solid #9b6bff;overflow:hidden;
+  box-shadow:0 0 0 4px rgba(124,92,255,0.14),0 8px 22px rgba(124,92,255,0.30),inset 0 0 14px rgba(124,92,255,0.15);
+}
+.module-avatar.speaking .module-avatar-bg{
+  box-shadow:0 0 0 6px rgba(124,92,255,0.22),0 0 28px 4px rgba(124,92,255,0.55);
+  animation:mavaHalo 1s ease-in-out infinite;
+}
+@keyframes mavaHalo{
+  0%,100%{box-shadow:0 0 0 5px rgba(124,92,255,0.16),0 0 22px rgba(124,92,255,0.40)}
+  50%{box-shadow:0 0 0 10px rgba(124,92,255,0.28),0 0 32px rgba(124,92,255,0.60)}
+}
+.module-avatar-svg{width:96%;height:96%;overflow:visible;}
+
+/* Head bob — gentle when idle, nodding when speaking */
+.doc-head{
+  animation:docBob 3s ease-in-out infinite;
+  transform-origin:center bottom;
+  transform-box:fill-box;
+}
+.module-avatar.speaking .doc-head{
+  animation:docBobSpeak 0.5s ease-in-out infinite;
+}
+@keyframes docBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes docBobSpeak{
+  0%,100%{transform:translateY(0) rotate(-0.8deg)}
+  50%{transform:translateY(-3px) rotate(0.8deg)}
+}
+
+/* Eye blink */
+.doc-eye{
+  animation:docBlink 4s ease-in-out infinite;
+  transform-origin:center;
+  transform-box:fill-box;
+}
+.doc-eye.right{animation-delay:0.08s;}
+@keyframes docBlink{
+  0%,90%,100%{transform:scaleY(1)}
+  95%{transform:scaleY(0.05)}
+}
+
+/* Hand gestures — left hand waves gently, right hand points to content */
+.doc-hand{
+  transform-origin:center;
+  transform-box:fill-box;
+  opacity:0.9;
+}
+.doc-hand-left{
+  animation:docHandLeftIdle 3.5s ease-in-out infinite;
+}
+.module-avatar.speaking .doc-hand-left{
+  animation:docHandLeftSpeak 1.2s ease-in-out infinite;
+}
+@keyframes docHandLeftIdle{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-1px) rotate(-2deg)}
+}
+@keyframes docHandLeftSpeak{
+  0%,100%{transform:translate(0,0) rotate(-8deg)}
+  50%{transform:translate(-2px,-3px) rotate(8deg)}
+}
+
+.doc-hand-right{
+  animation:docHandRightIdle 3.8s ease-in-out infinite 0.5s;
+}
+.module-avatar.speaking .doc-hand-right{
+  animation:docHandRightSpeak 1.0s ease-in-out infinite;
+}
+@keyframes docHandRightIdle{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-1px) rotate(2deg)}
+}
+@keyframes docHandRightSpeak{
+  0%,100%{transform:translate(0,0) rotate(8deg)}
+  50%{transform:translate(2px,-3px) rotate(-8deg)}
+}
+
+@media (max-width:640px){
+  .module-avatar{width:72px;height:72px;right:10px;bottom:10px;}
+}
 </style>
 <script>
 (function(){
@@ -1071,7 +1235,6 @@ window.addEventListener('message', event => {
   if(!av) return;
   var idle=document.getElementById('mavaMouthIdle');
   var open=document.getElementById('mavaMouthOpen');
-  var head=document.getElementById('mavaHead');
   var closeT=null, maxT=null, boundaryFired=false, fallbackT=null;
   function mouthOpen(){ if(idle)idle.style.display='none'; if(open)open.style.display=''; }
   function mouthClose(){ if(idle)idle.style.display=''; if(open)open.style.display='none'; }
