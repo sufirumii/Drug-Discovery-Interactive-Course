@@ -429,6 +429,92 @@
         body.theme-dark .lesson-item.completed .lesson-icon { background: var(--success) !important; color: #fff !important; }
         body.theme-dark .lesson-item.active .lesson-icon { background: rgba(255,255,255,0.22) !important; color: #fff !important; }
 
+        /* ── DARK-MODE FIX: Quiz & Game modal inline-styled content ──
+           The quiz results screen, game boards, and reference cards use
+           inline styles (color:#555, background:#f8fafc, etc.) that the
+           class-based overrides above can't reach. These broad rules
+           override ALL inline colors inside #quizContent, #gameBoard,
+           #gameMessage, #referencesPanel, and the certificate modal
+           so nothing is invisible in dark mode. */
+        body.theme-dark #quizContent *,
+        body.theme-dark #gameBoard *,
+        body.theme-dark #gameMessage *,
+        body.theme-dark #gameContent *,
+        body.theme-dark #referencesPanel *,
+        body.theme-dark #referencesPanel {
+            color: var(--ink-soft) !important;
+        }
+        body.theme-dark #quizContent h2,
+        body.theme-dark #quizContent h3,
+        body.theme-dark #gameBoard h3,
+        body.theme-dark #gameContent h2,
+        body.theme-dark #gameContent h3 { color: var(--ink) !important; }
+        /* Flip light backgrounds to dark surfaces */
+        body.theme-dark #quizContent div[style*="background:#f8fafc"],
+        body.theme-dark #quizContent div[style*="background:#f0f4ff"],
+        body.theme-dark #quizContent div[style*="background:#fafafa"],
+        body.theme-dark #quizContent div[style*="background:#f3f4f6"],
+        body.theme-dark #quizContent div[style*="background:#f9fafb"],
+        body.theme-dark #gameBoard div[style*="background:#f8fafc"],
+        body.theme-dark #gameBoard div[style*="background:#f0f4ff"],
+        body.theme-dark #gameBoard div[style*="background:#fafafa"],
+        body.theme-dark #gameBoard div[style*="background:#f3f4f6"],
+        body.theme-dark #gameBoard div[style*="background:#f9fafb"],
+        body.theme-dark #gameBoard div[style*="background:#fffbeb"],
+        body.theme-dark #gameBoard div[style*="background:#f8faff"],
+        body.theme-dark #gameContent div[style*="background:#f8fafc"],
+        body.theme-dark #gameContent div[style*="background:#f0f4ff"],
+        body.theme-dark #gameContent div[style*="background:#fafafa"],
+        body.theme-dark #gameContent div[style*="background:#f3f4f6"],
+        body.theme-dark #gameContent div[style*="background:#f9fafb"],
+        body.theme-dark #gameContent div[style*="background:#fffbeb"],
+        body.theme-dark #referencesPanel div[style*="background:#f9fafb"],
+        body.theme-dark #referencesPanel div[style*="background:#fff"] {
+            background: var(--surface-2) !important;
+            border-color: var(--hairline-strong) !important;
+        }
+        /* Quiz review rows: correct (green) and incorrect (red) backgrounds */
+        body.theme-dark #quizContent div[style*="background:#f0fdf4"] {
+            background: rgba(22,163,74,0.15) !important;
+            border-color: rgba(22,163,74,0.40) !important;
+        }
+        body.theme-dark #quizContent div[style*="background:#fef2f2"] {
+            background: rgba(220,53,69,0.15) !important;
+            border-color: rgba(220,53,69,0.40) !important;
+        }
+        /* Game cards with light backgrounds */
+        body.theme-dark #gameBoard div[style*="background:#f0f4ff"],
+        body.theme-dark #gameContent div[style*="background:#f0f4ff"] {
+            background: var(--brand-soft) !important;
+            border-color: var(--brand-line) !important;
+        }
+        body.theme-dark #gameBoard button[style*="background:#f9fafb"],
+        body.theme-dark #gameContent button[style*="background:#f9fafb"] {
+            background: var(--surface-2) !important;
+            border-color: var(--hairline-strong) !important;
+            color: var(--ink-soft) !important;
+        }
+        body.theme-dark #gameBoard button[style*="background:#f0f4ff"],
+        body.theme-dark #gameContent button[style*="background:#f0f4ff"] {
+            background: var(--brand-soft) !important;
+            border-color: var(--brand-line) !important;
+            color: var(--ink) !important;
+        }
+        /* References panel */
+        body.theme-dark #referencesPanel {
+            background: var(--surface) !important;
+            border-color: var(--hairline) !important;
+        }
+        body.theme-dark #referencesPanel a {
+            background: var(--surface-2) !important;
+            border-color: var(--hairline-strong) !important;
+            color: var(--ink) !important;
+        }
+        body.theme-dark #referencesPanel a:hover {
+            background: var(--surface-3) !important;
+            border-color: var(--brand-line) !important;
+        }
+
         /* "Why this activity?" panel — text colours flip cleanly */
         body.theme-dark .module-purpose { background: linear-gradient(135deg, rgba(124,92,255,0.18), rgba(199,125,255,0.20)) !important; border-color: var(--brand-line) !important; }
         body.theme-dark .module-purpose-toggle { color: #a78bff !important; }
@@ -8956,7 +9042,32 @@
                 doc.rect(0, 0, PW, 56, 'F');
                 doc.setFillColor(pink[0], pink[1], pink[2]);
                 doc.rect(0, 56, PW, 3, 'F');
-                if (logo) { try { doc.addImage(logo, 'PNG', M, 12, 110, 34); } catch(e){} }
+                // Logo: placed on a white rounded "chip" for proper contrast.
+                // The logo has dark text (#2D3142) which is invisible on the
+                // purple header without a white backing. The chip looks like
+                // an intentional design element (like a logo plate) and
+                // ensures the logo reads cleanly on every page.
+                if (logo) {
+                    try {
+                        // White rounded rectangle behind the logo
+                        // Logo native aspect ratio: 800x195 = 4.103:1
+                        // Display size: 104w x 25h (preserves aspect ratio)
+                        var logoW = 104, logoH = 25;
+                        var logoX = M, logoY = 14;
+                        var chipPad = 5;
+                        var chipX = logoX - chipPad;
+                        var chipY = logoY - chipPad;
+                        var chipW = logoW + chipPad * 2;
+                        var chipH = logoH + chipPad * 2;
+                        // Draw white chip with subtle border
+                        doc.setFillColor(255, 255, 255);
+                        doc.setDrawColor(255, 255, 255);
+                        doc.setLineWidth(0.5);
+                        doc.roundedRect(chipX, chipY, chipW, chipH, 4, 4, 'FD');
+                        // Place the logo on top of the white chip
+                        doc.addImage(logo, 'PNG', logoX, logoY, logoW, logoH);
+                    } catch(e){}
+                }
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(13);
