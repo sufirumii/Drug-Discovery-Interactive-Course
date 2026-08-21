@@ -9239,23 +9239,23 @@
                         return w;
                     })();
                     var defLines = doc.splitTextToSize(defn, PW - M * 2 - termWidth);
-                    var defH = defLines.length * 12;
-                    y = ensureSpace(defH + 8, y);
+                    var defH = defLines.length * 11;
+                    y = ensureSpace(defH + 5, y);
                     // Term in bold purple
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(10);
+                    doc.setFontSize(9.5);
                     doc.setTextColor(purple[0], purple[1], purple[2]);
                     doc.text(term, M, y);
                     // Definition
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(9.5);
+                    doc.setFontSize(9);
                     doc.setTextColor(inkSoft[0], inkSoft[1], inkSoft[2]);
                     for (var dl = 0; dl < defLines.length; dl++) {
-                        doc.text(defLines[dl], M + termWidth, y + dl * 12);
+                        doc.text(defLines[dl], M + termWidth, y + dl * 11);
                     }
-                    y += defH + 8;
+                    y += defH + 5;
                 }
-                y += 6;
+                y += 4;
             }
 
             // ── References & Further Reading ───────────────────────────
@@ -9263,48 +9263,57 @@
                 y = ensureSpace(60, y);
                 y = sectionHeading('References & Further Reading', y, { keepWithNext: 40 });
                 y = paragraph('Click any reference to open the canonical source in your browser.', y, 9);
-                y += 4;
+                y += 2;
 
                 for (var r = 0; r < data.references.length; r++) {
                     var ref = data.references[r];
-                    // Each reference is ~24pt tall (label + URL). Keep together.
-                    y = ensureSpace(28, y);
+                    // Compact reference: label + URL on consecutive lines,
+                    // with tighter spacing to avoid overflow to a new page.
+                    // Each reference is ~22pt tall (label 11pt + URL 10pt + gap 1pt).
+                    y = ensureSpace(24, y);
                     // Number badge
                     doc.setFillColor(purple[0], purple[1], purple[2]);
-                    doc.circle(M + 4, y - 3, 2.5, 'F');
+                    doc.circle(M + 4, y - 3, 2.2, 'F');
                     // Reference label as clickable link
                     doc.setTextColor(purple[0], purple[1], purple[2]);
                     doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(9.5);
+                    doc.setFontSize(9);
                     var refLabel = '[' + (r + 1) + '] ' + ref.label;
                     var refLines = doc.splitTextToSize(refLabel, PW - M * 2 - 18);
                     // Only draw the first line as the link (most references fit on one line)
                     doc.textWithLink(refLines[0], M + 14, y, { url: ref.url });
                     // If the label wrapped, draw the continuation
                     for (var rl = 1; rl < refLines.length; rl++) {
-                        y = ensureSpace(12, y);
-                        doc.text(refLines[rl], M + 14, y + rl * 12);
+                        y = ensureSpace(10, y);
+                        doc.text(refLines[rl], M + 14, y + rl * 10);
                     }
-                    // URL in smaller text below
+                    // URL in smaller text below — tighter spacing
                     doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(8);
-                    doc.textWithLink(ref.url, M + 14, y + refLines.length * 12, { url: ref.url });
-                    y += refLines.length * 12 + 16;
+                    doc.setFontSize(7.5);
+                    doc.textWithLink(ref.url, M + 14, y + refLines.length * 10, { url: ref.url });
+                    y += refLines.length * 10 + 10;
                 }
             }
 
             // ── Final flourish: Excelra tagline ────────────────────────
-            y = ensureSpace(50, y);
-            y += 14;
-            doc.setDrawColor(pink[0], pink[1], pink[2]);
-            doc.setLineWidth(1.5);
-            doc.line(M, y, M + 40, y);
-            y += 16;
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(10);
-            doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
-            doc.text('Where Data Means More — Excelra Knowledge Solutions', M, y);
+            // Only draw the tagline if there's room on the CURRENT page.
+            // Never force a page break just for the tagline — that would
+            // create a near-empty page with just one line of text, which
+            // looks unprofessional. If the current page is nearly full,
+            // skip the tagline entirely (it's a flourish, not essential).
+            var taglineSpace = 40;  // line + gap + text
+            if (y + taglineSpace <= PH - BOTTOM_MARGIN - 10) {
+                y += 10;
+                doc.setDrawColor(pink[0], pink[1], pink[2]);
+                doc.setLineWidth(1.5);
+                doc.line(M, y, M + 40, y);
+                y += 16;
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(10);
+                doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
+                doc.text('Where Data Means More — Excelra Knowledge Solutions', M, y);
+            }
 
             // ── Draw header + footer on every page ─────────────────────
             var pages = doc.internal.getNumberOfPages();

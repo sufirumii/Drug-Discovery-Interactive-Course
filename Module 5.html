@@ -1010,10 +1010,11 @@ window.addEventListener('message', event => {
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
-<!-- Dynamic Doctor AI Avatar — full body, moves to context-appropriate
-     positions inside the presentation, gestures with both hands while
-     explaining. Lip-syncs to narration. -->
-<div id="moduleAvatar" class="module-avatar" aria-hidden="true">
+<!-- Dynamic Doctor AI Avatar — full body, moves to context.
+     Starts HIDDEN; only appears when the slide presentation begins
+     (enterSlideSection). Hides again during intro/outro videos.
+     No container box — the doctor floats freely with just a soft glow. -->
+<div id="moduleAvatar" class="module-avatar hidden" aria-hidden="true">
   <div class="module-avatar-stage">
     <!-- Soft shadow under the avatar (grounds it visually) -->
     <div class="avatar-shadow"></div>
@@ -1021,7 +1022,6 @@ window.addEventListener('message', event => {
     <div class="module-avatar-bg">
       <svg class="module-avatar-svg" viewBox="0 0 160 220" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <!-- Skin tone -->
           <linearGradient id="docFace2" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#fdf5ee"/>
             <stop offset="55%" stop-color="#f6e0d0"/>
@@ -1031,7 +1031,6 @@ window.addEventListener('message', event => {
             <stop offset="0%" stop-color="#fdf5ee"/>
             <stop offset="100%" stop-color="#e8c0a8"/>
           </linearGradient>
-          <!-- Hair — dark brown -->
           <linearGradient id="docHair2" x1="0" y1="0" x2="0.5" y2="1">
             <stop offset="0%" stop-color="#3a2a20"/>
             <stop offset="50%" stop-color="#2a1d14"/>
@@ -1041,18 +1040,15 @@ window.addEventListener('message', event => {
             <stop offset="0%" stop-color="#5a4030"/>
             <stop offset="100%" stop-color="#3a2a20" stop-opacity="0"/>
           </linearGradient>
-          <!-- Eye — calm brown -->
           <radialGradient id="docEye2" cx="50%" cy="42%" r="62%">
             <stop offset="0%" stop-color="#8b6240"/>
             <stop offset="55%" stop-color="#5a3a20"/>
             <stop offset="100%" stop-color="#2a1a10"/>
           </radialGradient>
-          <!-- Lip -->
           <linearGradient id="docLip2" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#d88068"/>
             <stop offset="100%" stop-color="#b85a48"/>
           </linearGradient>
-          <!-- White lab coat -->
           <linearGradient id="docCoat2" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#ffffff"/>
             <stop offset="60%" stop-color="#f5f3fa"/>
@@ -1062,29 +1058,22 @@ window.addEventListener('message', event => {
             <stop offset="0%" stop-color="#d8d4e6"/>
             <stop offset="100%" stop-color="#b8b4c8"/>
           </linearGradient>
-          <!-- Stethoscope -->
           <linearGradient id="docStetho2" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#3a4050"/>
             <stop offset="50%" stop-color="#2a3040"/>
             <stop offset="100%" stop-color="#1a2030"/>
           </linearGradient>
-          <!-- Inner shirt — soft purple -->
           <linearGradient id="docShirt2" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#9b6bff"/>
             <stop offset="100%" stop-color="#7c5cff"/>
           </linearGradient>
-          <!-- Pants -->
           <linearGradient id="docPants2" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#3a3550"/>
             <stop offset="100%" stop-color="#251f3a"/>
           </linearGradient>
-          <filter id="docGlow2" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="1.4" result="b"/>
-            <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
         </defs>
 
-        <!-- ── PANTS / LEGS (visible at the bottom) ── -->
+        <!-- ── PANTS / LEGS ── -->
         <path d="M58 175 L56 215 L74 215 L76 175 Z" fill="url(#docPants2)"/>
         <path d="M84 175 L86 215 L104 215 L102 175 Z" fill="url(#docPants2)"/>
         <!-- Shoes -->
@@ -1119,66 +1108,65 @@ window.addEventListener('message', event => {
         <line x1="44" y1="131" x2="53" y2="131" stroke="#9b6bff" stroke-width="0.7"/>
         <line x1="44" y1="133" x2="51" y2="133" stroke="#c8c4d6" stroke-width="0.5"/>
 
-        <!-- ── LEFT ARM (anatomically right, on screen-left) — animated gesture ── -->
+        <!-- ── LEFT ARM (screen-left) — animated gesture ── -->
         <g class="doc-arm doc-arm-left" id="docArmLeft">
-          <!-- Upper arm -->
           <path d="M44 102 Q28 118 22 138" stroke="url(#docCoat2)" stroke-width="14" fill="none" stroke-linecap="round"/>
           <path d="M44 102 Q28 118 22 138" stroke="#c8c4d6" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.3"/>
-          <!-- Forearm -->
           <path d="M22 138 Q18 152 24 166" stroke="url(#docCoat2)" stroke-width="12" fill="none" stroke-linecap="round"/>
-          <!-- Hand -->
           <ellipse class="doc-hand doc-hand-left" cx="26" cy="170" rx="7" ry="8" fill="url(#docHand2)" stroke="rgba(180,90,140,0.2)" stroke-width="0.6"/>
-          <!-- Pointing finger (visible when "pointing" class is on) -->
           <path class="doc-finger doc-finger-left" d="M26 162 L26 154" stroke="url(#docHand2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         </g>
 
-        <!-- ── RIGHT ARM (anatomically left, on screen-right) — animated gesture ── -->
+        <!-- ── RIGHT ARM (screen-right) — animated gesture ── -->
         <g class="doc-arm doc-arm-right" id="docArmRight">
-          <!-- Upper arm -->
           <path d="M100 102 Q116 118 122 138" stroke="url(#docCoat2)" stroke-width="14" fill="none" stroke-linecap="round"/>
           <path d="M100 102 Q116 118 122 138" stroke="#c8c4d6" stroke-width="14" fill="none" stroke-linecap="round" opacity="0.3"/>
-          <!-- Forearm -->
           <path d="M122 138 Q126 152 120 166" stroke="url(#docCoat2)" stroke-width="12" fill="none" stroke-linecap="round"/>
-          <!-- Hand -->
           <ellipse class="doc-hand doc-hand-right" cx="118" cy="170" rx="7" ry="8" fill="url(#docHand2)" stroke="rgba(180,90,140,0.2)" stroke-width="0.6"/>
-          <!-- Pointing finger -->
           <path class="doc-finger doc-finger-right" d="M118 162 L118 154" stroke="url(#docHand2)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
         </g>
 
-        <!-- ── NECK ── -->
+        <!-- ── NECK ── (connects head to torso) ── -->
         <path d="M64 84 L64 100 L80 100 L80 84 Z" fill="url(#docFace2)" stroke="rgba(180,90,140,0.15)" stroke-width="0.5"/>
 
-        <!-- ── HEAD group — bobs gently when idle, nods when speaking ── -->
+        <!-- ── HEAD group ──
+             The outer <g class="doc-head"> handles the CSS animation
+             transforms (bob/nod). The inner <g transform="translate(20,0)">
+             shifts the head content +20 on the x-axis so it sits centered
+             on the neck (neck center is x=72; head content was centered at
+             x=52; the +20 shift aligns them). -->
         <g class="doc-head" id="docHead">
-          <!-- Hair back -->
-          <path d="M52 12 C36 12 26 26 26 50 C26 60 28 70 32 78 L40 78 C36 70 34 58 36 48 C38 32 44 24 52 22 C60 24 66 32 68 48 C70 58 68 70 64 78 L72 78 C76 70 78 60 78 50 C78 26 68 12 52 12 Z" fill="url(#docHair2)"/>
+          <g transform="translate(20, 8)">
+            <!-- Hair back -->
+            <path d="M52 12 C36 12 26 26 26 50 C26 60 28 70 32 78 L40 78 C36 70 34 58 36 48 C38 32 44 24 52 22 C60 24 66 32 68 48 C70 58 68 70 64 78 L72 78 C76 70 78 60 78 50 C78 26 68 12 52 12 Z" fill="url(#docHair2)"/>
 
-          <!-- Face -->
-          <ellipse cx="52" cy="50" rx="24" ry="27" fill="url(#docFace2)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
+            <!-- Face -->
+            <ellipse cx="52" cy="50" rx="24" ry="27" fill="url(#docFace2)" stroke="rgba(180,90,140,0.18)" stroke-width="0.8"/>
 
-          <!-- Hair fringe on top -->
-          <path d="M30 36 Q40 22 52 22 Q64 22 74 36 Q66 30 58 28 Q52 26 46 28 Q38 30 30 36 Z" fill="url(#docHair2)"/>
-          <path d="M36 32 Q44 24 52 24 Q60 24 68 32" stroke="url(#docHairShine2)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+            <!-- Hair fringe on top -->
+            <path d="M30 36 Q40 22 52 22 Q64 22 74 36 Q66 30 58 28 Q52 26 46 28 Q38 30 30 36 Z" fill="url(#docHair2)"/>
+            <path d="M36 32 Q44 24 52 24 Q60 24 68 32" stroke="url(#docHairShine2)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
 
-          <!-- Eyebrows -->
-          <path d="M34 40 Q42 37 50 40" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          <path d="M54 40 Q62 37 70 40" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <!-- Eyebrows -->
+            <path d="M34 40 Q42 37 50 40" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <path d="M54 40 Q62 37 70 40" stroke="#2a1d14" stroke-width="1.6" fill="none" stroke-linecap="round"/>
 
-          <!-- Eyes -->
-          <g class="doc-eye"><ellipse cx="42" cy="48" rx="5" ry="4.5" fill="#ffffff"/><circle cx="43" cy="48" r="3" fill="url(#docEye2)"/><circle cx="43" cy="48" r="1.4" fill="#1a0a05"/><circle cx="44" cy="46.5" r="0.9" fill="#ffffff" opacity="0.95"/></g>
-          <g class="doc-eye right"><ellipse cx="62" cy="48" rx="5" ry="4.5" fill="#ffffff"/><circle cx="61" cy="48" r="3" fill="url(#docEye2)"/><circle cx="61" cy="48" r="1.4" fill="#1a0a05"/><circle cx="62" cy="46.5" r="0.9" fill="#ffffff" opacity="0.95"/></g>
+            <!-- Eyes -->
+            <g class="doc-eye"><ellipse cx="42" cy="48" rx="5" ry="4.5" fill="#ffffff"/><circle cx="43" cy="48" r="3" fill="url(#docEye2)"/><circle cx="43" cy="48" r="1.4" fill="#1a0a05"/><circle cx="44" cy="46.5" r="0.9" fill="#ffffff" opacity="0.95"/></g>
+            <g class="doc-eye right"><ellipse cx="62" cy="48" rx="5" ry="4.5" fill="#ffffff"/><circle cx="61" cy="48" r="3" fill="url(#docEye2)"/><circle cx="61" cy="48" r="1.4" fill="#1a0a05"/><circle cx="62" cy="46.5" r="0.9" fill="#ffffff" opacity="0.95"/></g>
 
-          <!-- Nose -->
-          <path d="M51 54 Q52 60 53 54" stroke="rgba(180,90,140,0.35)" stroke-width="1" fill="none" stroke-linecap="round"/>
+            <!-- Nose -->
+            <path d="M51 54 Q52 60 53 54" stroke="rgba(180,90,140,0.35)" stroke-width="1" fill="none" stroke-linecap="round"/>
 
-          <!-- Subtle blush -->
-          <ellipse cx="36" cy="60" rx="3.5" ry="2.2" fill="#ff9bc8" opacity="0.30"/>
-          <ellipse cx="68" cy="60" rx="3.5" ry="2.2" fill="#ff9bc8" opacity="0.30"/>
+            <!-- Subtle blush -->
+            <ellipse cx="36" cy="60" rx="3.5" ry="2.2" fill="#ff9bc8" opacity="0.30"/>
+            <ellipse cx="68" cy="60" rx="3.5" ry="2.2" fill="#ff9bc8" opacity="0.30"/>
 
-          <!-- Mouth — closed idle, opens when speaking -->
-          <path id="mavaMouthIdle" class="mava-mouth" d="M44 64 Q52 69 60 64" stroke="url(#docLip2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-          <ellipse id="mavaMouthOpen" cx="52" cy="66" rx="6" ry="3.5" fill="url(#docLip2)" stroke="#a04848" stroke-width="0.7" style="display:none;"/>
-          <path d="M46 64.5 Q52 65.5 58 64.5" stroke="#ffffff" stroke-width="0.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+            <!-- Mouth — closed idle, opens when speaking -->
+            <path id="mavaMouthIdle" class="mava-mouth" d="M44 64 Q52 69 60 64" stroke="url(#docLip2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <ellipse id="mavaMouthOpen" cx="52" cy="66" rx="6" ry="3.5" fill="url(#docLip2)" stroke="#a04848" stroke-width="0.7" style="display:none;"/>
+            <path d="M46 64.5 Q52 65.5 58 64.5" stroke="#ffffff" stroke-width="0.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+          </g>
         </g>
       </svg>
     </div>
@@ -1186,64 +1174,43 @@ window.addEventListener('message', event => {
 </div>
 <style>
 /* ── Dynamic Doctor AI Avatar — full body, moves to context ──
-   The avatar is anchored to #presentation (which is position:fixed
-   covering the viewport). It can be repositioned per-slide via the
-   .pos-* classes on #moduleAvatar, gliding smoothly via CSS
-   transitions on left/right/top/bottom.
-
-   The avatar shows the doctor's FULL BODY: head, torso, arms, hands,
-   legs, shoes — not just a face. Both arms have animated gestures
-   that change based on slide context (pointing, waving, explaining).
-*/
+   NO BOX: the avatar floats freely with just a soft drop-shadow and
+   a glow when speaking. No border, no background, no border-radius.
+   Starts HIDDEN (class="hidden" in HTML); only shown when the slide
+   presentation begins via enterSlideSection(). */
 .module-avatar{
   position:fixed;
   z-index:60;
   pointer-events:none;
-  /* Default position: bottom-right of the presentation area */
   right:32px;
   bottom:90px;
   width:130px;
   height:200px;
-  /* Smooth glide between positions. Note: transform is reserved for
-     position-presets (translateY(-50%) for vertical-centering) and the
-     .hidden state (scale(0.5)). The float animation is on the inner
-     .module-avatar-stage element to avoid clobbering transforms here. */
   transition:left 0.7s cubic-bezier(0.34,1.4,0.64,1),
              right 0.7s cubic-bezier(0.34,1.4,0.64,1),
              top 0.7s cubic-bezier(0.34,1.4,0.64,1),
              bottom 0.7s cubic-bezier(0.34,1.4,0.64,1),
              opacity 0.4s ease,
              transform 0.5s ease;
-  filter:drop-shadow(0 10px 22px rgba(124,92,255,0.35));
+  /* Soft purple glow — the only visual "container" cue */
+  filter:drop-shadow(0 6px 16px rgba(124,92,255,0.30));
 }
 @keyframes mavaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 
-/* ── Position presets (set via JS based on slide type) ──
-   The avatar is position:fixed relative to the viewport. The bottom-bar
-   (presentation controls) is ~70px tall, so default bottom is 90px to
-   sit just above it. */
-/* Bottom-right: title, closing, content slides — companion position */
+/* ── Position presets ── */
 .module-avatar.pos-bottom-right{ right:32px; left:auto; top:auto; bottom:90px; transform:none; }
-/* Bottom-left: alternate companion position (used on some content slides) */
 .module-avatar.pos-bottom-left{ left:32px; right:auto; top:auto; bottom:90px; transform:none; }
-/* Left side, vertically centered: concept/diagram slides — doctor stands
-   to the left, points right at the diagram */
 .module-avatar.pos-left-center{
   left:32px; right:auto; top:50%; bottom:auto;
   transform:translateY(-50%) scale(0.92);
 }
-/* Right side, vertically centered: summary slides — doctor stands to the
-   right, points left at the summary cards */
 .module-avatar.pos-right-center{
   right:32px; left:auto; top:50%; bottom:auto;
   transform:translateY(-50%) scale(0.92);
 }
-/* Top-right: intro/transition — doctor "welcomes" from the top */
 .module-avatar.pos-top-right{ right:32px; left:auto; top:80px; bottom:auto; transform:none; }
 
-/* Stage wrapper — holds the bg circle + shadow. The float animation
-   lives HERE so it doesn't conflict with the position transforms
-   on .module-avatar itself. */
+/* Stage wrapper — holds the SVG + shadow. Float animation lives here. */
 .module-avatar-stage{
   position:relative;
   width:100%; height:100%;
@@ -1253,27 +1220,32 @@ window.addEventListener('message', event => {
   position:absolute;
   left:50%; bottom:-4px;
   transform:translateX(-50%);
-  width:60%; height:10px;
-  background:radial-gradient(ellipse at center, rgba(124,92,255,0.30) 0%, transparent 70%);
+  width:55%; height:8px;
+  background:radial-gradient(ellipse at center, rgba(124,92,255,0.20) 0%, transparent 70%);
   border-radius:50%;
   filter:blur(2px);
 }
+
+/* ── NO BOX on .module-avatar-bg ──
+   Previously this had border:3px solid, background:radial-gradient,
+   border-radius:18px, overflow:hidden, box-shadow — making it look
+   like the doctor was trapped in a rounded rectangle. Now it's just
+   a transparent container; the SVG floats freely. */
 .module-avatar-bg{
   position:relative;
   width:100%; height:100%;
-  border-radius:18px;
-  background:radial-gradient(ellipse at 50% 30%, #fff 0%, #f3eeff 55%, #e8def8 100%);
-  border:3px solid #9b6bff;
-  overflow:hidden;
-  box-shadow:0 0 0 4px rgba(124,92,255,0.14), 0 8px 22px rgba(124,92,255,0.30), inset 0 0 14px rgba(124,92,255,0.15);
+  /* No border, no background, no border-radius, no overflow:hidden */
+  transition:filter 0.3s ease;
 }
-.module-avatar.speaking .module-avatar-bg{
-  box-shadow:0 0 0 6px rgba(124,92,255,0.22), 0 0 28px 4px rgba(124,92,255,0.55);
-  animation:mavaHalo 1s ease-in-out infinite;
+/* Speaking glow — a soft purple aura around the avatar, NOT a box */
+.module-avatar.speaking{
+  filter:drop-shadow(0 6px 16px rgba(124,92,255,0.30))
+         drop-shadow(0 0 12px rgba(124,92,255,0.45));
+  animation:mavaHaloGlow 1.2s ease-in-out infinite;
 }
-@keyframes mavaHalo{
-  0%,100%{box-shadow:0 0 0 5px rgba(124,92,255,0.16),0 0 22px rgba(124,92,255,0.40)}
-  50%{box-shadow:0 0 0 10px rgba(124,92,255,0.28),0 0 32px rgba(124,92,255,0.60)}
+@keyframes mavaHaloGlow{
+  0%,100%{filter:drop-shadow(0 6px 16px rgba(124,92,255,0.30)) drop-shadow(0 0 10px rgba(124,92,255,0.35))}
+  50%{filter:drop-shadow(0 6px 16px rgba(124,92,255,0.40)) drop-shadow(0 0 18px rgba(124,92,255,0.60))}
 }
 .module-avatar-svg{width:100%;height:100%;overflow:visible;}
 
@@ -1304,21 +1276,12 @@ window.addEventListener('message', event => {
   95%{transform:scaleY(0.05)}
 }
 
-/* ── ARM GESTURES — the key feature ──
-   Each arm rotates around its shoulder (top of the arm path).
-   Gestures change based on the slide context:
-     - "explaining" (default while speaking): both arms swing gently
-     - "pointing-right": left arm extends right (toward content on right)
-     - "pointing-left": right arm extends left (toward content on left)
-     - "welcoming": both arms open outward
-*/
+/* ── ARM GESTURES ── */
 .doc-arm{
   transform-origin:50% 0%;
   transform-box:fill-box;
   transition:transform 0.5s cubic-bezier(0.34,1.4,0.64,1);
 }
-
-/* Default idle: gentle sway */
 .doc-arm-left{
   animation:armIdleLeft 3.5s ease-in-out infinite;
   transform-origin:50% 5%;
@@ -1335,8 +1298,6 @@ window.addEventListener('message', event => {
   0%,100%{transform:rotate(0deg)}
   50%{transform:rotate(3deg)}
 }
-
-/* Speaking: both arms gesture more emphatically */
 .module-avatar.speaking .doc-arm-left{
   animation:armSpeakLeft 0.9s ease-in-out infinite;
 }
@@ -1351,9 +1312,6 @@ window.addEventListener('message', event => {
   0%,100%{transform:rotate(8deg)}
   50%{transform:rotate(-8deg)}
 }
-
-/* Pointing-right: left arm reaches across to point rightward
-   (used when standing on the left side of a diagram) */
 .module-avatar.gesture-point-right .doc-arm-left{
   animation:armPointRight 1.2s ease-in-out infinite;
   transform-origin:50% 5%;
@@ -1365,14 +1323,10 @@ window.addEventListener('message', event => {
   0%,100%{transform:rotate(20deg) translateY(-2px)}
   50%{transform:rotate(30deg) translateY(-4px)}
 }
-/* When pointing, extend the left pointing finger */
 .module-avatar.gesture-point-right .doc-finger-left{
   stroke-width:4.5;
   filter:drop-shadow(0 0 4px rgba(124,92,255,0.6));
 }
-
-/* Pointing-left: right arm reaches across to point leftward
-   (used when standing on the right side of summary cards) */
 .module-avatar.gesture-point-left .doc-arm-right{
   animation:armPointLeft 1.2s ease-in-out infinite;
   transform-origin:50% 5%;
@@ -1388,8 +1342,6 @@ window.addEventListener('message', event => {
   stroke-width:4.5;
   filter:drop-shadow(0 0 4px rgba(124,92,255,0.6));
 }
-
-/* Welcoming: both arms open outward (title/closing slides) */
 .module-avatar.gesture-welcome .doc-arm-left{
   animation:armWelcomeLeft 2.2s ease-in-out infinite;
 }
@@ -1405,7 +1357,7 @@ window.addEventListener('message', event => {
   50%{transform:rotate(25deg)}
 }
 
-/* Hidden on intro/outro video sections */
+/* Hidden state — avatar is invisible until the presentation starts */
 .module-avatar.hidden{ opacity:0; pointer-events:none; transform:scale(0.5); }
 
 @media (max-width:640px){
@@ -1442,9 +1394,7 @@ window.addEventListener('message', event => {
   function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
                              return Math.max(2500, w*450+2500); }
 
-  // ── DYNAMIC POSITIONING ──────────────────────────────────────
-  // Moves the avatar to a context-appropriate position based on the
-  // current slide type. Called from enterSlideSection() below.
+  // ── DYNAMIC POSITIONING ──
   function clearPositionClasses(){
     av.classList.remove('pos-bottom-right','pos-bottom-left','pos-left-center','pos-right-center','pos-top-right');
   }
@@ -1463,7 +1413,6 @@ window.addEventListener('message', event => {
   function hide(){ av.classList.add('hidden'); }
 
   // Pick a position + gesture based on the current slide.
-  // Exposed globally so the presentation engine can call it.
   window.__doctorAvatar = {
     onSlideEnter: function(slideType){
       show();
@@ -1475,18 +1424,15 @@ window.addEventListener('message', event => {
           break;
         case 'concept':
         case 'diagram':
-          // Stand on the left, point right at the diagram/visual
           setPosition('pos-left-center');
           setGesture('gesture-point-right');
           break;
         case 'summary':
-          // Stand on the right, point left at the summary cards
           setPosition('pos-right-center');
           setGesture('gesture-point-left');
           break;
         case 'content':
         default:
-          // Companion position, explaining gesture (default)
           setPosition('pos-bottom-right');
           setGesture(null);
           break;
@@ -1497,9 +1443,9 @@ window.addEventListener('message', event => {
     setSpeaking: setSpeaking
   };
 
-  // ── HOOK INTO THE PRESENTATION ENGINE ────────────────────────
-  // Wrap enterSlideSection so the avatar repositions whenever the
-  // slide changes. Wrap enterIntroSection / enterOutroSection to
+  // ── HOOK INTO THE PRESENTATION ENGINE ──
+  // Wrap enterSlideSection so the avatar shows + repositions whenever
+  // a slide is entered. Wrap enterIntroSection / enterOutroSection to
   // hide the avatar during video playback.
   function hookPresentation(){
     if (typeof enterSlideSection === 'function' && !window._docAvHooked) {
@@ -1507,7 +1453,6 @@ window.addEventListener('message', event => {
       var origEnterSlide = enterSlideSection;
       enterSlideSection = function(){
         var result = origEnterSlide.apply(this, arguments);
-        // After the slide is rendered, reposition the avatar
         try {
           var s = slides[currentSlide];
           if (s && window.__doctorAvatar) {
@@ -1516,7 +1461,6 @@ window.addEventListener('message', event => {
         } catch(e){}
         return result;
       };
-      // Wrap enterIntroSection + enterOutroSection
       if (typeof enterIntroSection === 'function') {
         var origEnterIntro = enterIntroSection;
         enterIntroSection = function(){
@@ -1535,17 +1479,14 @@ window.addEventListener('message', event => {
       }
     }
   }
-  // Try hooking immediately; if not ready, defer to load
   if (typeof enterSlideSection === 'function') {
     hookPresentation();
   } else {
     window.addEventListener('load', hookPresentation);
   }
-  // Also retry after a short delay in case the presentation script
-  // loads after this avatar script
   setTimeout(hookPresentation, 500);
 
-  // ── LIP-SYNC HOOK (unchanged from before) ────────────────────
+  // ── LIP-SYNC HOOK ──
   function hook(){
     var pv=window.presentationVoice; if(!pv||!pv.speak||pv._mavaHooked) return; pv._mavaHooked=true;
     var orig=pv.speak;

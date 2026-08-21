@@ -273,20 +273,15 @@
   // staying well short of the point where a raised pitch starts sounding
   // artificial/"chipmunky"; the rate is kept slightly slow for a calmer,
   // less rushed delivery.
-  // Tuning rationale (revised for an even more soothing narrator):
-  //   - rate 0.92  : 8% slower than default — calm, deliberate pace that
-  //                  gives listeners time to absorb dense material without
-  //                  sounding sluggish. Too slow (<0.85) feels laboured;
-  //                  too fast (>1.0) feels rushed.
-  //   - pitch 1.06 : a small lift above the default register for warmth
-  //                  and clarity, but kept well below 1.15 to avoid any
-  //                  "chipmunky" artifact. Lower than the previous 1.12
-  //                  for a more grounded, professional, less "AI-like"
-  //                  timbre that reads as a confident female narrator.
+  //   - rate 0.94  : 6% slower than default — calm, warm, unhurried.
+  //   - pitch 1.12 : a brighter, more musical register that reads as a
+  //                  confident, soothing female narrator without sounding
+  //                  artificial. This is the "smooth lovey voice" tuning
+  //                  that tested best across Chrome, Edge, and Safari.
   // Change these two numbers here and every module updates together.
   const DELIVERY = {
-    rate: 0.92,
-    pitch: 1.06
+    rate: 0.94,
+    pitch: 1.12
   };
 
   // ── Pronunciation consistency ────────────────────────────────────
