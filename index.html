@@ -1190,6 +1190,13 @@
             display: none;
         }
         .tutorial-caption-box.active { display: block; animation: tutorialCardIn 0.25s ease both; }
+        .tutorial-caption-label {
+            font-family: Inter, 'Segoe UI', sans-serif;
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em;
+            text-transform: uppercase; color: var(--primary);
+            margin-bottom: 0.4rem;
+        }
+        body.theme-dark .tutorial-caption-label { color: #b9a4ff !important; }
         .tutorial-caption-box .tc-arrow {
             position: absolute;
             width: 12px; height: 12px;
@@ -3465,6 +3472,7 @@
                     </div>
                 </div>
                 <div class="user-menu-item" onclick="showProfile()">Profile</div>
+                <div class="user-menu-item" onclick="replayTutorial()">Replay Tutorial</div>
                 <div class="user-menu-item" onclick="logout()">Log Out</div>
             </div>
         </div>
@@ -3999,11 +4007,65 @@
             document.getElementById('loginModal').classList.add('hidden');
 
             playLoginTransition(() => {
-                resumeOrShowDashboard(isReturning
+                // ── FLOW ORDER (this was the bug) ─────────────────────────
+                // The old code called resumeOrShowDashboard() and then
+                // showOnboardingPrompt() unconditionally. resumeOrShowDashboard()
+                // jumps straight INTO a module when saved progress exists, so a
+                // returning learner came out of "Where Data Means More" looking at
+                // some mid-course module with the tutorial prompt on top of it —
+                // and because tutorialAnswerYes() then called showModuleDashboard(),
+                // clicking "Yes, show me" appeared to *navigate to* the main UI.
+                // The walkthrough was explaining the dashboard while the learner
+                // had just been dropped somewhere else entirely.
+                //
+                // Correct order, every time:
+                //   Where Data Means More  ->  MAIN UI (dashboard)  ->  tutorial
+                // and only once the tutorial is finished or declined do we offer
+                // to resume where the learner left off.
+                const welcome = isReturning
                     ? 'Welcome back! Your journey continues now.'
-                    : 'Welcome! Your journey begins now.');
-                showOnboardingPrompt();
+                    : 'Welcome! Your journey begins now.';
+
+                if (shouldOfferTutorial()) {
+                    // Land on the main UI FIRST so the tutorial's very first
+                    // step is describing what is actually on screen.
+                    showModuleDashboard();
+                    showNotification(welcome);
+                    // One frame for the dashboard to paint, so the prompt
+                    // animates in over a settled UI rather than a blank one.
+                    requestAnimationFrame(() => setTimeout(showOnboardingPrompt, 260));
+                } else {
+                    resumeOrShowDashboard(welcome);
+                }
             });
+        }
+
+        // ── Tutorial gating ──────────────────────────────────────────────
+        // The prompt used to appear on every single login, which is why it
+        // kept interrupting returning learners mid-course. It is now offered
+        // once; after that it is available on demand from the user menu
+        // ("Replay Tutorial"), which is also what makes it safe to always
+        // land on the dashboard when it *is* going to run.
+        const TUTORIAL_SEEN_KEY = 'drugDiscoveryTutorialSeen';
+
+        function shouldOfferTutorial() {
+            try { return localStorage.getItem(TUTORIAL_SEEN_KEY) !== '1'; }
+            catch (e) { return true; }
+        }
+        function markTutorialSeen() {
+            try { localStorage.setItem(TUTORIAL_SEEN_KEY, '1'); } catch (e) {}
+        }
+
+        // Manual replay from the user menu. Always returns to the main UI
+        // first, for exactly the same reason the login path does.
+        function replayTutorial() {
+            const menu = document.getElementById('userMenu');
+            if (menu) menu.classList.remove('active');
+            if (!currentUser) return;
+            stopActiveLessonMedia();
+            try { resetNarration(); } catch (e) {}
+            showModuleDashboard();
+            requestAnimationFrame(() => setTimeout(showOnboardingPrompt, 260));
         }
 
         // Called when the learner clicks "No" — shows a short goodbye
@@ -4381,12 +4443,12 @@
                     title: "Module 1: Introduction",
                     icon: "🏠",
                     purpose: "This presentation introduces the core vocabulary and concepts of drug discovery before the rest of the course builds on them. The quiz and Term Scramble game that follow check that these foundational terms have stuck, since every later module assumes you already know them.",
-                    duration: 300,
+                    duration: 480,
                     lessons: [
                         {
                             id: 1,
                             title: "Welcome to Drug Discovery",
-                            duration: 120,
+                            duration: 300,
                             xp: 50,
                             videoUrl: "Module 1.html"
                         }
@@ -4467,12 +4529,12 @@
                     title: "Module 2: Business Overview",
                     icon: "💼",
                     purpose: "This presentation frames drug discovery as a business decision, not only a scientific one — the stages, the odds of success, and the timeline involved. The activities that follow test whether you can reason about drug development as an investment, which is the lens the rest of the course keeps returning to.",
-                    duration: 300,
+                    duration: 420,
                     lessons: [
                         {
                             id: 1,
                             title: "What is Drug Discovery?",
-                            duration: 120,
+                            duration: 240,
                             xp: 60,
                             videoUrl: "Module 2.html"
                         }
@@ -4554,12 +4616,12 @@
                     title: "Module 3: End-to-End Process",
                     icon: "🗺️",
                     purpose: "This presentation walks the full pipeline from target identification to a filed IND, giving you the map that every later module fills in piece by piece. The quiz and game check that you can place a given activity in the right stage of that pipeline, not just recognize the stage names.",
-                    duration: 420,
+                    duration: 390,
                     lessons: [
                         {
                             id: 1,
                             title: "Workflow Overview",
-                            duration: 180,
+                            duration: 210,
                             xp: 70,
                             videoUrl: "Module 3.html"
                         }
@@ -4642,12 +4704,12 @@
                     title: "Module 4: Key Terminologies",
                     icon: "📖",
                     purpose: "This presentation defines the technical terms used without further explanation for the rest of the course. The activities exist purely to lock that vocabulary in now, before it's assumed knowledge in every module that follows.",
-                    duration: 300,
+                    duration: 420,
                     lessons: [
                         {
                             id: 1,
                             title: "Essential Drug Discovery Terms",
-                            duration: 180,
+                            duration: 240,
                             xp: 70,
                             videoUrl: "Module 4.html"
                         }
@@ -4728,7 +4790,7 @@
                     title: "Module 5: Stakeholders",
                     icon: "👥",
                     purpose: "This presentation maps who actually does what across a drug discovery organization, from bench scientists to regulatory affairs. The activities check that you can match a role to its responsibility, since later modules reference these roles by name without re-explaining them.",
-                    duration: 240,
+                    duration: 360,
                     lessons: [
                         {
                             id: 1,
@@ -4816,12 +4878,12 @@
                     title: "Module 6: Data Landscape",
                     icon: "🗃️",
                     purpose: "This presentation surveys the different types of data — biological, pharmacological, ADMET, clinical — and how they differ. The activities test whether you can tell these categories apart, since the data-engineering topics later in the course depend on that distinction.",
-                    duration: 300,
+                    duration: 390,
                     lessons: [
                         {
                             id: 1,
                             title: "Types of Data in Drug Discovery",
-                            duration: 180,
+                            duration: 210,
                             xp: 70,
                             videoUrl: "Module 6.html"
                         }
@@ -4906,12 +4968,12 @@
                     title: "Module 7: Industry Standards",
                     icon: "🏆",
                     purpose: "This presentation covers the regulatory and data standards — GLP, CDISC, SDTM, and others — that keep drug discovery data usable and auditable. The activities check that you can tell one standard's purpose from another, since confusing them has real compliance consequences on the job.",
-                    duration: 240,
+                    duration: 390,
                     lessons: [
                         {
                             id: 1,
                             title: "Key Standards in Drug Discovery",
-                            duration: 180,
+                            duration: 210,
                             xp: 70,
                             videoUrl: "Module 7.html"
                         }
@@ -4992,12 +5054,12 @@
                     title: "Module 8: Technology Ecosystem",
                     icon: "💻",
                     purpose: "This presentation tours the software systems — LIMS, ELN, CTMS, and others — that run a modern discovery organization day to day. The activities test whether you know which system owns which job, which is the practical, everyday version of this knowledge.",
-                    duration: 300,
+                    duration: 390,
                     lessons: [
                         {
                             id: 1,
                             title: "Technologies in Drug Discovery",
-                            duration: 180,
+                            duration: 210,
                             xp: 70,
                             videoUrl: "Module 8.html"
                         }
@@ -5078,12 +5140,12 @@
                     title: "Module 9: Current Industry Challenges",
                     icon: "⚠️",
                     purpose: "This presentation looks at where drug discovery still struggles today — cost, timelines, attrition, data silos. The activities check that you understand why these problems exist, not just that they do, since that reasoning is exactly what the AI-focused module right after this one builds on.",
-                    duration: 240,
+                    duration: 390,
                     lessons: [
                         {
                             id: 1,
                             title: "Challenges in Drug Discovery",
-                            duration: 180,
+                            duration: 210,
                             xp: 70,
                             videoUrl: "Module 9.html"
                         }
@@ -5183,12 +5245,12 @@
                     title: "Module 10: Role of Data Engineering & AI",
                     icon: "🤖",
                     purpose: "This presentation shows concretely where data engineering and AI — tools like AlphaFold and generative molecule design — speed up each pipeline stage. The activities test whether you can connect a specific technology to the problem it actually solves, rather than treating \"AI\" as one generic idea.",
-                    duration: 300,
+                    duration: 420,
                     lessons: [
                         {
                             id: 1,
                             title: "Data Engineering in Drug Discovery",
-                            duration: 180,
+                            duration: 240,
                             xp: 70,
                             videoUrl: "Module 10.html"
                         }
@@ -5270,12 +5332,12 @@
                     title: "Module 11: Summary",
                     icon: "📝",
                     purpose: "This presentation ties every earlier module back together into one coherent picture of the drug discovery process. The activities are a final check across the whole course — not new material, but proof the earlier modules actually connected — before you generate your certificate.",
-                    duration: 180,
+                    duration: 420,
                     lessons: [
                         {
                             id: 1,
                             title: "Key Takeaways",
-                            duration: 180,
+                            duration: 240,
                             xp: 80,
                             videoUrl: "Module 11.html"
                         }
@@ -5496,7 +5558,14 @@
         // (roughly the locked-in narrator's rate of 0.94) plus a generous
         // 2.5s buffer for the network voice's startup latency and any
         // trailing syllable.
+        // Hard cap for the guide's mouth animation. Sourced from
+        // voice-engine.js rather than a local formula: the engine now chunks
+        // long lines and speaks at rate 0.92, so the old words*450 estimate
+        // consistently under-shot and stopped the mouth mid-sentence — most
+        // visibly on the long voice-control step. One source of truth.
         function tutEstimateSpeakMs(text) {
+            var pv = window.presentationVoice;
+            if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text) + 1200;
             var words = (text || '').trim().split(/\s+/).filter(Boolean).length;
             return Math.max(2500, words * 450 + 2500);
         }
@@ -5628,45 +5697,59 @@
 
         function tutorialStopSpeaking() {
             clearTimeout(_tutMaxSpeakTimeout);
-            if (window.presentationVoice && window.presentationVoice.synth) {
-                try { window.presentationVoice.synth.cancel(); } catch(e) {}
-            }
+            // Must use the engine's stop(), not synth.cancel(). v5 speaks a
+            // long line as several chunks; cancel() only kills the audible
+            // one, so Skip/Next could be followed by the next chunk starting.
+            // stop() invalidates the queued remainder as well.
+            const pv = window.presentationVoice;
+            if (pv && typeof pv.stop === 'function') { pv.stop(); }
+            else if (pv && pv.synth) { try { pv.synth.cancel(); } catch(e) {} }
             tutSetAvatarSpeaking(false);
         }
 
         // ── Walkthrough step definitions ──────────────────────────────
         // Each step (after the prompt) points the caption box at a real
         // UI element and pulses a highlight around it.
+        // Ordering rule: the walkthrough starts where the learner already is —
+        // the main UI — and only moves into a module once it needs to point at
+        // something that lives there. Nothing here navigates "backwards" into
+        // a screen the learner has not been shown yet, which is what made the
+        // old sequence feel like it was jumping around.
+        //
+        // Labels are generated from the array length (see tutorialShowWalkStep)
+        // so adding or removing a step can never leave a stale "Step 3 of 6".
         var tutorialWalkSteps = [
             {
-                label: 'Step 1 of 6',
-                text: "This is your dashboard — every module in the course lives here as a card. Click any card to open it and start learning.",
+                text: "This is your dashboard, and it's home base. Every module in the course sits here as a card, showing its title and how far through it you are. Click any card to open it.",
                 target: '.module-card'
             },
             {
-                label: 'Step 2 of 6',
-                text: "This is the lesson video — a narrated presentation covering the module's material. Use its on-screen controls to play, pause, jump between sections, or go full screen. When you're done, use the button below it to mark the lesson complete.",
+                text: "Progress is tracked automatically as you go. Once you've completed the modules, this button generates your certificate — so there's nothing to keep track of yourself.",
+                target: '.dashboard-cert-btn'
+            },
+            {
+                text: "Let's open the first module together. This is the lesson itself: a narrated presentation, with the same voice you're hearing now. Use the controls along the bottom to play, pause, step between sections, or go full screen.",
                 target: '#videoPlaceholderFrame',
                 beforeShow: function() { showCourseContainer(); goToLesson(0, 0); }
             },
             {
-                label: 'Step 3 of 6',
-                text: "See this Next button? Clicking it moves you through this module's video, then its quiz, then its game — one step at a time. It only jumps to the next module once you've finished all three.",
+                text: "Every module also comes with a study sheet you can keep. This button downloads it as a PDF, complete with an overview, the process diagram, a deep dive, key takeaways, and a glossary for that module.",
+                target: '#modulePdfBtn'
+            },
+            {
+                text: "This Next button walks you through the module in order: first the lesson, then the quiz, then the game. It only moves on to the following module once you've finished all three, so you can't accidentally skip ahead.",
                 target: '#nextBtn'
             },
             {
-                label: 'Step 4 of 6',
-                text: "This is the quiz for the module. Click it any time to test what you've learned — you'll need at least 60% to pass and earn XP.",
+                text: "Here's the quiz for the module. Open it whenever you're ready to check what stuck. You'll need sixty percent to pass, and passing earns you experience points.",
                 target: '.lesson-item[onclick*="startModuleQuiz(0)"]'
             },
             {
-                label: 'Step 5 of 6',
-                text: "And this is the interactive game for the module — a fun way to reinforce what you just learned.",
+                text: "And this is the module's interactive game. Each one is built around that module's material, so it's a quick, low-pressure way to make the terminology stick.",
                 target: '.lesson-item[onclick*="startGame(0)"]'
             },
             {
-                label: 'Step 6 of 6',
-                text: "Last thing — this microphone lets you control the whole course with your voice. Click it once to turn it on — after that, you can say switch off any time to stop it listening for commands, and switch on to wake it back up hands-free. While it's on, say next, previous, or switch to move around, say open quiz, open game, or certificate to jump to those, say a module number like go to module 2, answer quiz questions by saying the option letter, say relax to open Course Relaxer, and close to come back out of it.",
+                text: "Last thing, and it's a good one. This microphone lets you drive the whole course by voice. Click it once to switch it on. From then on, say next or previous to move around, open quiz or open game to jump straight in, or name a module, like go to module two. During a quiz, just say the letter of your answer. Say relax to open the Course Relaxer and close to come back out. And you can always say switch off to stop it listening, then switch on to wake it again.",
                 target: '#voiceBtn'
             }
         ];
@@ -5688,6 +5771,10 @@
             btnRow.innerHTML =
                 '<button class="tutorial-btn tutorial-btn-no" onclick="tutorialAnswerNo()">No thanks</button>' +
                 '<button class="tutorial-btn tutorial-btn-yes" onclick="tutorialAnswerYes()">Yes, show me</button>';
+
+            // Snapshot where the learner actually was, so step 2's jump into
+            // Module 1 can be undone when the walkthrough ends.
+            tutorialRememberLearnerPosition();
 
             overlay.classList.add('active');
             bubble.classList.add('active');
@@ -5715,10 +5802,17 @@
             tutorialStopSpeaking();
             document.getElementById('tutorialOverlay').classList.remove('active');
 
-            // Start on the dashboard — step 1 explains it. Later steps that
-            // need the module view navigate there themselves (see each
-            // step's beforeShow hook in tutorialWalkSteps).
-            showModuleDashboard();
+            // NOTE: deliberately does NOT navigate. The learner is already on
+            // the main UI — beginJourney()/replayTutorial() guarantee that
+            // before the prompt is ever shown. The old version called
+            // showModuleDashboard() here, which is what made clicking "Yes"
+            // look like it *moved* you to a different screen.
+            //
+            // If we are somehow not on the dashboard (e.g. a stale DOM state),
+            // correct it silently rather than mid-walkthrough.
+            const dash = document.getElementById('moduleDashboard');
+            if (dash && !dash.classList.contains('active')) showModuleDashboard();
+
             tutorialWalkIdx = 0;
             setTimeout(tutorialShowWalkStep, 400);
         }
@@ -5787,7 +5881,15 @@
             }
 
             var step = tutorialWalkSteps[tutorialWalkIdx];
-            if (step.beforeShow) step.beforeShow();
+            if (step.beforeShow) {
+                try { step.beforeShow(); } catch (e) {}
+            }
+
+            // Label is derived, never hardcoded, so it can't drift out of sync
+            // with the number of steps actually defined.
+            var stepLabel = 'Step ' + (tutorialWalkIdx + 1) + ' of ' + tutorialWalkSteps.length;
+            var capLabel = document.getElementById('tutorialCaptionLabel');
+            if (capLabel) capLabel.textContent = stepLabel;
 
             var targetEl = document.querySelector(step.target);
 
@@ -5868,9 +5970,54 @@
         function tutorialCloseAll() {
             tutorialStopSpeaking();
             tutorialClearHighlight();
-            document.getElementById('tutorialOverlay').classList.remove('active');
-            document.getElementById('tutorialCaptionBox').classList.remove('active');
-            document.getElementById('tutorialAvatarBubble').classList.remove('active');
+            const ov  = document.getElementById('tutorialOverlay');
+            const cap = document.getElementById('tutorialCaptionBox');
+            const bub = document.getElementById('tutorialAvatarBubble');
+            if (ov)  ov.classList.remove('active');
+            if (cap) cap.classList.remove('active');
+            if (bub) bub.classList.remove('active');
+
+            markTutorialSeen();
+
+            // The walkthrough opens Module 1's lesson view at step 2 in order
+            // to point at the real video player, Next button, quiz and game.
+            // Leaving the learner parked there afterwards is disorienting —
+            // and it silently overwrote their saved position with (0, 0). So
+            // we return to the main UI and restore whatever they were actually
+            // on before the tutorial borrowed the screen.
+            tutorialRestoreLearnerPosition();
+        }
+
+        // Remembers where the learner really was before the walkthrough
+        // navigated away, so the tutorial is non-destructive.
+        var _tutSavedPosition = null;
+
+        function tutorialRememberLearnerPosition() {
+            try { _tutSavedPosition = loadLastPosition(); } catch (e) { _tutSavedPosition = null; }
+        }
+
+        function tutorialRestoreLearnerPosition() {
+            const saved = _tutSavedPosition;
+            _tutSavedPosition = null;
+
+            // Always come back to the main UI — that is where the flow began.
+            showModuleDashboard();
+
+            const hasAnyProgress = userProgress.completedLessons.size > 0 ||
+                userProgress.completedQuizzes.size > 0 ||
+                userProgress.completedGames.size > 0;
+
+            if (saved && hasAnyProgress &&
+                courseData.modules[saved.m] &&
+                courseData.modules[saved.m].lessons[saved.l]) {
+                // Repair the saved position the walkthrough clobbered, but do
+                // not yank the learner into it — offer it instead.
+                currentModuleIndex = saved.m;
+                currentLessonIndex = saved.l;
+                saveLastPosition();
+                showNotification('Tutorial complete — pick a module, or continue ' +
+                    courseData.modules[saved.m].title + '.');
+            }
         }
 
         // ========== INITIALIZATION ==========
@@ -8184,7 +8331,7 @@
                       body: 'For most of the twentieth century, drug discovery was a low-throughput, intuition-led discipline: a chemist would synthesise a handful of analogues per week, a biologist would test them in a single assay, and decisions rested on the senior scientist\'s judgement. Today, high-throughput screening produces millions of data points per campaign, structural biology routinely resolves protein–ligand complexes at atomic resolution, and clinical trials generate terabytes of patient-level data. The bottleneck has shifted from running experiments to making sense of their output. Organisations that treat discovery as a data problem — not just a chemistry problem — are the ones that consistently compress timelines and reduce attrition.',
                       bullets: [
                         'High-throughput screening (HTS) routinely tests 100,000–500,000 compounds per campaign.',
-                        ' cryo-EM and AlphaFold have made structural data near-universal for drugable targets.',
+                        'Cryo-EM and AlphaFold have made structural data near-universal for drugable targets.',
                         'Electronic health records and real-world evidence (RWE) close the loop between trial and bedside.',
                         'AI-driven generative chemistry expands the search space far beyond historical collections.'
                       ]},
@@ -8770,7 +8917,7 @@
                     { heading: 'Predictive ML: ADMET, Activity, Toxicity',
                       body: 'Predictive ML models estimate properties before wet-lab measurement, reducing the number of compounds that need to be synthesised and tested. ADMET models predict absorption, distribution, metabolism, excretion, toxicity from chemical structure alone — using graph neural networks (GNNs) trained on historical ADMET data. Activity models predict IC50 against specific targets — useful for virtual screening of large libraries. Toxicity models predict organ toxicity (cardiotoxicity via hERG, hepatotoxicity via DILI) from structure and omics data. The training data is the limiting factor: a model trained on 1,000 compounds is far less reliable than one trained on 100,000. Curated databases like GOSTAR and ChEMBL are the dominant training-data sources.',
                       bullets: [
-                        'ADMET models: graph neural networks on structure → predicted PK/tox.',
+                        'ADMET models: graph neural networks on structure to predicted PK/tox.',
                         'Activity models: predict IC50 against specific targets — virtual screening.',
                         'Toxicity models: hERG (cardiotoxicity), DILI (hepatotoxicity), genotoxicity.',
                         'Training data is the limiting factor — GOSTAR, ChEMBL are dominant sources.'
@@ -9209,8 +9356,8 @@
             var badgeSize = 28;
             var arrowGap = 14;           // vertical gap between nodes (for the arrow)
 
-            for (var i = 0; i < data.pipeline.length; i++) {
-                var stage = data.pipeline[i];
+            for (var pi = 0; pi < data.pipeline.length; pi++) {
+                var stage = data.pipeline[pi];
 
                 // Pre-measure the description height so we know the node height
                 doc.setFont('helvetica', 'normal');
@@ -9222,10 +9369,10 @@
                 // Ensure the WHOLE node + its outgoing arrow fits on this page.
                 // If not, break to a new page. This eliminates the stale-row
                 // whitespace-gap bug from the previous version.
-                y = ensureSpace(nodeH + (i < data.pipeline.length - 1 ? arrowGap + 8 : 0), y);
+                y = ensureSpace(nodeH + (pi < data.pipeline.length - 1 ? arrowGap + 8 : 0), y);
 
                 // ── Draw the node card ──
-                var cardBg = (i % 2 === 0) ? lavenderBg : lavenderBgDeep;
+                var cardBg = (pi % 2 === 0) ? lavenderBg : lavenderBgDeep;
                 doc.setFillColor(cardBg[0], cardBg[1], cardBg[2]);
                 doc.setDrawColor(purple[0], purple[1], purple[2]);
                 doc.setLineWidth(1.1);
@@ -9239,7 +9386,7 @@
                 doc.setTextColor(255, 255, 255);
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(13);
-                doc.text(String(i + 1), M + nodePad + badgeSize / 2, y + (nodeH - badgeSize) / 2 + 18, { align: 'center' });
+                doc.text(String(pi + 1), M + nodePad + badgeSize / 2, y + (nodeH - badgeSize) / 2 + 18, { align: 'center' });
 
                 // Label (bold ink) — to the right of the badge
                 doc.setTextColor(ink[0], ink[1], ink[2]);
@@ -9251,14 +9398,14 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
                 doc.setTextColor(inkSoft[0], inkSoft[1], inkSoft[2]);
-                for (var d = 0; d < descLines.length; d++) {
-                    doc.text(descLines[d], M + nodePad * 2 + badgeSize, y + 36 + d * 11);
+                for (var dLine = 0; dLine < descLines.length; dLine++) {
+                    doc.text(descLines[dLine], M + nodePad * 2 + badgeSize, y + 36 + dLine * 11);
                 }
 
                 y += nodeH;
 
                 // ── Draw the connecting arrow to the next node ──
-                if (i < data.pipeline.length - 1) {
+                if (pi < data.pipeline.length - 1) {
                     var ax = M + nodeW / 2;     // arrow shaft x = center of node
                     var ay1 = y + 2;
                     var ay2 = y + arrowGap - 2;
@@ -9283,8 +9430,8 @@
                 y = paragraph('A detailed examination of the most important concepts in this module, with sub-points and examples.', y, 9.5);
                 y += 8;
 
-                for (var d = 0; d < data.deepDives.length; d++) {
-                    var dd = data.deepDives[d];
+                for (var ddIdx = 0; ddIdx < data.deepDives.length; ddIdx++) {
+                    var dd = data.deepDives[ddIdx];
 
                     // Keep heading + first 2 lines of body together (no orphaned headings)
                     y = ensureSpace(60, y);
@@ -9332,39 +9479,49 @@
             y += 12;
 
             // ── Glossary ───────────────────────────────────────────────
+            // Restructured. The previous version placed the definition to the
+            // RIGHT of the term at an x-offset derived from that term's width,
+            // which produced two defects: every row started at a different
+            // indent (so the column never read as a list), and the definition
+            // lines were drawn at `y + dl*11` with only ONE ensureSpace() for
+            // the whole entry — so a long definition ran straight through the
+            // bottom margin and under the footer band.
+            //
+            // Now: term on its own line, definition indented beneath it, and
+            // ensureSpace() applied per line. A long entry breaks cleanly
+            // across pages instead of overflowing, and the term is never left
+            // orphaned at the foot of a page without at least one line of its
+            // definition.
             if (data.glossary && data.glossary.length > 0) {
                 y = ensureSpace(60, y);
-                y = sectionHeading('Glossary', y, { keepWithNext: 40 });
+                y = sectionHeading('Glossary', y, { keepWithNext: 46 });
+
                 for (var g = 0; g < data.glossary.length; g++) {
-                    var term = data.glossary[g][0];
-                    var defn = data.glossary[g][1];
-                    // Measure the definition height to keep term+def together
+                    var term = String(data.glossary[g][0]);
+                    var defn = String(data.glossary[g][1]);
+
                     doc.setFont('helvetica', 'normal');
-                    doc.setFontSize(9.5);
-                    var termWidth = (function(){
-                        doc.setFont('helvetica', 'bold');
-                        doc.setFontSize(10);
-                        var w = doc.getTextWidth(term) + 8;
-                        doc.setFont('helvetica', 'normal');
-                        doc.setFontSize(9.5);
-                        return w;
-                    })();
-                    var defLines = doc.splitTextToSize(defn, PW - M * 2 - termWidth);
-                    var defH = defLines.length * 11;
-                    y = ensureSpace(defH + 5, y);
-                    // Term in bold purple
+                    doc.setFontSize(9);
+                    var defLines = doc.splitTextToSize(defn, PW - M * 2 - 14);
+
+                    // Keep the term with at least its first definition line.
+                    y = ensureSpace(13 + 11, y);
+
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(9.5);
                     doc.setTextColor(purple[0], purple[1], purple[2]);
                     doc.text(term, M, y);
-                    // Definition
+                    y += 12;
+
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(9);
                     doc.setTextColor(inkSoft[0], inkSoft[1], inkSoft[2]);
                     for (var dl = 0; dl < defLines.length; dl++) {
-                        doc.text(defLines[dl], M + termWidth, y + dl * 11);
+                        y = ensureSpace(11, y);
+                        doc.text(defLines[dl], M + 14, y);
+                        y += 11;
                     }
-                    y += defH + 5;
+                    y += 6;
                 }
                 y += 4;
             }
@@ -9378,32 +9535,39 @@
 
                 for (var r = 0; r < data.references.length; r++) {
                     var ref = data.references[r];
-                    // Compact reference: label + URL on consecutive lines,
-                    // with tighter spacing to avoid overflow to a new page.
-                    // Each reference is ~22pt tall (label 11pt + URL 10pt + gap 1pt).
-                    y = ensureSpace(24, y);
-                    // Number badge
-                    doc.setFillColor(purple[0], purple[1], purple[2]);
-                    doc.circle(M + 4, y - 3, 2.2, 'F');
-                    // Reference label as clickable link
-                    doc.setTextColor(purple[0], purple[1], purple[2]);
+                    var refLabel = '[' + (r + 1) + '] ' + ref.label;
+
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(9);
-                    var refLabel = '[' + (r + 1) + '] ' + ref.label;
                     var refLines = doc.splitTextToSize(refLabel, PW - M * 2 - 18);
-                    // Only draw the first line as the link (most references fit on one line)
-                    doc.textWithLink(refLines[0], M + 14, y, { url: ref.url });
-                    // If the label wrapped, draw the continuation
-                    for (var rl = 1; rl < refLines.length; rl++) {
-                        y = ensureSpace(10, y);
-                        doc.text(refLines[rl], M + 14, y + rl * 10);
+
+                    // The old version drew wrapped label lines at `y + rl*10`
+                    // and the URL at `y + refLines.length*10`, both AFTER a
+                    // single ensureSpace(24) — so any reference whose label
+                    // wrapped pushed its URL through the bottom margin and
+                    // under the footer. Each line now advances y and checks
+                    // for itself, and the whole entry is kept together.
+                    var entryH = refLines.length * 11 + 12;
+                    y = ensureSpace(entryH, y);
+
+                    doc.setFillColor(purple[0], purple[1], purple[2]);
+                    doc.circle(M + 4, y - 3, 2.2, 'F');
+                    doc.setTextColor(purple[0], purple[1], purple[2]);
+
+                    for (var rl = 0; rl < refLines.length; rl++) {
+                        doc.textWithLink(refLines[rl], M + 14, y, { url: ref.url });
+                        y += 11;
                     }
-                    // URL in smaller text below — tighter spacing
+
                     doc.setTextColor(inkMuted[0], inkMuted[1], inkMuted[2]);
                     doc.setFont('helvetica', 'normal');
                     doc.setFontSize(7.5);
-                    doc.textWithLink(ref.url, M + 14, y + refLines.length * 10, { url: ref.url });
-                    y += refLines.length * 10 + 10;
+                    var urlLines = doc.splitTextToSize(String(ref.url), PW - M * 2 - 18);
+                    for (var ul = 0; ul < urlLines.length; ul++) {
+                        doc.textWithLink(urlLines[ul], M + 14, y, { url: ref.url });
+                        y += 9;
+                    }
+                    y += 5;
                 }
             }
 
@@ -10241,6 +10405,7 @@
 
     <!-- Element-pointing caption — used while walking through the interface -->
     <div class="tutorial-caption-box" id="tutorialCaptionBox">
+        <div class="tutorial-caption-label" id="tutorialCaptionLabel"></div>
         <div id="tutorialCaptionText"></div>
         <div class="tutorial-caption-buttons">
             <button class="tc-btn-skip" onclick="tutorialSkip()">Skip tour</button>

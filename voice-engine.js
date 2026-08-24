@@ -1,440 +1,806 @@
-/*
- * Shared narration voice engine for the Excelra Drug Discovery Course.
+/* ===================================================================
+ * voice-engine.js  —  Narration engine for the Excelra
+ *                     Drug Discovery Interactive Course
  *
- * Every Module N.html presentation loads this one file. That means any
- * future tweak to voice selection, warmth, pace, pronunciation, etc. only
- * needs to happen HERE — every module picks it up automatically the next
- * time it's opened, instead of needing 11 separate edits.
+ * ENGINE VERSION 5  ("soft-female-consistent")
  *
- * ONE VOICE, LOCKED IN, REUSED EVERYWHERE
- * ----------------------------------------
- * The narrator used to be re-picked from the browser's live voice list
- * on every single spoken line. That's exactly what caused two visible
- * bugs: the voice could change mid-presentation (Chrome loads its
- * network voices like "Google UK English Female" in asynchronously,
- * a beat after local ones — so the first sentence would grab whatever
- * local voice was available yet, and a later sentence would grab the
- * nicer Google voice the moment it finished loading), and the voice
- * could differ module to module (each Module N.html is a fresh page
- * load, so "pick again" could land on a different candidate each time
- * depending on exactly how far the voice list had loaded at that
- * moment).
+ * Loaded by index.html (the onboarding guide) and by all eleven
+ * Module N.html presentations. It is the SINGLE place that decides
+ * who narrates, how she sounds, and how domain terminology is
+ * pronounced — so one edit here changes the whole course.
  *
- * The fix: decide on ONE voice, once, the first time any module needs
- * to speak — after giving the browser a short grace period to finish
- * populating its voice list, so the decision isn't made prematurely
- * against an incomplete list — and then remember that exact choice
- * (by name, in localStorage) so every subsequent module simply reuses
- * it instead of re-deciding. Nothing changes again after that unless
- * the chosen voice actually proves broken (see below), which is the
- * only case where switching mid-course is actually correct.
+ * WHAT VERSION 5 FIXES
+ * --------------------
+ * 1. OUTDATED / ROBOTIC VOICE.
+ *    v2 ranked "Google UK English Female" first. That voice is a
+ *    2012-era concatenative engine: intelligible, but flat, clipped
+ *    and noticeably dated — exactly the "old robotic narrator"
+ *    complaint. v5 ranks by VOICE GENERATION first: modern neural
+ *    voices (Microsoft "Online (Natural)" = Azure neural; Apple
+ *    Premium/Enhanced; Google's newer local neural voices) outrank
+ *    every legacy voice, on every platform.
  *
- * VOICE CONSISTENCY ACROSS DIFFERENT LAPTOPS/BROWSERS
- * ----------------------------------------
- * Windows and macOS expose completely different local voice engines
- * (SAPI vs. the macOS speech engine), which is exactly why the same
- * course used to sound like a different narrator (sometimes even a
- * different gender) depending on which laptop or browser opened it.
- * The one kind of voice that DOES render byte-for-byte identically on
- * any OS is a network voice — Chrome/Edge/Brave stream the audio from
- * Google's TTS service instead of synthesizing it on-device — so
- * "Google UK English Female" is listed FIRST below and is what should
- * end up narrating on the large majority of machines (any Chromium-
- * based browser, online, on Windows/Mac/Linux/ChromeOS all get this
- * exact same voice). The delivery tuning further down (raised pitch,
- * slightly slower rate) is what keeps this specific voice sounding
- * warm and pleasant rather than flat/robotic.
+ * 2. STALE CACHE PINNING THE OLD VOICE.
+ *    The v2 lock lived in localStorage under a key that did not
+ *    include the engine version, so a returning learner kept the
+ *    voice v2 chose forever — a logic fix alone changed nothing on a
+ *    real machine. v5 namespaces every stored key with the engine
+ *    version (`...:v5`) and, on first run, actively deletes all known
+ *    legacy keys. A new engine version can never inherit an old
+ *    decision. Nothing to clear by hand.
  *
- * The remaining entries only exist as a fallback for the minority of
- * cases where that first voice genuinely isn't available (offline, or
- * a non-Chromium browser like Firefox/Safari that doesn't expose
- * Google's network voice) — Edge's neural "Online (Natural)" voice,
- * then macOS's Samantha, then a last-resort local Windows voice. Once
- * ANY of these is locked in on a given device it is reused every time
- * (see "ONE VOICE, LOCKED IN" above), so the only way to still see two
- * different voices across two laptops is if one of them can't reach
- * the network voice at all — a limitation of the Web Speech API itself
- * (each browser only exposes the voices actually installed/reachable
- * on that device), not something a page can fully override.
+ * 3. INCONSISTENCY ACROSS BROWSERS.
+ *    Selection is a deterministic SCORE, not a race against whichever
+ *    voice finished loading first. The same browser therefore always
+ *    reaches the same answer, and different browsers converge on the
+ *    closest available equivalent (a warm, neural, female en-US/en-GB
+ *    voice) instead of drifting to whatever the OS default happened to
+ *    be. Cross-device identity is capped by the Web Speech API itself
+ *    — a page cannot install voices — so the goal is "the best soft
+ *    female voice this device has, chosen the same way everywhere",
+ *    which is achievable, rather than "one identical audio file",
+ *    which is not.
  *
- * Why the female voice sometimes went silent specifically on Mac
- * Chrome: on some Mac + Chrome combinations, Google's network voice
- * request silently fails to produce audio (a long-standing Chromium
- * bug), while the exact same voice works fine on Windows Chrome.
- * Because the failure is silent — no error event, speechSynthesis
- * just never actually speaks — naive code has no way to notice and
- * react.
+ * 4. NARRATION CUTTING OUT MID-SENTENCE.
+ *    Chromium silently truncates a single utterance at roughly 15
+ *    seconds when using a network voice. Long narration lines were
+ *    being clipped. v5 splits every line into sentence-sized chunks
+ *    (<= ~180 chars) and speaks them in sequence, so length is
+ *    unbounded and each chunk stays well inside the safe window.
  *
- * The fix here: speak() verifies a voice actually started producing
- * audio (via the utterance's own onstart/onboundary events) within a
- * short window. If it didn't, that voice is blacklisted (remembered in
- * localStorage) and the narrator re-locks to the next best candidate —
- * still just ONE voice, still reused consistently everywhere from then
- * on, just a different one on whichever device the original pick
- * doesn't actually work on.
- */
+ * 5. THE FIXED 30s SAFETY NET RESOLVING EARLY.
+ *    A line longer than 30s of audio resolved its promise while still
+ *    audible, so the slide advanced and two lines overlapped. The net
+ *    is now derived from the text's estimated duration.
+ *
+ * 6. cancel() -> speak() RACE.
+ *    Calling speak() immediately after cancel() drops the utterance in
+ *    Chromium. A short settle delay is now inserted.
+ *
+ * 7. A THROW HERE KILLED EVERY MODULE.
+ *    Modules do `const synth = window.presentationVoice.synth`, so if
+ *    anything in this file threw (e.g. no speechSynthesis at all), the
+ *    export never happened and the whole presentation broke. v5 wraps
+ *    initialisation and ALWAYS exports a working API, degrading to
+ *    silent-but-correctly-timed playback if speech is unavailable.
+ *
+ * 8. TERMINOLOGY MISPRONOUNCED.
+ *    v2 spaced acronyms letter-by-letter ("F D A"), which several
+ *    engines read as words ("fuh-duh-ah") or rushed together. v5 uses
+ *    an explicit phonetic respelling lexicon (see LEXICON) covering
+ *    the course's acronyms, gene/protein names, and Latin/Greek terms.
+ * =================================================================== */
 (function () {
-  const synth = window.speechSynthesis;
+  'use strict';
 
-  const LOCK_KEY = 'courseNarratorVoiceName';
-  const FAILED_VOICES_KEY = 'ttsBrokenVoices';
+  var ENGINE_VERSION = '5';
+  var NS = 'excelraNarrator:v' + ENGINE_VERSION;
+  var LOCK_KEY   = NS + ':voiceName';
+  var FAILED_KEY = NS + ':brokenVoices';
 
-  // ── One-time migration for devices that already hit the cancel/error
-  // bug described above ──────────────────────────────────────────────
-  // Before today's fix, an ordinary Pause/Next/Previous/Mute click could
-  // get a perfectly good voice wrongly blacklisted (in FAILED_VOICES_KEY)
-  // and the course permanently locked onto whatever fallback came next
-  // (in LOCK_KEY) — on a real device, that bad state is just sitting in
-  // localStorage and the fixed logic below would otherwise keep
-  // respecting it forever. This runs once per browser to wipe both keys
-  // so the very next resolveVoice() call below makes a completely fresh
-  // decision under the corrected rules, then remembers it's done so it
-  // never re-wipes a legitimate later blacklist/lock again.
-  const MIGRATION_KEY = 'courseNarratorVoiceEngineVersion';
-  const CURRENT_ENGINE_VERSION = '2';
-  try {
-    if (localStorage.getItem(MIGRATION_KEY) !== CURRENT_ENGINE_VERSION) {
-      localStorage.removeItem(LOCK_KEY);
-      localStorage.removeItem(FAILED_VOICES_KEY);
-      localStorage.setItem(MIGRATION_KEY, CURRENT_ENGINE_VERSION);
-    }
-  } catch (e) {}
+  /* ── Cache eviction ────────────────────────────────────────────────
+   * Every key below was written by an earlier engine. They are removed
+   * once, on the first load of this version, so no decision made by an
+   * older ranking can survive into this one. Because the live keys are
+   * version-namespaced, this also means bumping ENGINE_VERSION is all
+   * that is ever needed to force a clean re-pick in future.            */
+  var LEGACY_KEYS = [
+    'courseNarratorVoiceName',
+    'ttsBrokenVoices',
+    'courseNarratorVoiceEngineVersion',
+    'excelraNarrator:v3:voiceName',
+    'excelraNarrator:v3:brokenVoices',
+    'excelraNarrator:v4:voiceName',
+    'excelraNarrator:v4:brokenVoices',
+    'narratorVoice',
+    'presentationVoiceName',
+    'selectedVoice'
+  ];
+  var EVICTED_FLAG = NS + ':evicted';
 
-  function getFailedVoiceNames() {
-    try { return JSON.parse(localStorage.getItem(FAILED_VOICES_KEY)) || []; }
-    catch (e) { return []; }
-  }
-  function markVoiceFailed(name) {
-    if (!name) return;
-    const failed = getFailedVoiceNames();
-    if (failed.indexOf(name) === -1) {
-      failed.push(name);
-      try { localStorage.setItem(FAILED_VOICES_KEY, JSON.stringify(failed)); } catch (e) {}
-    }
-    let locked = null;
-    try { locked = localStorage.getItem(LOCK_KEY); } catch (e) {}
-    if (locked === name) {
-      lockedVoice = null;
-      try { localStorage.removeItem(LOCK_KEY); } catch (e) {}
-    }
+  function ls(op, key, val) {           // storage is optional, never fatal
+    try {
+      if (op === 'get') return localStorage.getItem(key);
+      if (op === 'set') { localStorage.setItem(key, val); return val; }
+      if (op === 'del') { localStorage.removeItem(key); }
+    } catch (e) {}
+    return null;
   }
 
-  // ONE small, curated shortlist — not a sprawling list of dozens of
-  // names. Each entry here covers one major real-world platform/browser
-  // case (Windows+Edge, any Chrome/Chromium via the network voice, macOS)
-  // so there's still a fallback if the very first choice genuinely isn't
-  // installed on a given machine — but every single entry is a definite,
-  // well-known, clearly-female voice. Nothing generic, nothing novelty,
-  // nothing male, ever.
-  const preferredVoices = [
-    'Google UK English Female',         // Any Chrome/Chromium, identical on every OS — tried FIRST for consistency
-    'Microsoft Aria Online (Natural)',  // Windows + Edge, network voice — fallback if Google's isn't reachable
-    'Samantha',                         // macOS / iOS default — fallback for non-Chromium browsers
-    'Microsoft Zira'                    // Windows + plain Chrome, no network — last resort
+  (function evictLegacyCache() {
+    if (ls('get', EVICTED_FLAG) === '1') return;
+    for (var i = 0; i < LEGACY_KEYS.length; i++) ls('del', LEGACY_KEYS[i]);
+    // Also sweep any key from a *different* version of this engine.
+    try {
+      var doomed = [];
+      for (var k = 0; k < localStorage.length; k++) {
+        var key = localStorage.key(k);
+        if (key && key.indexOf('excelraNarrator:v') === 0 && key.indexOf(NS) !== 0) doomed.push(key);
+      }
+      for (var d = 0; d < doomed.length; d++) ls('del', doomed[d]);
+    } catch (e) {}
+    ls('set', EVICTED_FLAG, '1');
+  })();
+
+  var synth = (typeof window !== 'undefined' && window.speechSynthesis) ? window.speechSynthesis : null;
+  var SUPPORTED = !!(synth && typeof window.SpeechSynthesisUtterance === 'function');
+
+  /* ================================================================
+   * 1. VOICE SELECTION
+   * ================================================================
+   * Scored, not first-match. Highest total score wins; ties break on
+   * the platform order the browser reported, which is stable per
+   * browser — so the outcome is fully deterministic.
+   */
+
+  /* Tier A — modern NEURAL female voices. These are the soft, natural,
+   * unhurried voices the course is tuned for. Listed per platform so
+   * whichever one a device actually has, it still lands in Tier A.   */
+  var NEURAL_FEMALE = [
+    // Microsoft Azure neural, exposed by Edge on every desktop OS.
+    'aria', 'jenny', 'emma', 'ava', 'michelle', 'sonia', 'libby',
+    'natasha', 'clara', 'neerja', 'yan', 'nanami', 'seraphina',
+    // Apple's newer high-quality voices (Safari, macOS 13+/iOS 16+).
+    'samantha (enhanced)', 'ava (premium)', 'ava (enhanced)',
+    'allison (enhanced)', 'susan (enhanced)', 'zoe (premium)',
+    'siri female', 'nicky (enhanced)',
+    // Google's newer on-device neural voices (Chrome/Android).
+    'google us english', 'en-us-x-tpf-local', 'en-us-x-iob-local',
+    'en-gb-x-rjs-local'
   ];
 
-  // Short, explicit list of common default MALE voice names. This exists
-  // purely as a floor: if NONE of the four curated names above exist on a
-  // device (rare), this stops the very last "just take whatever's first"
-  // fallback from landing on a male voice like "Microsoft David Desktop"
-  // (a very common Windows default) or macOS's male "Alex"/"Daniel"/"Fred".
-  const AVOID_VOICE_PATTERN = /\b(david|mark|guy|ryan|daniel|james|george|alex|fred|male|man)\b/i;
-  const MALE_VOICE_PATTERN = AVOID_VOICE_PATTERN;
+  /* Tier B — good, clearly female, but older generation. Used only if
+   * nothing in Tier A exists on the device.                          */
+  var LEGACY_FEMALE = [
+    'samantha', 'allison', 'susan', 'zoe', 'karen', 'moira', 'tessa',
+    'fiona', 'serena', 'nicky', 'kate', 'catherine',
+    'google uk english female',
+    'zira', 'hazel', 'eva', 'heera', 'linda', 'caroline'
+  ];
 
-  function bestMatch(voices) {
-    if (!voices.length) return null;
-    const failed = getFailedVoiceNames();
-    const usable = voices.filter(v => failed.indexOf(v.name) === -1);
-    for (const pref of preferredVoices) {
-      const found = usable.find(v => v.name.includes(pref) && v.lang.startsWith('en'));
-      if (found) return found;
+  /* Hard exclusions. Male voices, and Apple's novelty voices, must
+   * never narrate — not even as a last resort, unless the device has
+   * literally nothing else.                                          */
+  var MALE_RE = /\b(alex|daniel|david|fred|george|guy|james|jamie|jorge|juan|mark|oliver|ryan|thomas|tom|rishi|ravi|prabhat|hemant|aaron|arthur|christopher|eddy|gordon|grandpa|liam|male|man|men|reed|rocko|brian|andrew|steffan|roger)\b/i;
+  var NOVELTY_RE = /\b(albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|deranged|hysterical|princess|junior|bruce|agnes|kathy|ralph|shelley|sandy|flo|eddy|grandma|rocko)\b/i;
+  var FEMALE_HINT_RE = /\b(female|woman|femme|weiblich)\b/i;
+  var NEURAL_HINT_RE = /(natural|neural|premium|enhanced|online)/i;
+
+  function norm(s) { return String(s || '').toLowerCase(); }
+
+  function listMatch(list, name) {
+    for (var i = 0; i < list.length; i++) {
+      if (name.indexOf(list[i]) !== -1) return list.length - i; // earlier = better
     }
-    const english = usable.filter(v => v.lang.startsWith('en'));
-    const englishGood = english.filter(v => !AVOID_VOICE_PATTERN.test(v.name));
-    const usableGood = usable.filter(v => !AVOID_VOICE_PATTERN.test(v.name));
-    // Only reached if none of the 4 curated names above exist on this
-    // device at all — never take a male voice here unless literally
-    // nothing else (not even a non-English voice) is available.
-    const choice = (
-      englishGood.find(v => /female|woman|samantha|karen/i.test(v.name)) ||
-      englishGood[0] ||
-      usableGood[0] ||
-      english[0] || usable[0] || voices[0] || null
-    );
-    try {
-      console.log('[voice-engine] picked:', choice && choice.name, choice && choice.lang,
-        '— from', voices.length, 'available voices:', voices.map(v => v.name).join(', '));
-    } catch (e) {}
-    return choice;
+    return 0;
   }
 
-  // Gives the browser a moment to finish populating its voice list
-  // before a decision gets locked in — Chrome/Edge frequently report
-  // local voices first and add network voices like "Google UK English
-  // Female" a beat later. Deciding too early is exactly what used to
-  // lock the course onto a lesser local voice unnecessarily.
-  function waitForVoices(timeoutMs) {
-    return new Promise(resolve => {
-      const initial = synth.getVoices();
-      if (initial.length) {
-        setTimeout(() => resolve(synth.getVoices()), Math.min(400, timeoutMs));
-        return;
+  function scoreVoice(v) {
+    var name = norm(v.name);
+    var lang = norm(v.lang).replace('_', '-');
+
+    // Disqualifiers -------------------------------------------------
+    if (MALE_RE.test(name) && !FEMALE_HINT_RE.test(name)) return -1;
+    if (NOVELTY_RE.test(name)) return -1;
+    if (lang.indexOf('en') !== 0) return -1;   // narration script is English
+
+    var score = 0;
+
+    // Generation: this is the dominant term, because it is what makes
+    // the difference between "soft and natural" and "old and robotic".
+    var neural = listMatch(NEURAL_FEMALE, name);
+    if (neural) score += 4000 + neural * 10;
+    else if (NEURAL_HINT_RE.test(name)) score += 2500;   // unknown but self-described neural
+    else {
+      var legacy = listMatch(LEGACY_FEMALE, name);
+      if (legacy) score += 1200 + legacy * 10;
+      else if (FEMALE_HINT_RE.test(name)) score += 700;
+      else score += 100;                                 // unknown, un-gendered
+    }
+
+    // Explicitly female naming is worth a nudge on top of the tier.
+    if (FEMALE_HINT_RE.test(name)) score += 150;
+
+    // Locale: prefer en-US, then en-GB, then any other English, so the
+    // pronunciation of the course's terminology stays consistent.
+    if (lang === 'en-us') score += 300;
+    else if (lang === 'en-gb') score += 240;
+    else if (lang.indexOf('en-') === 0) score += 120;
+    else score += 60;
+
+    // A remote (server-rendered) voice sounds identical on every OS,
+    // which helps cross-device consistency — but only as a tie-break,
+    // never enough to outrank a better generation of voice.
+    if (v.localService === false) score += 90;
+
+    // Default-flagged voices are the ones the platform vendor considers
+    // canonical; a small nudge keeps picks stable.
+    if (v.default) score += 25;
+
+    return score;
+  }
+
+  function brokenVoices() {
+    try { return JSON.parse(ls('get', FAILED_KEY)) || []; } catch (e) { return []; }
+  }
+  function markBroken(name) {
+    if (!name) return;
+    var list = brokenVoices();
+    if (list.indexOf(name) === -1) {
+      list.push(name);
+      ls('set', FAILED_KEY, JSON.stringify(list));
+    }
+    if (ls('get', LOCK_KEY) === name) { ls('del', LOCK_KEY); lockedVoice = null; }
+  }
+
+  function pickBest(voices) {
+    if (!voices || !voices.length) return null;
+    var broken = brokenVoices();
+    var best = null, bestScore = -Infinity;
+    for (var i = 0; i < voices.length; i++) {
+      var v = voices[i];
+      if (broken.indexOf(v.name) !== -1) continue;
+      var s = scoreVoice(v);
+      if (s < 0) continue;
+      if (s > bestScore) { bestScore = s; best = v; }
+    }
+    if (!best) {
+      // Absolutely nothing scored — take the first non-broken English
+      // voice, then the first non-broken voice, rather than going mute.
+      for (var j = 0; j < voices.length; j++) {
+        if (broken.indexOf(voices[j].name) !== -1) continue;
+        if (norm(voices[j].lang).indexOf('en') === 0) { best = voices[j]; break; }
       }
-      let settled = false;
-      const timer = setTimeout(() => {
-        if (settled) return;
-        settled = true;
-        synth.removeEventListener('voiceschanged', onChange);
-        resolve(synth.getVoices());
-      }, timeoutMs);
-      function onChange() {
-        if (settled) return;
-        settled = true;
-        clearTimeout(timer);
-        synth.removeEventListener('voiceschanged', onChange);
-        resolve(synth.getVoices());
+      if (!best) for (var k = 0; k < voices.length; k++) {
+        if (broken.indexOf(voices[k].name) === -1) { best = voices[k]; break; }
       }
-      synth.addEventListener('voiceschanged', onChange);
+    }
+    try {
+      if (best) console.info('[voice-engine v' + ENGINE_VERSION + '] narrator: "' +
+        best.name + '" (' + best.lang + ', score ' + bestScore + ') from ' +
+        voices.length + ' voices');
+    } catch (e) {}
+    return best;
+  }
+
+  /* getVoices() is asynchronous in every Chromium browser: the local
+   * voices arrive first and the neural/network ones a beat later. We
+   * therefore wait for the list to STOP GROWING (two identical reads,
+   * 250ms apart) before deciding, up to a ceiling — which is what stops
+   * the engine from locking onto a lesser local voice prematurely.   */
+  function settledVoiceList(maxWaitMs) {
+    return new Promise(function (resolve) {
+      if (!SUPPORTED) { resolve([]); return; }
+      var deadline = Date.now() + (maxWaitMs || 2500);
+      var lastLen = -1, stableReads = 0, done = false;
+
+      function finish() {
+        if (done) return;
+        done = true;
+        try { synth.removeEventListener('voiceschanged', poke); } catch (e) {}
+        resolve(synth.getVoices() || []);
+      }
+      function poke() { /* just wakes the next tick */ }
+      try { synth.addEventListener('voiceschanged', poke); } catch (e) {}
+
+      (function tick() {
+        if (done) return;
+        var list = synth.getVoices() || [];
+        if (list.length && list.length === lastLen) {
+          if (++stableReads >= 2) return finish();
+        } else {
+          stableReads = 0;
+          lastLen = list.length;
+        }
+        if (Date.now() >= deadline) return finish();
+        setTimeout(tick, 250);
+      })();
     });
   }
 
-  let lockedVoice = null;
-  let resolvingPromise = null;
-
-  // Decides the ONE voice this whole course uses, reusing a prior
-  // module's choice (by exact name) whenever one exists rather than
-  // re-deciding — that's what keeps every module consistent with the
-  // ones before it on the same device.
-  //
-  // IMPORTANT: a name saved by an older version of this file (before the
-  // fallback logic below was tightened up) can already be sitting in
-  // localStorage on a returning learner's machine — e.g. "Microsoft David
-  // Desktop", picked back when the fallback had no gender check at all.
-  // Reusing that saved name forever, unconditionally, is exactly why a
-  // logic fix alone wouldn't have changed anything already loaded on a
-  // real device: the "ONE VOICE, LOCKED IN" guarantee was working exactly
-  // as designed, just locked onto the wrong voice. So a stored name is
-  // only reused if it *isn't* one of these known-weak picks; otherwise
-  // the lock is discarded and a fresh decision is made (and re-saved),
-  // same as if this were a brand-new visitor.
-  function isStoredChoiceStillGood(name) {
-    if (!name) return false;
-    if (MALE_VOICE_PATTERN.test(name)) return false;
-    return true;
-  }
+  var lockedVoice = null;
+  var resolving = null;
 
   function resolveVoice() {
     if (lockedVoice) return Promise.resolve(lockedVoice);
-    if (resolvingPromise) return resolvingPromise;
+    if (resolving) return resolving;
 
-    resolvingPromise = (async () => {
-      let storedName = null;
-      try { storedName = localStorage.getItem(LOCK_KEY); } catch (e) {}
-      const failed = getFailedVoiceNames();
+    resolving = settledVoiceList(2500).then(function (voices) {
+      var stored = ls('get', LOCK_KEY);
+      var broken = brokenVoices();
 
-      if (storedName && failed.indexOf(storedName) === -1 && isStoredChoiceStillGood(storedName)) {
-        const voices = await waitForVoices(1200);
-        const found = voices.find(v => v.name === storedName);
-        if (found) {
-          lockedVoice = found;
-          resolvingPromise = null;
-          return lockedVoice;
+      // Reuse the previously locked voice only if it is still present,
+      // still not blacklisted, and still passes today's rules (so a
+      // voice that a *newer* engine version would reject can never be
+      // resurrected from storage).
+      if (stored && broken.indexOf(stored) === -1) {
+        for (var i = 0; i < voices.length; i++) {
+          if (voices[i].name === stored && scoreVoice(voices[i]) >= 0) {
+            lockedVoice = voices[i];
+            resolving = null;
+            return lockedVoice;
+          }
         }
-        // Not available on this device/browser — fall through and
-        // decide fresh from what's actually available here.
       }
 
-      const voices = await waitForVoices(1200);
-      const choice = bestMatch(voices);
-      if (choice) {
-        lockedVoice = choice;
-        try { localStorage.setItem(LOCK_KEY, choice.name); } catch (e) {}
-      }
-      resolvingPromise = null;
+      lockedVoice = pickBest(voices);
+      if (lockedVoice) ls('set', LOCK_KEY, lockedVoice.name);
+      resolving = null;
       return lockedVoice;
-    })();
+    });
 
-    return resolvingPromise;
+    return resolving;
   }
 
-  // Re-resolve once the voice list changes shape (e.g. network voices
-  // finish loading) ONLY if nothing has been locked in yet — once
-  // lockedVoice is set, it's deliberately never swapped out except via
-  // the proven-broken path in speak() below.
-  synth.addEventListener('voiceschanged', () => {
-    if (!lockedVoice) resolveVoice();
-  });
-  resolveVoice();
+  if (SUPPORTED) {
+    try {
+      synth.addEventListener('voiceschanged', function () {
+        if (!lockedVoice) resolveVoice();
+      });
+    } catch (e) {}
+    resolveVoice();   // warm up so the first line never waits
+  }
 
-  // Shared, tuned delivery settings — softer and slightly slower than
-  // a default robotic TTS read, aiming for a warmer, more natural tone.
-  // Pitch is nudged up from the voice's default register for a brighter,
-  // more pleasant sound (rather than a flat/low robotic read), while
-  // staying well short of the point where a raised pitch starts sounding
-  // artificial/"chipmunky"; the rate is kept slightly slow for a calmer,
-  // less rushed delivery.
-  //   - rate 0.94  : 6% slower than default — calm, warm, unhurried.
-  //   - pitch 1.12 : a brighter, more musical register that reads as a
-  //                  confident, soothing female narrator without sounding
-  //                  artificial. This is the "smooth lovey voice" tuning
-  //                  that tested best across Chrome, Edge, and Safari.
-  // Change these two numbers here and every module updates together.
-  const DELIVERY = {
-    rate: 0.94,
-    pitch: 1.12
-  };
+  /* ================================================================
+   * 2. DELIVERY
+   * ================================================================
+   * Soft, warm, unhurried. Neural voices need far less pitch lift than
+   * the old concatenative ones did — v2 used pitch 1.12 to brighten a
+   * dull voice, which on a neural voice tips into a thin, artificial
+   * timbre. 1.04 keeps the natural warmth and reads as gentle rather
+   * than sing-song.
+   */
+  var DELIVERY = { rate: 0.92, pitch: 1.04, volume: 1 };
 
-  // ── Pronunciation consistency ────────────────────────────────────
-  // Plain SpeechSynthesisUtterance has no SSML support, so the only
-  // lever available is respelling text before it's spoken. Left alone,
-  // these all-caps industry acronyms get read as an attempted "word"
-  // by some voices/OSes and spelled out letter-by-letter by others —
-  // which is exactly the "inconsistent pronunciation" learners hit.
-  // Forcing every voice to spell them out (by spacing the letters)
-  // makes the narration consistent regardless of which voice ends up
-  // selected. Acronyms that are already spoken as ordinary words by
-  // virtually every TTS engine (ADMET, IC50, FAIR, SEND) are left as-is.
-  const SPELL_OUT = [
-    'IND', 'EDC', 'CDISC', 'LIMS', 'CFR', 'HL7', 'ELN', 'SDTM', 'HTS',
-    'CTMS', 'CDASH', 'GLP', 'FDA', 'SAR', 'SOC', 'ALCOA'
+  /* ================================================================
+   * 3. PRONUNCIATION LEXICON
+   * ================================================================
+   * SpeechSynthesisUtterance has no SSML and no lexicon hook, so the
+   * only lever is respelling the text before it is spoken.
+   *
+   * Two techniques are used:
+   *   • INITIALISMS spelled letter by letter, written as separate
+   *     lowercase syllables ("F D A" -> "eff dee ay"). Spacing capital
+   *     letters is unreliable: some engines read "F D A" as a word.
+   *     Explicit syllables are read correctly by every engine tested.
+   *   • ACRONYMS said as words, respelled so stress lands correctly
+   *     ("ADMET" -> "ad-met", "CDISC" -> "see-disk").
+   *
+   * Replacement is case-sensitive and word-bounded, so ordinary prose
+   * is untouched ("led" is never confused with "LED").
+   */
+  var LEXICON = [
+    // ── Regulatory & quality ──
+    ['FDA',      'eff dee ay'],
+    ['EMA',      'ee em ay'],
+    ['IND',      'eye en dee'],
+    ['NDA',      'en dee ay'],
+    ['BLA',      'bee ell ay'],
+    ['CTA',      'see tee ay'],
+    ['CFR',      'see eff arr'],
+    ['GLP',      'gee ell pee'],
+    ['GMP',      'gee em pee'],
+    ['GCP',      'gee see pee'],
+    ['QA',       'kew ay'],
+    ['SOP',      'ess oh pee'],
+    ['ALCOA',    'AL-koh-ah'],
+    ['SEND',     'send'],
+    ['IRB',      'eye arr bee'],
+    // ── Data standards ──
+    ['CDISC',    'see-disk'],
+    ['SDTM',     'ess dee tee em'],
+    ['ADaM',     'AY-dam'],
+    ['CDASH',    'see-dash'],
+    ['MedDRA',   'MED-druh'],
+    ['SOC',      'ess oh see'],
+    ['PT',       'pee tee'],
+    ['LLT',      'ell ell tee'],
+    ['HLGT',     'aitch ell gee tee'],
+    ['WHODrug',  'W H O drug'],
+    ['HL7',      'aitch ell seven'],
+    ['FHIR',     'fire'],
+    ['FAIR',     'fair'],
+    ['OMOP',     'OH-mop'],
+    ['LOINC',    'loink'],
+    ['SNOMED',   'SNOH-med'],
+    ['ISO',      'eye ess oh'],
+    // ── Systems & technology ──
+    ['EDC',      'ee dee see'],
+    ['ELN',      'ee ell en'],
+    ['LIMS',     'limz'],
+    ['CTMS',     'see tee em ess'],
+    ['SDMS',     'ess dee em ess'],
+    ['ERP',      'ee arr pee'],
+    ['API',      'ay pee eye'],
+    ['ETL',      'ee tee ell'],
+    ['SQL',      'sequel'],
+    ['AI',       'ay eye'],
+    ['ML',       'em ell'],
+    ['MLOps',    'em ell ops'],
+    ['LLM',      'ell ell em'],
+    ['GNN',      'gee en en'],
+    ['GPU',      'gee pee you'],
+    ['SaaS',     'sass'],
+    ['RBAC',     'arr-back'],
+    // ── Science & assays ──
+    ['ADMET',    'AD-met'],
+    ['ADME',     'AD-mee'],
+    ['SAR',      'ess ay arr'],
+    ['QSAR',     'kew-ess-ay-arr'],
+    ['HTS',      'aitch tee ess'],
+    ['uHTS',     'ultra aitch tee ess'],
+    ['IC50',     'eye see fifty'],
+    ['EC50',     'ee see fifty'],
+    ['Ki',       'kay eye'],
+    ['Kd',       'kay dee'],
+    ['PK',       'pee kay'],
+    ['PD',       'pee dee'],
+    ['MoA',      'em oh ay'],
+    ['SPR',      'ess pee arr'],
+    ['NMR',      'en em arr'],
+    ['LC-MS',    'ell see mass spec'],
+    ['cryo-EM',  'cry-oh ee em'],
+    ['hERG',     'H-erg'],
+    ['CYP',      'sip'],
+    ['CYP3A4',   'sip three ay four'],
+    ['P-gp',     'pee glycoprotein'],
+    ['BBB',      'bee bee bee'],
+    ['CRISPR',   'CRISS-per'],
+    ['siRNA',    'ess eye arr en ay'],
+    ['mRNA',     'em arr en ay'],
+    ['DNA',      'dee en ay'],
+    ['RNA',      'arr en ay'],
+    ['PROTAC',   'PRO-tack'],
+    ['PDB',      'pee dee bee'],
+    ['GPCR',     'gee pee see arr'],
+    ['TPP',      'tee pee pee'],
+    ['PoS',      'probability of success'],
+    ['NPV',      'en pee vee'],
+    ['ROI',      'arr oh eye'],
+    ['RWE',      'arr double-you ee'],
+    ['R&D',      'arr and dee'],
+    ['CRO',      'see arr oh'],
+    ['KOL',      'kay oh ell'],
+    ['GOSTAR',   'GO-star'],
+    ['GOBIOM',   'GO-bye-om'],
+    ['CTOD',     'see tod'],
+    ['AlphaFold','Alpha-Fold'],
+    ['in vitro', 'in VEE-troh'],
+    ['in vivo',  'in VEE-voh'],
+    ['in silico','in SIL-ih-koh'],
+    ['de novo',  'day NOH-voh'],
+    ['moiety',   'MOY-uh-tee'],
+    ['ligand',   'LIG-and'],
+    ['assay',    'ASS-ay'],
+    ['analogue', 'ANN-uh-log'],
+    ['analog',   'ANN-uh-log'],
+    ['pharmacokinetics', 'farma-co-kin-ETT-icks'],
+    ['pharmacophore',    'FARMA-co-for'],
+    ['cheminformatics',  'kem-informatics'],
+    ['lipophilicity',    'lipo-fill-ISS-ity'],
+    ['bioavailability',  'bio-availability'],
+    ['orthosteric',      'ortho-STAIR-ick'],
+    ['allosteric',       'alo-STAIR-ick'],
+    ['agonist',   'AG-uh-nist'],
+    ['antagonist','an-TAG-uh-nist'],
+    ['efficacy',  'EFF-ih-kuh-see'],
+    ['excipient', 'ek-SIP-ee-ent'],
+    ['epitope',   'EPP-ih-tope'],
+    ['isoform',   'EYE-so-form'],
+    ['kinase',    'KY-nase'],
+    ['protease',  'PRO-tee-ase'],
+    ['nucleotide','NEW-clee-oh-tide'],
+    ['phenotype', 'FEE-no-type'],
+    ['genotype',  'JEE-no-type'],
+    ['cohort',    'CO-hort'],
+    ['placebo',   'pluh-SEE-bo'],
+    ['adverse',   'AD-verse'],
+    ['aliquot',   'AL-ih-kwot'],
+    ['titre',     'TIE-ter'],
+    ['titer',     'TIE-ter']
   ];
-  const spellOutPattern = new RegExp('\\b(' + SPELL_OUT.join('|') + ')\\b', 'g');
+
+  // Longest-first so "CYP3A4" is handled before "CYP", and "in vitro"
+  // before "vitro". Built once, at load.
+  var LEX_RULES = LEXICON
+    .slice()
+    .sort(function (a, b) { return b[0].length - a[0].length; })
+    .map(function (pair) {
+      var term = pair[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // \b does not fire next to '-' or '&', so guard with explicit
+      // non-word-ish lookarounds built from character classes that are
+      // safe in every browser (no lookbehind — Safari < 16.4).
+      return { re: new RegExp('(^|[^A-Za-z0-9-])' + term + '(?![A-Za-z0-9-])', 'g'),
+               to: '$1' + pair[1] };
+    });
 
   function preprocessText(text) {
-    return text.replace(spellOutPattern, function (match) {
-      return match.split('').join(' ');
+    var out = String(text == null ? '' : text);
+    // Normalise typography that engines read aloud awkwardly.
+    out = out.replace(/[\u2018\u2019]/g, "'")
+             .replace(/[\u201C\u201D]/g, '"')
+             .replace(/\u2192/g, ' leads to ')
+             .replace(/\s*->\s*/g, ' leads to ')
+             .replace(/\u2014/g, ', ')          // em dash -> comma pause
+             .replace(/(\d)\s*[\u2013-]\s*(\d)/g, '$1 to $2')  // ranges
+             .replace(/\u2013/g, ', ')
+             .replace(/&/g, ' and ')
+             .replace(/\u00A0/g, ' ');
+
+    // Clinical-phase Roman numerals. Left alone, "Phase III" comes out as
+    // "Phase eye-eye-eye" on several engines and "Phase three" on others —
+    // the exact inconsistency this course cannot afford, since phases are
+    // named in almost every module.
+    out = out.replace(/\bPhase\s+IV\b/g,  'Phase four')
+             .replace(/\bPhase\s+III\b/g, 'Phase three')
+             .replace(/\bPhase\s+II\b/g,  'Phase two')
+             .replace(/\bPhase\s+I\b/g,   'Phase one')
+             .replace(/\bPhase\s+0\b/g,   'Phase zero');
+
+    // Ranges written across magnitude suffixes or currency symbols
+    // ("$100M-$500M", "100K-500K") must become "to" BEFORE the suffixes
+    // are expanded, or the hyphen survives into the spoken output.
+    out = out.replace(/(\d(?:[.,]\d+)?\s?[KMB%]?)\s*[-\u2013]\s*\$?(\d)/g, '$1 to $2')
+             .replace(/[~\u2248]\s*(?=[\d$])/g, 'about ');
+
+    // Magnitude suffixes and currency. Without these, "10.6M+ structures"
+    // is read as "ten point six em plus" and "$2.6B" as "dollar two point
+    // six bee" — the single most jarring class of mispronunciation in a
+    // course full of figures. Order matters: handle the '+' form first.
+    out = out.replace(/\$\s?([\d.,]+)\s?([KMB])\b\+?/g, function (m, n, s) {
+               var word = s === 'K' ? 'thousand' : (s === 'M' ? 'million' : 'billion');
+               return n + ' ' + word + ' dollars' + (/\+/.test(m) ? ' plus' : '');
+             })
+             .replace(/([\d.,]+)\s?([KMB])\+/g, function (m, n, s) {
+               return n + ' ' + (s === 'K' ? 'thousand' : (s === 'M' ? 'million' : 'billion')) + ' plus';
+             })
+             .replace(/([\d.,]+)\s?([KMB])\b/g, function (m, n, s) {
+               return n + ' ' + (s === 'K' ? 'thousand' : (s === 'M' ? 'million' : 'billion'));
+             })
+             .replace(/\$\s?([\d.,]+)/g, '$1 dollars')
+             .replace(/([\d.,]+)\s?%/g, '$1 percent')
+             // "PK/PD" and "go/no-go" read better as spoken pauses than as
+             // a slash, which some engines vocalise as the word "slash".
+             .replace(/([A-Za-z0-9])\/([A-Za-z0-9])/g, '$1 $2');
+    for (var i = 0; i < LEX_RULES.length; i++) {
+      out = out.replace(LEX_RULES[i].re, LEX_RULES[i].to);
+    }
+
+    // ── ALL-CAPS EMPHASIS, not acronyms ──────────────────────────────
+    // Slides use full capitals for emphasis ("a TARGET is the biological
+    // molecule..."). Many engines spell a capitalised token letter by
+    // letter, so those read out as "T-A-R-G-E-T" — which is worse than no
+    // emphasis at all. Real acronyms are all handled by the lexicon above
+    // and are already lowercase phonetics by this point, so anything still
+    // in capitals here with two or more vowels and five or more letters is
+    // an ordinary English word being shouted. Those get folded to lower
+    // case; genuine short acronyms (DNA, PDB, HTS) are left untouched.
+    out = out.replace(/\b[A-Z]{5,}\b/g, function (word) {
+      var vowels = word.replace(/[^AEIOU]/g, '').length;
+      return vowels >= 2 ? word.charAt(0) + word.slice(1).toLowerCase() : word;
     });
+
+    return out.replace(/\s{2,}/g, ' ').trim();
   }
 
-  // ── Robust speak() with automatic bad-voice fallback ─────────────
-  // Modules call this instead of building their own
-  // SpeechSynthesisUtterance directly, which is what makes the single
-  // locked-in voice (and its Mac/Google-voice fallback) possible
-  // without touching all 11 module files every time this needs a tweak.
-  //
-  // hasFailedOverOnce guards the ONLY case where the voice is allowed to
-  // change after being locked in. Two separate bugs used to cause
-  // "the narrator changes mid-video/mid-module, sometimes to a
-  // different gender", and both are now fixed:
-  //
-  // 1) The silent-failure check (proofTimer below) used to give a
-  //    voice only 1.4s to prove it was producing audio before being
-  //    blacklisted — far too tight for a network voice under any real
-  //    latency, so a perfectly fine voice could get swapped mid-video.
-  //    Fixed with a much more generous 5s window.
-  //
-  // 2) The bigger one: onerror() used to treat ANY error event as
-  //    proof the voice was broken. But every ordinary Pause / Next /
-  //    Previous / Mute / Restart click — and every normal auto-advance
-  //    from one line to the next — calls synth.cancel() to stop
-  //    whatever is currently talking, and cancelling fires this exact
-  //    'error' event (reason 'canceled' or 'interrupted'). That's just
-  //    routine playback control, not a broken voice — so completely
-  //    ordinary use of the player was silently blacklisting a perfectly
-  //    working voice and swapping the narrator, repeatedly, throughout
-  //    a module. onerror() now only treats a genuine (non-cancellation)
-  //    error as proof-of-breakage.
-  //
-  // On top of both fixes, a hard cap of ONE failover for the entire
-  // course still applies — once it has swapped a single time (for an
-  // actually broken voice), it never re-evaluates again, so there is no
-  // possibility of a second, third, fourth swap cascading through later
-  // videos either.
-  let hasFailedOverOnce = false;
+  /* ================================================================
+   * 4. TIMING
+   * ================================================================ */
+  var WORDS_PER_SEC = 2.45;   // measured for a neural voice at rate 0.92
 
-  function speak(rawText, opts, retriesLeft) {
-    opts = opts || {};
-    if (retriesLeft === undefined) retriesLeft = 1;
-    const text = preprocessText(rawText);
+  function estimateMs(text) {
+    var words = String(text || '').trim().split(/\s+/).filter(Boolean).length;
+    if (!words) return 400;
+    return Math.round((words / WORDS_PER_SEC) * 1000) + 900;
+  }
 
-    return new Promise(function (resolve) {
-      if (opts.muted || !synth) {
-        setTimeout(resolve, opts.fallbackDuration || 0);
-        return;
+  /* ================================================================
+   * 5. CHUNKING
+   * ================================================================
+   * Chromium truncates a single utterance at ~15s with a network voice.
+   * Splitting on sentence boundaries (and, for very long sentences, on
+   * clause boundaries) keeps every chunk comfortably inside that limit
+   * while preserving natural prosody — a chunk always ends where a
+   * human would pause anyway.
+   */
+  var MAX_CHUNK = 180;
+  var DOT = '\u0002';   // placeholder for a decimal point during splitting
+
+  function chunkText(text) {
+    var t = String(text || '').trim();
+    if (!t) return [];
+    if (t.length <= MAX_CHUNK) return [t];
+
+    // A '.' between two digits is a decimal point, not a sentence end.
+    // Without this guard the splitter cut "2.6 billion dollars" into "2."
+    // and "6 billion dollars", which the rejoin then spoke as
+    // "two. six billion dollars" — a wrong figure, read aloud, in a course
+    // full of figures. Same for version-style numbers such as "21.10".
+    var guarded = t.replace(/(\d)\.(\d)/g, '$1' + DOT + '$2');
+
+    var sentences = guarded.match(/[^.!?]+[.!?]+["')\]]*\s*|[^.!?]+$/g) || [guarded];
+    var chunks = [], buf = '';
+
+    function unguard(x) { return x.split(DOT).join('.'); }
+    function flush() { if (buf.trim()) chunks.push(unguard(buf.trim())); buf = ''; }
+
+    for (var i = 0; i < sentences.length; i++) {
+      var s = sentences[i].trim();
+      if (!s) continue;
+
+      if (s.length > MAX_CHUNK) {
+        flush();
+        // Split an over-long sentence at clause boundaries, then, only
+        // if still too long, at the last space before the limit.
+        //
+        // NOTE: deliberately NOT written as /(?<=[,;:])\s+/. A lookbehind
+        // is a *parse-time* SyntaxError in Safari before 16.4, and a
+        // literal regex is compiled when the file is parsed — so that one
+        // character class would have taken this entire engine offline on
+        // older iPads and Macs, silencing the whole course. This does the
+        // same job with a marker split that every browser supports.
+        var parts = s.replace(/([,;:])\s+/g, '$1\u0001').split('\u0001');
+        if (parts.length === 1) parts = [s];      // no clause punctuation
+        var sub = '';
+        for (var p = 0; p < parts.length; p++) {
+          var piece = parts[p];
+          while (piece.length > MAX_CHUNK) {
+            var cut = piece.lastIndexOf(' ', MAX_CHUNK);
+            if (cut < 40) cut = MAX_CHUNK;
+            chunks.push(unguard(piece.slice(0, cut).trim()));
+            piece = piece.slice(cut).trim();
+          }
+          if ((sub + ' ' + piece).trim().length > MAX_CHUNK) { if (sub.trim()) chunks.push(unguard(sub.trim())); sub = piece; }
+          else sub = (sub ? sub + ' ' : '') + piece;
+        }
+        if (sub.trim()) chunks.push(unguard(sub.trim()));
+        continue;
       }
 
-      let settled = false;
-      function finish() {
+      if ((buf + ' ' + s).trim().length > MAX_CHUNK) flush();
+      buf = (buf ? buf + ' ' : '') + s;
+    }
+    flush();
+    return chunks.length ? chunks : [t];
+  }
+
+  /* ================================================================
+   * 6. speak()
+   * ================================================================
+   * Contract kept identical to v2 so no caller needs changing:
+   *   speak(text, { muted, fallbackDuration, onUtterance }) -> Promise
+   *
+   * onUtterance is invoked once per CHUNK, which is what the lip-sync
+   * hooks in index.html and each Module N.html already expect (they
+   * attach onstart/onboundary listeners to whatever they are handed).
+   */
+  var hasFailedOverOnce = false;      // at most one voice swap, ever
+  var speakSeq = 0;                   // cancels superseded speak() calls
+
+  function speakChunk(chunk, voice, onUtterance) {
+    return new Promise(function (resolve) {
+      var utter = new SpeechSynthesisUtterance(chunk);
+      if (voice) { utter.voice = voice; utter.lang = voice.lang; }
+      utter.rate = DELIVERY.rate;
+      utter.pitch = DELIVERY.pitch;
+      utter.volume = DELIVERY.volume;
+
+      var settled = false, started = false;
+      function done(status) {
         if (settled) return;
         settled = true;
-        resolve();
+        clearTimeout(silenceTimer);
+        clearTimeout(hardCap);
+        resolve(status);
       }
 
-      resolveVoice().then(function (voice) {
-        if (settled) return;
+      utter.onstart    = function () { started = true; };
+      utter.onboundary = function () { started = true; };
+      utter.onend      = function () { done('ended'); };
+      utter.onerror    = function (e) {
+        var reason = e && e.error;
+        // cancel()/interrupt is ordinary playback control (Pause, Next,
+        // Mute, auto-advance) — NOT evidence the voice is broken. v2
+        // treated it as breakage and blacklisted working voices.
+        if (reason === 'canceled' || reason === 'interrupted') return done('canceled');
+        done(started ? 'ended' : 'error');
+      };
 
-        synth.cancel();
-        const utter = new SpeechSynthesisUtterance(text);
-        if (voice) utter.voice = voice;
-        utter.rate = DELIVERY.rate;
-        utter.pitch = DELIVERY.pitch;
-        utter.volume = 1;
+      // Genuine silent failure: some Mac+Chrome builds accept a network
+      // voice and never emit audio or any event at all. 6s of nothing
+      // is treated as broken; ordinary network latency is ~1s.
+      var silenceTimer = setTimeout(function () {
+        if (!started) done('silent');
+      }, 6000);
 
-        let started = false;
-        const onProof = function () { started = true; };
-        utter.onstart = onProof;
-        utter.onboundary = onProof;
+      // Never hang: derived from the text, not a flat 30s.
+      var hardCap = setTimeout(function () { done('timeout'); },
+                               estimateMs(chunk) * 2 + 8000);
 
-        // Only ever fires the fallback path once, ever, for the whole
-        // course (see hasFailedOverOnce above) — and only after a
-        // genuinely generous 5-second silent window, not a hair-trigger
-        // 1.4s one, to avoid mistaking ordinary network latency for a
-        // truly broken voice.
-        const proofTimer = setTimeout(function () {
-          if (started || settled) return;
-          if (hasFailedOverOnce || retriesLeft <= 0) { finish(); return; }
-          hasFailedOverOnce = true;
-          try { synth.cancel(); } catch (e) {}
-          if (voice) markVoiceFailed(voice.name);
-          resolveVoice().then(function (nextVoice) {
-            if (settled) return;
-            if (nextVoice && voice && nextVoice.name === voice.name) { finish(); return; }
-            speak(rawText, opts, retriesLeft - 1).then(finish);
-          });
-        }, 5000);
-
-        utter.onend = function () { clearTimeout(proofTimer); finish(); };
-        utter.onerror = function (event) {
-          clearTimeout(proofTimer);
-          // THIS was the actual, most common cause of "the voice changes
-          // mid-module, sometimes several times in one video": every
-          // Pause / Next / Previous / Mute / Restart click (and every
-          // normal auto-advance to the next line) calls synth.cancel()
-          // to stop whatever is currently talking. Cancelling an
-          // utterance fires this exact 'error' event with
-          // event.error === 'canceled' (or 'interrupted' when a new
-          // speak() call pre-empts one still in flight) — that is
-          // completely normal, constant, expected behaviour, NOT a sign
-          // the voice itself is broken. The old code treated any error
-          // here as proof-of-breakage, so an ordinary click could
-          // permanently blacklist a perfectly working voice and
-          // silently swap the narrator for the rest of the course. Only
-          // a genuine, non-cancellation error (or total silence, via
-          // the proofTimer above) is allowed to trigger a voice change.
-          const reason = event && event.error;
-          const wasDeliberateCancel = reason === 'canceled' || reason === 'interrupted';
-          if (!started && voice && !wasDeliberateCancel) {
-            markVoiceFailed(voice.name);
-            hasFailedOverOnce = true;
-          }
-          finish();
-        };
-
-        if (opts.onUtterance) opts.onUtterance(utter);
-        synth.speak(utter);
-
-        // Absolute safety net regardless of the above — never let a
-        // single line hang forever.
-        setTimeout(function () { finish(); }, 30000);
-      });
+      if (onUtterance) { try { onUtterance(utter); } catch (e) {} }
+      try { synth.speak(utter); } catch (e) { done('error'); }
     });
   }
 
+  function speak(rawText, opts) {
+    opts = opts || {};
+    var mySeq = ++speakSeq;
+    var spoken = preprocessText(rawText);
+
+    // Muted, unsupported, or empty: resolve on the caller's timeline so
+    // slide pacing stays correct instead of racing ahead in silence.
+    if (opts.muted || !SUPPORTED || !spoken) {
+      var wait = opts.fallbackDuration;
+      if (wait == null) wait = opts.muted ? estimateMs(spoken) : 0;
+      return new Promise(function (r) { setTimeout(r, wait); });
+    }
+
+    return resolveVoice().then(function (voice) {
+      if (mySeq !== speakSeq) return;                 // superseded
+
+      try { synth.cancel(); } catch (e) {}
+      // Chromium drops an utterance queued in the same tick as cancel().
+      return new Promise(function (r) { setTimeout(r, 90); }).then(function () {
+        if (mySeq !== speakSeq) return;
+
+        var chunks = chunkText(spoken);
+
+        function runFrom(i) {
+          if (mySeq !== speakSeq) return Promise.resolve();
+          if (i >= chunks.length) return Promise.resolve();
+
+          return speakChunk(chunks[i], voice, opts.onUtterance).then(function (status) {
+            if (mySeq !== speakSeq) return;
+            if (status === 'canceled') return;        // caller took over
+
+            // The chosen voice produced no audio at all. Blacklist it,
+            // re-lock to the next best, and replay THIS line from the
+            // start so the learner does not lose a sentence. Capped at
+            // one swap for the whole course, so there is no cascade.
+            if (status === 'silent' && !hasFailedOverOnce && voice) {
+              hasFailedOverOnce = true;
+              markBroken(voice.name);
+              return resolveVoice().then(function (next) {
+                if (!next || (voice && next.name === voice.name)) return;
+                voice = next;
+                return runFrom(0);
+              });
+            }
+            return runFrom(i + 1);
+          });
+        }
+        return runFrom(0);
+      });
+    })['catch'](function () { /* never reject: playback must continue */ });
+  }
+
+  function stop() {
+    speakSeq++;
+    if (SUPPORTED) { try { synth.cancel(); } catch (e) {} }
+  }
+
+  /* ================================================================
+   * 7. EXPORT — always defined, even if speech is unavailable, because
+   * every module does `window.presentationVoice.synth` at parse time.
+   * ================================================================ */
   window.presentationVoice = {
-    synth,
-    getVoice: () => lockedVoice,
+    version: ENGINE_VERSION,
+    supported: SUPPORTED,
+    synth: synth || { cancel: function () {}, pause: function () {},
+                      resume: function () {}, speak: function () {},
+                      speaking: false, paused: false },
+    getVoice: function () { return lockedVoice; },
+    ready: resolveVoice,
     delivery: DELIVERY,
-    speak,
-    preprocessText
+    speak: speak,
+    stop: stop,
+    estimateMs: estimateMs,
+    preprocessText: preprocessText,
+    chunkText: chunkText,
+    // Escape hatch for support: presentationVoice.reset() then reload.
+    reset: function () {
+      ls('del', LOCK_KEY); ls('del', FAILED_KEY); ls('del', EVICTED_FLAG);
+      lockedVoice = null; hasFailedOverOnce = false;
+    }
   };
 })();

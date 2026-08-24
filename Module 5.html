@@ -416,9 +416,9 @@ const slides = [
     "label": "Module 05",
     "title": "<span class=\"hl\">Stakeholders</span> in Drug Discovery",
     "subtitle": "The people behind the pipeline",
-    "brand": "Excelra \u2014 Where Data Means More",
+    "brand": "Excelra — Where Data Means More",
     "segments": [
-      "Welcome to Module Five, Stakeholders. Drug discovery isn't the work of one person \u2014 let's meet the team."
+      "Welcome to Module Five, Stakeholders. Drug discovery isn't the work of one person — let's meet the team."
     ]
   },
   {
@@ -435,7 +435,7 @@ const slides = [
     "label": "Role 1",
     "title": "The <span class=\"hl\">Research Scientist</span>",
     "segments": [
-      "The <span class=\"key\">Research Scientist</span> designs experiments and identifies the biological targets worth pursuing in the first place \u2014 the earliest link in the whole chain."
+      "The <span class=\"key\">Research Scientist</span> designs experiments and identifies the biological targets worth pursuing in the first place — the earliest link in the whole chain."
     ]
   },
   {
@@ -443,8 +443,8 @@ const slides = [
     "label": "Role 2",
     "title": "The <span class=\"hl\">Medicinal Chemist</span>",
     "segments": [
-      "The <span class=\"key\">Medicinal Chemist</span> designs and synthesizes new compounds.",
-      "Of all five roles, this is the one most directly using <span class=\"em\">SAR data</span> \u2014 the structure-activity relationship you learned in Module Four \u2014 to refine a molecule's design."
+      "The Medicinal Chemist designs and synthesizes new compounds, turning an idea about a molecule into a real substance that can be tested.",
+      "Of all six roles, this is the one working most directly with <span class=\"key\">SAR</span> data, the structure-activity relationship from Module Four, using it to refine a molecule one modification at a time."
     ]
   },
   {
@@ -452,7 +452,7 @@ const slides = [
     "label": "Role 3",
     "title": "The <span class=\"hl\">Computational Chemist</span>",
     "segments": [
-      "The <span class=\"key\">Computational Chemist</span> performs modeling and virtual screening \u2014 running candidate molecules through simulations before anything touches a lab bench.",
+      "The <span class=\"key\">Computational Chemist</span> performs modeling and virtual screening — running candidate molecules through simulations before anything touches a lab bench.",
       "This role benefits most from a platform's <span class=\"em\">virtual screening</span> capabilities, more than any other stakeholder here."
     ]
   },
@@ -461,7 +461,7 @@ const slides = [
     "label": "Role 4",
     "title": "The <span class=\"hl\">Project Manager</span>",
     "segments": [
-      "The <span class=\"key\">Project Manager</span>'s primary responsibility is coordinating project activities and managing timelines \u2014 not designing experiments, not synthesizing compounds, and not regulatory compliance."
+      "The <span class=\"key\">Project Manager</span>'s primary responsibility is coordinating project activities and managing timelines — not designing experiments, not synthesizing compounds, and not regulatory compliance."
     ]
   },
   {
@@ -469,37 +469,48 @@ const slides = [
     "label": "Role 5",
     "title": "The <span class=\"hl\">Regulatory Specialist</span>",
     "segments": [
-      "The <span class=\"key\">Regulatory Specialist</span> ensures compliance with regulations, and is the role most interested in <span class=\"em\">safety and toxicity data</span> \u2014 that's exactly what regulators scrutinize first."
+      "The <span class=\"key\">Regulatory Specialist</span> ensures compliance with regulations, and is the role most interested in <span class=\"em\">safety and toxicity data</span> — that's exactly what regulators scrutinize first."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Role 6",
+    "title": "The <span class=\"key\">Data Engineer</span>",
+    "segments": [
+      "And the sixth role, which has grown faster than any of the others: the Data Engineer.",
+      "The Data Engineer builds and maintains the <span class=\"em\">pipelines</span> that move data between every system the other five roles depend on, and makes sure it arrives in a usable shape.",
+      "They do not design the experiments or the molecules. But when a scientist can query ten years of assay results in seconds rather than weeks, that is their work you are seeing."
     ]
   },
   {
     "type": "summary",
     "label": "Recap",
-    "title": "Five <span class=\"hl\">Roles</span>",
+    "title": "Six <span class=\"key\">Roles</span>",
     "cards": [
       {
         "icon": "fa-flask-vial",
-        "text": "<span class=\"key\">Research Scientist</span> \u2014 designs experiments, identifies targets"
+        "text": "<span class=\"key\">Research Scientist</span> — designs experiments, identifies targets"
       },
       {
         "icon": "fa-atom",
-        "text": "<span class=\"key\">Medicinal Chemist</span> \u2014 designs & synthesizes compounds, uses SAR data"
+        "text": "<span class=\"key\">Medicinal Chemist</span> — designs & synthesizes compounds, uses SAR data"
       },
       {
         "icon": "fa-laptop-code",
-        "text": "<span class=\"key\">Computational Chemist</span> \u2014 modeling & virtual screening"
+        "text": "<span class=\"key\">Computational Chemist</span> — modeling & virtual screening"
       },
       {
         "icon": "fa-diagram-project",
-        "text": "<span class=\"key\">Project Manager</span> \u2014 coordinates activities, manages timelines"
+        "text": "<span class=\"key\">Project Manager</span> — coordinates activities, manages timelines"
       },
       {
         "icon": "fa-user-shield",
-        "text": "<span class=\"key\">Regulatory Specialist</span> \u2014 compliance, safety & toxicity data"
+        "text": "<span class=\"key\">Regulatory Specialist</span> — compliance, safety & toxicity data"
       }
     ],
     "segments": [
-      "Five roles: research scientist, medicinal chemist, computational chemist, project manager, and regulatory specialist \u2014 each relying on a different slice of data to do their part."
+      "Six roles: research scientist, medicinal chemist, computational chemist, project manager, regulatory specialist, and data engineer.",
+      "Each one leans on a different slice of the same data, which is exactly why that data has to be shared, consistent, and understandable across all six."
     ]
   },
   {
@@ -597,8 +608,13 @@ function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 function estimateDuration(text) {
-  const words = text.split(/\s+/).length;
-  return (words / 2.6) * 1000;
+  // Used as the fallbackDuration when narration is MUTED: playback still has
+  // to advance on the same timeline it would have taken to speak, or a muted
+  // run races through the deck. Sourced from the engine so both paths agree.
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text);
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return (words / 2.45) * 1000;
 }
 
 function renderSlide(index) {
@@ -716,10 +732,21 @@ async function playCurrentSlide() {
   goToSection(currentSection + 1);
 }
 
+// Stops narration through the engine rather than calling synth.cancel()
+// directly. cancel() alone only kills the audible chunk — voice-engine v5
+// splits long lines into several — so a Pause or Mute click could be
+// followed by the next chunk starting anyway. stop() invalidates the whole
+// queued line.
+function stopNarrationAudio() {
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.stop === 'function') { pv.stop(); return; }
+  try { synth.cancel(); } catch (e) {}
+}
+
 function stopSpeech() {
   genToken++;
   clearTimeout(segmentTimeout);
-  synth.cancel();
+  stopNarrationAudio();
   currentUtterance = null;
 }
 function delay(ms) {
@@ -854,7 +881,7 @@ function toggleMute() {
   isMuted = !isMuted;
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
-  if (isMuted) synth.cancel();
+  if (isMuted) stopNarrationAudio();
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1391,8 +1418,15 @@ window.addEventListener('message', event => {
   }
   function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;}
                         mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
-  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
-                             return Math.max(2500, w*450+2500); }
+  // Defers to voice-engine.js so the lip-sync cap can never drift out of
+  // step with the actual delivery rate or the engine's sentence chunking.
+  // (A local copy of this formula is what used to stop the mouth early.)
+  function estimateMs(text){
+    var pv = window.presentationVoice;
+    if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text) + 1200;
+    var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2500, w*450+2500);
+  }
 
   // ── DYNAMIC POSITIONING ──
   function clearPositionClasses(){

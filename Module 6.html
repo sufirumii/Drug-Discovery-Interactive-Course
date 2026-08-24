@@ -416,9 +416,9 @@ const slides = [
     "label": "Module 06",
     "title": "The <span class=\"hl\">Data Landscape</span>",
     "subtitle": "Not all data looks alike",
-    "brand": "Excelra \u2014 Where Data Means More",
+    "brand": "Excelra — Where Data Means More",
     "segments": [
-      "Welcome to Module Six, the Data Landscape. Drug discovery runs on data \u2014 but not all data looks alike. Let's map it."
+      "Welcome to Module Six, the Data Landscape. Drug discovery runs on data — but not all data looks alike. Let's map it."
     ]
   },
   {
@@ -435,7 +435,7 @@ const slides = [
     "label": "Biological Data",
     "title": "The Source of <span class=\"hl\">Biological Data</span>",
     "segments": [
-      "<span class=\"key\">Biological data</span> comes primarily from genomics, proteomics, and transcriptomics \u2014 the molecular blueprint of disease, not from chemical synthesis, clinical trials, or computational modeling alone."
+      "<span class=\"key\">Biological data</span> comes primarily from genomics, proteomics, and transcriptomics — the molecular blueprint of disease, not from chemical synthesis, clinical trials, or computational modeling alone."
     ]
   },
   {
@@ -443,8 +443,8 @@ const slides = [
     "label": "Pharmacological Data",
     "title": "Understanding Drug-Target <span class=\"hl\">Interaction</span>",
     "segments": [
-      "<span class=\"key\">Pharmacological data</span> is what tells us how a drug interacts with its target \u2014 binding, activity, mechanism.",
-      "When the question is specifically how a drug interacts with its target, pharmacological data is the most useful category \u2014 more so than ADMET or clinical data alone."
+      "<span class=\"key\">Pharmacological data</span> is what tells us how a drug interacts with its target — binding, activity, mechanism.",
+      "When the question is specifically how a drug interacts with its target, pharmacological data is the most useful category — more so than ADMET or clinical data alone."
     ]
   },
   {
@@ -452,7 +452,7 @@ const slides = [
     "label": "ADMET Data",
     "title": "<span class=\"hl\">ADMET</span> Data, Revisited",
     "segments": [
-      "<span class=\"key\">ADMET data</span> captures how a compound is absorbed, distributed, metabolized, and excreted by the body \u2014 sourced from in vitro assays, in vivo studies, and computational predictions, though notably not from clinical trials directly."
+      "<span class=\"key\">ADMET data</span> captures how a compound is absorbed, distributed, metabolized, and excreted by the body — sourced from in vitro assays, in vivo studies, and computational predictions, though notably not from clinical trials directly."
     ]
   },
   {
@@ -460,7 +460,7 @@ const slides = [
     "label": "Scale",
     "title": "The <span class=\"hl\">Scale</span> of Modern Databases",
     "segments": [
-      "The scale here is enormous \u2014 comprehensive drug discovery databases today include <span class=\"key\">over one and a half million compounds</span>, each with layers of associated data attached."
+      "The scale here is enormous — comprehensive drug discovery databases today include <span class=\"key\">over one and a half million compounds</span>, each with layers of associated data attached."
     ]
   },
   {
@@ -481,29 +481,50 @@ const slides = [
     ]
   },
   {
+    "type": "content",
+    "label": "The Third Category",
+    "title": "Metadata Decides <span class=\"key\">Reusability</span>",
+    "segments": [
+      "There is a third category people routinely forget: <span class=\"key\">metadata</span>, the data about the data.",
+      "An assay result of fifty nanomolar means nothing on its own. Which assay? Which cell line? What concentration range, what date, whose protocol?",
+      "Without that context the number cannot be compared to anything, which means it cannot be reused.",
+      "So it is metadata, not volume, that really decides whether a dataset has any <span class=\"em\">long-term value</span>."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "The Ladder",
+    "title": "From Data to <span class=\"key\">Decision</span>",
+    "segments": [
+      "Raw data on its own helps nobody. It has to climb a ladder first.",
+      "<span class=\"em\">Captured</span>, then <span class=\"em\">cleaned</span>, then <span class=\"em\">standardised</span>, then <span class=\"em\">integrated</span>, and only then <span class=\"em\">interpreted</span>.",
+      "Every rung costs real effort, and a skipped rung always resurfaces later. Most organisations are strongest at capture and weakest at <span class=\"key\">integration</span>, which is where the value actually appears."
+    ]
+  },
+  {
     "type": "summary",
     "label": "Recap",
     "title": "The Data <span class=\"hl\">Landscape</span>",
     "cards": [
       {
         "icon": "fa-dna",
-        "text": "<span class=\"key\">Biological data</span> \u2014 genomics, proteomics, transcriptomics"
+        "text": "<span class=\"key\">Biological data</span> — genomics, proteomics, transcriptomics"
       },
       {
         "icon": "fa-link",
-        "text": "<span class=\"key\">Pharmacological data</span> \u2014 drug-target interaction"
+        "text": "<span class=\"key\">Pharmacological data</span> — drug-target interaction"
       },
       {
         "icon": "fa-shield-heart",
-        "text": "<span class=\"key\">ADMET data</span> \u2014 safety & pharmacokinetics; 1.5M+ compounds in modern databases"
+        "text": "<span class=\"key\">ADMET data</span> — safety & pharmacokinetics; 1.5M+ compounds in modern databases"
       },
       {
         "icon": "fa-table-cells",
-        "text": "<span class=\"key\">Structured</span> \u2014 assay tables, compound databases, spreadsheets"
+        "text": "<span class=\"key\">Structured</span> — assay tables, compound databases, spreadsheets"
       },
       {
         "icon": "fa-file-lines",
-        "text": "<span class=\"key\">Unstructured</span> \u2014 research papers, lab notes, images, case notes"
+        "text": "<span class=\"key\">Unstructured</span> — research papers, lab notes, images, case notes"
       }
     ],
     "segments": [
@@ -605,8 +626,13 @@ function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 function estimateDuration(text) {
-  const words = text.split(/\s+/).length;
-  return (words / 2.6) * 1000;
+  // Used as the fallbackDuration when narration is MUTED: playback still has
+  // to advance on the same timeline it would have taken to speak, or a muted
+  // run races through the deck. Sourced from the engine so both paths agree.
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text);
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return (words / 2.45) * 1000;
 }
 
 function renderSlide(index) {
@@ -724,10 +750,21 @@ async function playCurrentSlide() {
   goToSection(currentSection + 1);
 }
 
+// Stops narration through the engine rather than calling synth.cancel()
+// directly. cancel() alone only kills the audible chunk — voice-engine v5
+// splits long lines into several — so a Pause or Mute click could be
+// followed by the next chunk starting anyway. stop() invalidates the whole
+// queued line.
+function stopNarrationAudio() {
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.stop === 'function') { pv.stop(); return; }
+  try { synth.cancel(); } catch (e) {}
+}
+
 function stopSpeech() {
   genToken++;
   clearTimeout(segmentTimeout);
-  synth.cancel();
+  stopNarrationAudio();
   currentUtterance = null;
 }
 function delay(ms) {
@@ -862,7 +899,7 @@ function toggleMute() {
   isMuted = !isMuted;
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
-  if (isMuted) synth.cancel();
+  if (isMuted) stopNarrationAudio();
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1399,8 +1436,15 @@ window.addEventListener('message', event => {
   }
   function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;}
                         mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
-  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
-                             return Math.max(2500, w*450+2500); }
+  // Defers to voice-engine.js so the lip-sync cap can never drift out of
+  // step with the actual delivery rate or the engine's sentence chunking.
+  // (A local copy of this formula is what used to stop the mouth early.)
+  function estimateMs(text){
+    var pv = window.presentationVoice;
+    if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text) + 1200;
+    var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2500, w*450+2500);
+  }
 
   // ── DYNAMIC POSITIONING ──
   function clearPositionClasses(){

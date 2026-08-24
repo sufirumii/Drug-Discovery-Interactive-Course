@@ -416,7 +416,7 @@ const slides = [
     "label": "Module 02",
     "title": "Drug Discovery: <span class=\"hl\">Business Overview</span>",
     "subtitle": "The process, the odds, and the timeline",
-    "brand": "Excelra \u2014 Where Data Means More",
+    "brand": "Excelra — Where Data Means More",
     "segments": [
       "Welcome to Module Two, Business Overview. Let's look at drug discovery as a process with real stages, real odds, and a real timeline."
     ]
@@ -435,8 +435,8 @@ const slides = [
     "label": "Stage One",
     "title": "It Starts With <span class=\"hl\">Target Identification</span>",
     "segments": [
-      "The very first stage of drug discovery is <span class=\"key\">Target Identification</span> \u2014 finding the biological molecule that drives a disease.",
-      "It is not clinical trials, it is not manufacturing, and it is not marketing \u2014 those all come much later, if the target holds up.",
+      "The very first stage of drug discovery is <span class=\"key\">Target Identification</span> — finding the biological molecule that drives a disease.",
+      "It is not clinical trials, it is not manufacturing, and it is not marketing — those all come much later, if the target holds up.",
       "Get the target wrong at this stage, and nothing downstream matters, no matter how good the chemistry that follows is."
     ]
   },
@@ -445,9 +445,9 @@ const slides = [
     "label": "Hit Discovery",
     "title": "Screening for <span class=\"hl\">Activity</span>",
     "segments": [
-      "<span class=\"em\">Hit Discovery</span> comes next \u2014 screening thousands, sometimes millions, of compounds for activity against that target.",
+      "<span class=\"em\">Hit Discovery</span> comes next — screening thousands, sometimes millions, of compounds for activity against that target.",
       "This is exactly where integrated data platforms help most: enabling <span class=\"key\">virtual screening</span> of entire compound libraries, computationally, before a single physical experiment runs.",
-      "Compare that to offering only target data, or only SAR data, or only toxicity data \u2014 virtual screening specifically is what accelerates this particular stage."
+      "Compare that to offering only target data, or only SAR data, or only toxicity data — virtual screening specifically is what accelerates this particular stage."
     ]
   },
   {
@@ -455,8 +455,18 @@ const slides = [
     "label": "The Odds",
     "title": "The Reality <span class=\"hl\">Check</span>",
     "segments": [
-      "Across the whole discovery journey, the typical success rate is around <span class=\"key\">ten percent</span> \u2014 not one percent, and nowhere near fifty or ninety percent.",
+      "Across the whole discovery journey, the typical success rate is around <span class=\"key\">ten percent</span> — not one percent, and nowhere near fifty or ninety percent.",
       "That number is sobering, but it is also exactly why every efficiency gain in data and process matters so much."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "The Cost Curve",
+    "title": "Why Late Failure <span class=\"key\">Hurts</span>",
+    "segments": [
+      "Not all failures cost the same, and this is the single most important economic fact in the industry. A compound dropped at hit discovery costs <span class=\"em\">thousands</span>. One dropped in Phase three costs <span class=\"em\">hundreds of millions</span>.",
+      "A single Phase three trial runs <span class=\"key\">$100M-$500M</span> depending on the therapeutic area, and Phase two is where most compounds die, at roughly <span class=\"key\">30%</span> success.",
+      "That asymmetry shapes the entire strategy of modern discovery: <span class=\"em\">fail early, fail cheaply</span>, and use data to pull every decision as far to the left as possible."
     ]
   },
   {
@@ -464,8 +474,19 @@ const slides = [
     "label": "The Timeline",
     "title": "How Long Does It <span class=\"hl\">Really Take</span>?",
     "segments": [
-      "End to end \u2014 from target to approved therapy \u2014 the average timeline is <span class=\"key\">ten to fifteen years</span>.",
-      "Not one to two years, not five to seven, and not twenty to twenty-five \u2014 a decade or more is the realistic expectation for this entire journey."
+      "End to end — from target to approved therapy — the average timeline is <span class=\"key\">ten to fifteen years</span>.",
+      "Not one to two years, not five to seven, and not twenty to twenty-five — a decade or more is the realistic expectation for this entire journey."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Where Data Buys Time",
+    "title": "Three Points of <span class=\"key\">Real Leverage</span>",
+    "segments": [
+      "Data does not speed up everything equally. There are three places where it reliably buys time.",
+      "<span class=\"key\">Target identification</span>, where genomics and knowledge graphs narrow the search from thousands of candidate proteins down to a handful.",
+      "<span class=\"key\">Lead discovery</span>, where virtual screening evaluates millions of molecules in silico before anyone sets up a physical assay.",
+      "And <span class=\"key\">clinical design</span>, where outcomes from historical trials sharpen how patients and endpoints are chosen. Each of these removes weeks or months, but only if the underlying data is clean and comparable."
     ]
   },
   {
@@ -479,7 +500,7 @@ const slides = [
       },
       {
         "icon": "fa-magnifying-glass",
-        "text": "<span class=\"key\">Hit Discovery</span> screens compound libraries \u2014 virtual screening speeds this up."
+        "text": "<span class=\"key\">Hit Discovery</span> screens compound libraries — virtual screening speeds this up."
       },
       {
         "icon": "fa-percent",
@@ -487,7 +508,7 @@ const slides = [
       },
       {
         "icon": "fa-clock",
-        "text": "Full timeline: <span class=\"key\">10\u201315 years</span>."
+        "text": "Full timeline: <span class=\"key\">10–15 years</span>."
       }
     ],
     "segments": [
@@ -589,8 +610,13 @@ function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 function estimateDuration(text) {
-  const words = text.split(/\s+/).length;
-  return (words / 2.6) * 1000;
+  // Used as the fallbackDuration when narration is MUTED: playback still has
+  // to advance on the same timeline it would have taken to speak, or a muted
+  // run races through the deck. Sourced from the engine so both paths agree.
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text);
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return (words / 2.45) * 1000;
 }
 
 function renderSlide(index) {
@@ -708,10 +734,21 @@ async function playCurrentSlide() {
   goToSection(currentSection + 1);
 }
 
+// Stops narration through the engine rather than calling synth.cancel()
+// directly. cancel() alone only kills the audible chunk — voice-engine v5
+// splits long lines into several — so a Pause or Mute click could be
+// followed by the next chunk starting anyway. stop() invalidates the whole
+// queued line.
+function stopNarrationAudio() {
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.stop === 'function') { pv.stop(); return; }
+  try { synth.cancel(); } catch (e) {}
+}
+
 function stopSpeech() {
   genToken++;
   clearTimeout(segmentTimeout);
-  synth.cancel();
+  stopNarrationAudio();
   currentUtterance = null;
 }
 function delay(ms) {
@@ -846,7 +883,7 @@ function toggleMute() {
   isMuted = !isMuted;
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
-  if (isMuted) synth.cancel();
+  if (isMuted) stopNarrationAudio();
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1383,8 +1420,15 @@ window.addEventListener('message', event => {
   }
   function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;}
                         mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
-  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
-                             return Math.max(2500, w*450+2500); }
+  // Defers to voice-engine.js so the lip-sync cap can never drift out of
+  // step with the actual delivery rate or the engine's sentence chunking.
+  // (A local copy of this formula is what used to stop the mouth early.)
+  function estimateMs(text){
+    var pv = window.presentationVoice;
+    if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text) + 1200;
+    var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2500, w*450+2500);
+  }
 
   // ── DYNAMIC POSITIONING ──
   function clearPositionClasses(){

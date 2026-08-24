@@ -416,7 +416,7 @@ const slides = [
     "label": "Module 10",
     "title": "Data Engineering & <span class=\"hl\">AI</span>",
     "subtitle": "The infrastructure discovery now runs on",
-    "brand": "Excelra \u2014 Where Data Means More",
+    "brand": "Excelra — Where Data Means More",
     "segments": [
       "Welcome to Module Ten, the Role of Data Engineering and AI. This is where these fields stop being buzzwords and start reshaping drug discovery directly."
     ]
@@ -436,7 +436,7 @@ const slides = [
     "title": "From Years to <span class=\"hl\">Days</span>",
     "segments": [
       "AI's primary advantage in target identification is <span class=\"key\">surfacing novel drug targets from vast datasets in days rather than years</span>.",
-      "To be clear about its limits: it does not eliminate the need for clinical trials, does not guarantee regulatory approval, and does not replace wet-lab experiments entirely \u2014 it accelerates the search, it doesn't skip the science."
+      "To be clear about its limits: it does not eliminate the need for clinical trials, does not guarantee regulatory approval, and does not replace wet-lab experiments entirely — it accelerates the search, it doesn't skip the science."
     ]
   },
   {
@@ -444,7 +444,7 @@ const slides = [
     "label": "AlphaFold",
     "title": "<span class=\"hl\">AlphaFold</span>",
     "segments": [
-      "The clearest proof point is <span class=\"key\">AlphaFold</span> \u2014 the landmark AI system that solved protein structure prediction, predicting a protein's 3D shape directly from its amino acid sequence."
+      "The clearest proof point is <span class=\"key\">AlphaFold</span> — the landmark AI system that solved protein structure prediction, predicting a protein's 3D shape directly from its amino acid sequence."
     ]
   },
   {
@@ -470,7 +470,7 @@ const slides = [
     "label": "FAIR Data",
     "title": "The Foundation: <span class=\"hl\">FAIR Data</span>",
     "segments": [
-      "None of this works without <span class=\"key\">FAIR data</span> \u2014 Findable, Accessible, Interoperable, and Reusable \u2014 the same principle you met in Module Seven, now underpinning every AI model in this ecosystem."
+      "None of this works without <span class=\"key\">FAIR data</span> — Findable, Accessible, Interoperable, and Reusable — the same principle you met in Module Seven, now underpinning every AI model in this ecosystem."
     ]
   },
   {
@@ -478,8 +478,29 @@ const slides = [
     "label": "MLOps & Real-Time Data",
     "title": "<span class=\"hl\">MLOps</span> & Real-Time Integration",
     "segments": [
-      "<span class=\"key\">MLOps pipelines</span> automate model training, validation, and deployment in a <span class=\"em\">GxP-compliant</span> way \u2014 they don't manage patient data or replace lab scientists, they manage the model lifecycle itself.",
-      "And <span class=\"key\">real-time data integration</span>, through APIs and streaming, connects lab instruments directly to dashboards \u2014 enabling decisions in the moment, not from monthly batch exports."
+      "<span class=\"key\">MLOps pipelines</span> automate model training, validation, and deployment in a <span class=\"em\">GxP-compliant</span> way — they don't manage patient data or replace lab scientists, they manage the model lifecycle itself.",
+      "And <span class=\"key\">real-time data integration</span>, through APIs and streaming, connects lab instruments directly to dashboards — enabling decisions in the moment, not from monthly batch exports."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Preconditions",
+    "title": "What Makes AI <span class=\"key\">Work Here</span>",
+    "segments": [
+      "Three conditions have to hold before any of this helps at all.",
+      "Enough data, in a <span class=\"em\">consistent format</span>, with the <span class=\"key\">negative results</span> included. That last one is the most commonly missing.",
+      "A dataset of only successes teaches a model nothing about failure, and in drug discovery, knowing what does not work is most of the value."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Limits",
+    "title": "Where AI Still <span class=\"key\">Needs a Human</span>",
+    "segments": [
+      "It is worth being honest about the limits too.",
+      "A model can only be as good as the data it learned from. Trained on a narrow compound library, it will confidently propose <span class=\"em\">more of the same chemistry</span>.",
+      "It cannot tell you whether a target is worth pursuing, and it cannot replace a wet-lab result. What it does is rank possibilities so that scarce experiments are spent well.",
+      "Every AI output in this field is a <span class=\"key\">hypothesis</span>, not an answer. The validation step never goes away."
     ]
   },
   {
@@ -489,31 +510,31 @@ const slides = [
     "cards": [
       {
         "icon": "fa-shapes",
-        "text": "<span class=\"key\">AlphaFold</span> \u2014 predicts 3D protein structure"
+        "text": "<span class=\"key\">AlphaFold</span> — predicts 3D protein structure"
       },
       {
         "icon": "fa-wand-magic-sparkles",
-        "text": "<span class=\"key\">Generative AI</span> \u2014 designs novel molecules"
+        "text": "<span class=\"key\">Generative AI</span> — designs novel molecules"
       },
       {
         "icon": "fa-vial-circle-check",
-        "text": "<span class=\"key\">ADMET Prediction ML</span> \u2014 predicts toxicity pre-synthesis"
+        "text": "<span class=\"key\">ADMET Prediction ML</span> — predicts toxicity pre-synthesis"
       },
       {
         "icon": "fa-robot",
-        "text": "<span class=\"key\">Agentic AI</span> \u2014 autonomous multi-step workflows"
+        "text": "<span class=\"key\">Agentic AI</span> — autonomous multi-step workflows"
       },
       {
         "icon": "fa-warehouse",
-        "text": "<span class=\"key\">Data Lakehouse</span> \u2014 centralizes ELN, LIMS, compound data"
+        "text": "<span class=\"key\">Data Lakehouse</span> — centralizes ELN, LIMS, compound data"
       },
       {
         "icon": "fa-check-to-slot",
-        "text": "<span class=\"key\">FAIR Data & MLOps</span> \u2014 the foundation everything above runs on"
+        "text": "<span class=\"key\">FAIR Data & MLOps</span> — the foundation everything above runs on"
       }
     ],
     "segments": [
-      "AlphaFold, generative AI, ADMET prediction, agentic AI, and the data lakehouse \u2014 all built on a foundation of FAIR data and GxP-compliant MLOps pipelines."
+      "AlphaFold, generative AI, ADMET prediction, agentic AI, and the data lakehouse — all built on a foundation of FAIR data and GxP-compliant MLOps pipelines."
     ]
   },
   {
@@ -611,8 +632,13 @@ function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 function estimateDuration(text) {
-  const words = text.split(/\s+/).length;
-  return (words / 2.6) * 1000;
+  // Used as the fallbackDuration when narration is MUTED: playback still has
+  // to advance on the same timeline it would have taken to speak, or a muted
+  // run races through the deck. Sourced from the engine so both paths agree.
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text);
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return (words / 2.45) * 1000;
 }
 
 function renderSlide(index) {
@@ -730,10 +756,21 @@ async function playCurrentSlide() {
   goToSection(currentSection + 1);
 }
 
+// Stops narration through the engine rather than calling synth.cancel()
+// directly. cancel() alone only kills the audible chunk — voice-engine v5
+// splits long lines into several — so a Pause or Mute click could be
+// followed by the next chunk starting anyway. stop() invalidates the whole
+// queued line.
+function stopNarrationAudio() {
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.stop === 'function') { pv.stop(); return; }
+  try { synth.cancel(); } catch (e) {}
+}
+
 function stopSpeech() {
   genToken++;
   clearTimeout(segmentTimeout);
-  synth.cancel();
+  stopNarrationAudio();
   currentUtterance = null;
 }
 function delay(ms) {
@@ -868,7 +905,7 @@ function toggleMute() {
   isMuted = !isMuted;
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
-  if (isMuted) synth.cancel();
+  if (isMuted) stopNarrationAudio();
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1405,8 +1442,15 @@ window.addEventListener('message', event => {
   }
   function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;}
                         mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
-  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
-                             return Math.max(2500, w*450+2500); }
+  // Defers to voice-engine.js so the lip-sync cap can never drift out of
+  // step with the actual delivery rate or the engine's sentence chunking.
+  // (A local copy of this formula is what used to stop the mouth early.)
+  function estimateMs(text){
+    var pv = window.presentationVoice;
+    if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text) + 1200;
+    var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2500, w*450+2500);
+  }
 
   // ── DYNAMIC POSITIONING ──
   function clearPositionClasses(){

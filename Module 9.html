@@ -416,9 +416,9 @@ const slides = [
     "label": "Module 09",
     "title": "Current Industry <span class=\"hl\">Challenges</span>",
     "subtitle": "For all its progress, real challenges remain",
-    "brand": "Excelra \u2014 Where Data Means More",
+    "brand": "Excelra — Where Data Means More",
     "segments": [
-      "Welcome to Module Nine, Current Industry Challenges. For all its progress, drug discovery still faces real, recurring problems \u2014 let's name them."
+      "Welcome to Module Nine, Current Industry Challenges. For all its progress, drug discovery still faces real, recurring problems — let's name them."
     ]
   },
   {
@@ -435,7 +435,7 @@ const slides = [
     "label": "Data Quality",
     "title": "<span class=\"hl\">Data Quality</span>",
     "segments": [
-      "<span class=\"key\">Data Quality</span> means ensuring accuracy and consistency of data across multiple sources \u2014 distinct from compliance, interoperability, or scalability issues."
+      "<span class=\"key\">Data Quality</span> means ensuring accuracy and consistency of data across multiple sources — distinct from compliance, interoperability, or scalability issues."
     ]
   },
   {
@@ -443,7 +443,7 @@ const slides = [
     "label": "Compliance",
     "title": "<span class=\"hl\">Compliance</span>",
     "segments": [
-      "<span class=\"key\">Compliance</span> challenges center on regulations like <span class=\"em\">21 CFR Part 11</span>, which governs electronic records and signatures \u2014 not clinical trial standardization or lab workflows."
+      "<span class=\"key\">Compliance</span> challenges center on regulations like <span class=\"em\">21 CFR Part 11</span>, which governs electronic records and signatures — not clinical trial standardization or lab workflows."
     ]
   },
   {
@@ -460,7 +460,7 @@ const slides = [
     "label": "Scalability",
     "title": "<span class=\"hl\">Scalability</span>",
     "segments": [
-      "<span class=\"key\">Scalability</span> becomes a challenge when a screening campaign of, say, five hundred thousand compounds generates data volumes that overwhelm infrastructure \u2014 a data volume problem as much as a science one."
+      "<span class=\"key\">Scalability</span> becomes a challenge when a screening campaign of, say, five hundred thousand compounds generates data volumes that overwhelm infrastructure — a data volume problem as much as a science one."
     ]
   },
   {
@@ -468,7 +468,7 @@ const slides = [
     "label": "Manual Processes",
     "title": "<span class=\"hl\">Manual Processes</span>",
     "segments": [
-      "Reducing manual data entry through <span class=\"key\">integrated workflows</span> is how modern platforms directly attack the manual-process bottleneck \u2014 rather than through curated data or cloud access alone."
+      "Reducing manual data entry through <span class=\"key\">integrated workflows</span> is how modern platforms directly attack the manual-process bottleneck — rather than through curated data or cloud access alone."
     ]
   },
   {
@@ -482,33 +482,54 @@ const slides = [
     ]
   },
   {
+    "type": "content",
+    "label": "Consequences",
+    "title": "The Cost of <span class=\"key\">Getting It Wrong</span>",
+    "segments": [
+      "These challenges are not abstract. They have names in the regulatory record.",
+      "An inspection that finds inadequate data controls issues a <span class=\"key\">Form 483</span> observation. Left unresolved, that escalates to a <span class=\"key\">warning letter</span>.",
+      "At that point a submission can slip by months, and in the worst cases an entire trial's data is ruled <span class=\"em\">unreliable</span>.",
+      "Every one of those outcomes traces back to one of the five challenges we just walked through."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Why They Persist",
+    "title": "If They Are Known, <span class=\"key\">Why Are They Still Here?</span>",
+    "segments": [
+      "Which raises a fair question. If these problems are so well understood, why has nobody fixed them?",
+      "Because each one is <span class=\"em\">cheap to ignore today</span> and expensive to fix later, and the person who pays is rarely the person who caused it.",
+      "So fixing them is less a technology problem than a <span class=\"key\">governance</span> one. Someone has to own the data, not merely produce it."
+    ]
+  },
+  {
     "type": "summary",
     "label": "Recap",
     "title": "Five Core <span class=\"hl\">Challenges</span>",
     "cards": [
       {
         "icon": "fa-triangle-exclamation",
-        "text": "<span class=\"key\">Data Quality</span> \u2014 accuracy & consistency across sources"
+        "text": "<span class=\"key\">Data Quality</span> — accuracy & consistency across sources"
       },
       {
         "icon": "fa-gavel",
-        "text": "<span class=\"key\">Compliance</span> \u2014 e.g. 21 CFR Part 11"
+        "text": "<span class=\"key\">Compliance</span> — e.g. 21 CFR Part 11"
       },
       {
         "icon": "fa-plug",
-        "text": "<span class=\"key\">Interoperability</span> \u2014 solved via standardized formats"
+        "text": "<span class=\"key\">Interoperability</span> — solved via standardized formats"
       },
       {
         "icon": "fa-server",
-        "text": "<span class=\"key\">Scalability</span> \u2014 handling growing data volume"
+        "text": "<span class=\"key\">Scalability</span> — handling growing data volume"
       },
       {
         "icon": "fa-arrows-spin",
-        "text": "<span class=\"key\">Manual Processes</span> \u2014 reduced via integrated workflows"
+        "text": "<span class=\"key\">Manual Processes</span> — reduced via integrated workflows"
       }
     ],
     "segments": [
-      "Five challenges to remember: data quality, compliance, interoperability, scalability, and manual processes \u2014 each showing up in real scenarios like translational failure, reproducibility crises, and data fragmentation."
+      "Five challenges to remember: data quality, compliance, interoperability, scalability, and manual processes — each showing up in real scenarios like translational failure, reproducibility crises, and data fragmentation."
     ]
   },
   {
@@ -606,8 +627,13 @@ function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 function estimateDuration(text) {
-  const words = text.split(/\s+/).length;
-  return (words / 2.6) * 1000;
+  // Used as the fallbackDuration when narration is MUTED: playback still has
+  // to advance on the same timeline it would have taken to speak, or a muted
+  // run races through the deck. Sourced from the engine so both paths agree.
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text);
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return (words / 2.45) * 1000;
 }
 
 function renderSlide(index) {
@@ -725,10 +751,21 @@ async function playCurrentSlide() {
   goToSection(currentSection + 1);
 }
 
+// Stops narration through the engine rather than calling synth.cancel()
+// directly. cancel() alone only kills the audible chunk — voice-engine v5
+// splits long lines into several — so a Pause or Mute click could be
+// followed by the next chunk starting anyway. stop() invalidates the whole
+// queued line.
+function stopNarrationAudio() {
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.stop === 'function') { pv.stop(); return; }
+  try { synth.cancel(); } catch (e) {}
+}
+
 function stopSpeech() {
   genToken++;
   clearTimeout(segmentTimeout);
-  synth.cancel();
+  stopNarrationAudio();
   currentUtterance = null;
 }
 function delay(ms) {
@@ -863,7 +900,7 @@ function toggleMute() {
   isMuted = !isMuted;
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
-  if (isMuted) synth.cancel();
+  if (isMuted) stopNarrationAudio();
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1400,8 +1437,15 @@ window.addEventListener('message', event => {
   }
   function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;}
                         mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
-  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
-                             return Math.max(2500, w*450+2500); }
+  // Defers to voice-engine.js so the lip-sync cap can never drift out of
+  // step with the actual delivery rate or the engine's sentence chunking.
+  // (A local copy of this formula is what used to stop the mouth early.)
+  function estimateMs(text){
+    var pv = window.presentationVoice;
+    if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text) + 1200;
+    var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2500, w*450+2500);
+  }
 
   // ── DYNAMIC POSITIONING ──
   function clearPositionClasses(){

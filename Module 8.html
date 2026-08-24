@@ -416,9 +416,9 @@ const slides = [
     "label": "Module 08",
     "title": "The <span class=\"hl\">Technology Ecosystem</span>",
     "subtitle": "The systems behind the science",
-    "brand": "Excelra \u2014 Where Data Means More",
+    "brand": "Excelra — Where Data Means More",
     "segments": [
-      "Welcome to Module Eight, Technology Ecosystem. Every stage of drug discovery runs on a specific piece of technology \u2014 let's meet them."
+      "Welcome to Module Eight, Technology Ecosystem. Every stage of drug discovery runs on a specific piece of technology — let's meet them."
     ]
   },
   {
@@ -435,8 +435,18 @@ const slides = [
     "label": "EDC",
     "title": "<span class=\"hl\">EDC</span> Systems",
     "segments": [
-      "<span class=\"key\">EDC</span>, Electronic Data Capture, is used specifically to collect clinical trial data electronically \u2014 not LIMS, not CTMS, and not a general safety database.",
+      "<span class=\"key\">EDC</span>, Electronic Data Capture, is used specifically to collect clinical trial data electronically — not LIMS, not CTMS, and not a general safety database.",
       "It replaces paper case report forms, capturing data directly from investigator sites."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "ELN",
+    "title": "The <span class=\"key\">Electronic Lab Notebook</span>",
+    "segments": [
+      "Before any clinical data exists, there is the <span class=\"key\">ELN</span>, the Electronic Laboratory Notebook.",
+      "It is where a scientist records what they did, why they did it, and what happened, replacing the bound paper notebook.",
+      "Signed, timestamped and searchable, it is the primary evidence of the experiment itself, and it underpins <span class=\"em\">intellectual property</span> claims later on."
     ]
   },
   {
@@ -444,7 +454,17 @@ const slides = [
     "label": "LIMS",
     "title": "<span class=\"hl\">LIMS</span>",
     "segments": [
-      "<span class=\"key\">LIMS</span> stands for Laboratory Information Management System, and it manages laboratory workflows and data \u2014 samples, assays, and results, tracked from the moment a sample enters the lab."
+      "<span class=\"key\">LIMS</span> stands for Laboratory Information Management System, and it manages laboratory workflows and data — samples, assays, and results, tracked from the moment a sample enters the lab."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "CTMS",
+    "title": "Running the <span class=\"key\">Trial Itself</span>",
+    "segments": [
+      "Running the trial needs a different system again: the <span class=\"key\">CTMS</span>, the Clinical Trial Management System.",
+      "It tracks sites, patients, visits, budgets and timelines.",
+      "Where EDC holds the clinical <span class=\"em\">results</span>, CTMS holds the <span class=\"em\">operational picture</span> around them. Confusing the two is one of the most common mistakes in this area."
     ]
   },
   {
@@ -460,8 +480,8 @@ const slides = [
     "label": "How It Connects",
     "title": "A <span class=\"hl\">Connected</span> Ecosystem",
     "segments": [
-      "Integrated data platforms connect with EDC systems too: their curated data can be <span class=\"em\">imported directly into EDC systems</span> to inform clinical trial design \u2014 not the other way around, and not as a replacement for EDC.",
-      "EDC, LIMS, cloud platforms, databases, and warehouses \u2014 different tools for different jobs, all feeding one connected ecosystem."
+      "Integrated data platforms connect with EDC systems too: their curated data can be <span class=\"em\">imported directly into EDC systems</span> to inform clinical trial design — not the other way around, and not as a replacement for EDC.",
+      "EDC, LIMS, cloud platforms, databases, and warehouses — different tools for different jobs, all feeding one connected ecosystem."
     ]
   },
   {
@@ -471,15 +491,15 @@ const slides = [
     "cards": [
       {
         "icon": "fa-clipboard-list",
-        "text": "<span class=\"key\">EDC</span> \u2014 electronic clinical trial data capture"
+        "text": "<span class=\"key\">EDC</span> — electronic clinical trial data capture"
       },
       {
         "icon": "fa-microscope",
-        "text": "<span class=\"key\">LIMS</span> \u2014 Laboratory Information Management System"
+        "text": "<span class=\"key\">LIMS</span> — Laboratory Information Management System"
       },
       {
         "icon": "fa-cloud",
-        "text": "<span class=\"key\">Cloud Platforms</span> \u2014 scalable storage & compute"
+        "text": "<span class=\"key\">Cloud Platforms</span> — scalable storage & compute"
       },
       {
         "icon": "fa-arrows-turn-to-dots",
@@ -487,7 +507,8 @@ const slides = [
       }
     ],
     "segments": [
-      "EDC, LIMS, and cloud platforms are the core technologies here \u2014 and integrated data platforms connect directly into EDC to support trial design."
+      "Six systems, each owning a slice of the lifecycle: ELN for the experiment, LIMS for the samples, EDC for clinical results, CTMS for trial operations, cloud platforms for scale, and integrated data platforms tying them together.",
+      "And remember that integrated data platforms feed curated data directly into EDC to support trial design."
     ]
   },
   {
@@ -585,8 +606,13 @@ function stripHTML(html) {
   return tmp.textContent || tmp.innerText || '';
 }
 function estimateDuration(text) {
-  const words = text.split(/\s+/).length;
-  return (words / 2.6) * 1000;
+  // Used as the fallbackDuration when narration is MUTED: playback still has
+  // to advance on the same timeline it would have taken to speak, or a muted
+  // run races through the deck. Sourced from the engine so both paths agree.
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text);
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return (words / 2.45) * 1000;
 }
 
 function renderSlide(index) {
@@ -704,10 +730,21 @@ async function playCurrentSlide() {
   goToSection(currentSection + 1);
 }
 
+// Stops narration through the engine rather than calling synth.cancel()
+// directly. cancel() alone only kills the audible chunk — voice-engine v5
+// splits long lines into several — so a Pause or Mute click could be
+// followed by the next chunk starting anyway. stop() invalidates the whole
+// queued line.
+function stopNarrationAudio() {
+  const pv = window.presentationVoice;
+  if (pv && typeof pv.stop === 'function') { pv.stop(); return; }
+  try { synth.cancel(); } catch (e) {}
+}
+
 function stopSpeech() {
   genToken++;
   clearTimeout(segmentTimeout);
-  synth.cancel();
+  stopNarrationAudio();
   currentUtterance = null;
 }
 function delay(ms) {
@@ -842,7 +879,7 @@ function toggleMute() {
   isMuted = !isMuted;
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
-  if (isMuted) synth.cancel();
+  if (isMuted) stopNarrationAudio();
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1379,8 +1416,15 @@ window.addEventListener('message', event => {
   }
   function onBoundary(){ boundaryFired=true; if(fallbackT){clearInterval(fallbackT);fallbackT=null;}
                         mouthOpen(); clearTimeout(closeT); closeT=setTimeout(mouthClose,130); }
-  function estimateMs(text){ var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
-                             return Math.max(2500, w*450+2500); }
+  // Defers to voice-engine.js so the lip-sync cap can never drift out of
+  // step with the actual delivery rate or the engine's sentence chunking.
+  // (A local copy of this formula is what used to stop the mouth early.)
+  function estimateMs(text){
+    var pv = window.presentationVoice;
+    if (pv && typeof pv.estimateMs === 'function') return pv.estimateMs(text) + 1200;
+    var w=(text||'').trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2500, w*450+2500);
+  }
 
   // ── DYNAMIC POSITIONING ──
   function clearPositionClasses(){
