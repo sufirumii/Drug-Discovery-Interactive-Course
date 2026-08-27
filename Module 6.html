@@ -51,6 +51,7 @@
 <title>Module 6: The Data Landscape | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -456,6 +457,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "The Map",
+    "title": "Three <span class=\"hl\">Pillars</span> of Discovery Data",
+    "content": "<div class='arch-diagram'><div class='arch-stack'><div class='arch-layer'><div class='arch-ltag'>Biological</div><div class='arch-litems'><span class='arch-chip'>Genomics</span><span class='arch-chip'>Proteomics</span><span class='arch-chip'>Transcriptomics</span></div></div><div class='arch-layer'><div class='arch-ltag'>Pharmacological</div><div class='arch-litems'><span class='arch-chip'>Binding</span><span class='arch-chip'>Activity</span><span class='arch-chip'>Mechanism</span></div></div><div class='arch-layer accent'><div class='arch-ltag'>ADMET</div><div class='arch-litems'><span class='arch-chip'>In vitro assays</span><span class='arch-chip'>In vivo studies</span><span class='arch-chip'>In silico predictions</span></div></div></div><div class='arch-cap'>Each pillar asks a different question about the same compound</div></div>",
+    "segments": [
+      "Here is the whole landscape on one map. The first pillar is <span class=\"key\">biological</span> data — genomics, proteomics, and transcriptomics, the molecular blueprint of disease.",
+      "The second pillar is <span class=\"key\">pharmacological</span> data, which tells us how a drug interacts with its target — binding, activity, and mechanism.",
+      "And the third pillar is <span class=\"key\">ADMET</span> — how a compound is absorbed, distributed, metabolized, and excreted, built from in vitro assays, in vivo studies, and computational predictions.",
+      "Notice how the three pillars line up: each asks a different question about the same compound — where the disease is, how strongly the molecule acts on it, and what the body does to the molecule."
+    ]
+  },
+  {
     "type": "content",
     "label": "Scale",
     "title": "The <span class=\"hl\">Scale</span> of Modern Databases",
@@ -492,6 +505,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "Two Formats",
+    "title": "Structured vs <span class=\"hl\">Unstructured</span>",
+    "content": "<div class='arch-diagram'><div class='arch-split'><div class='arch-side good'><div style='display:flex;align-items:center;gap:0.55rem'><div style='width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);color:var(--accent);font-size:13px;flex:0 0 auto'><i class='fas fa-table-cells'></i></div><div style='font-family:Space Grotesk,Inter,sans-serif;font-weight:700;font-size:0.8rem;color:var(--ink)'>Structured</div></div><div style='font-size:0.66rem;color:var(--muted)'>Clean rows and columns — ready to query</div><ul><li>Assay result tables</li><li>Compound databases</li><li>ADMET measurements</li><li>Genomic spreadsheets</li></ul></div><div class='arch-vs'>VS</div><div class='arch-side'><div style='display:flex;align-items:center;gap:0.55rem'><div style='width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft);color:var(--accent);font-size:13px;flex:0 0 auto'><i class='fas fa-file-lines'></i></div><div style='font-family:Space Grotesk,Inter,sans-serif;font-weight:700;font-size:0.8rem;color:var(--ink)'>Unstructured</div></div><div style='font-size:0.66rem;color:var(--muted)'>Rich but messy — needs work first</div><ul><li>Research papers</li><li>Lab notebook entries</li><li>Microscopy images</li><li>Clinical case notes</li></ul></div></div><div class='arch-note'>And the third category people forget: metadata — the context that makes either side reusable</div></div>",
+    "segments": [
+      "Here are the two formats side by side. On the left, <span class=\"key\">structured</span> data: clean rows and columns — assay result tables, compound databases, ADMET measurements, and genomic spreadsheets.",
+      "On the right, <span class=\"key\">unstructured</span> data: research papers, lab notebook entries, microscopy images, and clinical case notes — rich, but messy.",
+      "Turning that messy right side into the clean left side is one of the biggest jobs in modern drug discovery.",
+      "And underneath both sits the category people routinely forget — <span class=\"key\">metadata</span> — because without context like assay type, cell line, and protocol, a number cannot be compared to anything."
+    ]
+  },
+  {
     "type": "content",
     "label": "The Ladder",
     "title": "From Data to <span class=\"key\">Decision</span>",
@@ -499,6 +524,17 @@ const slides = [
       "Raw data on its own helps nobody. It has to climb a ladder first.",
       "<span class=\"em\">Captured</span>, then <span class=\"em\">cleaned</span>, then <span class=\"em\">standardised</span>, then <span class=\"em\">integrated</span>, and only then <span class=\"em\">interpreted</span>.",
       "Every rung costs real effort, and a skipped rung always resurfaces later. Most organisations are strongest at capture and weakest at <span class=\"key\">integration</span>, which is where the value actually appears."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "The Payoff",
+    "title": "Where the Value <span class=\"hl\">Actually Appears</span>",
+    "segments": [
+      "Remember the ladder: captured, cleaned, standardised, integrated, interpreted. Most organisations are strongest at capture and weakest at <span class=\"key\">integration</span>.",
+      "Yet integration is exactly where the value appears — it is what lets one question cross pillars, joining a compound's activity with its <span class=\"em\">ADMET profile</span> in a single query.",
+      "And none of it works without <span class=\"key\">metadata</span>. A fifty nanomolar reading with no assay, cell line, or protocol behind it cannot be compared — so it cannot be reused.",
+      "That is the real lesson of the landscape: <span class=\"em\">context and integration</span> decide a dataset's long-term value, not volume."
     ]
   },
   {
@@ -900,6 +936,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1050,8 +1090,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1560,5 +1629,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

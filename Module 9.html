@@ -51,6 +51,7 @@
 <title>Module 9: Current Industry Challenges | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -472,6 +473,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "Challenge Map",
+    "title": "The Five Challenges, <span class=\"hl\">Side by Side</span>",
+    "content": "<div class='arch-diagram' style='max-width:min(780px,calc(100vw - 460px))'><div class='arch-grid' style='grid-template-columns:repeat(auto-fit,minmax(230px,1fr))'><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-database'></i></div><div class='arch-t'>Data Quality</div></div><div class='arch-d'>Accuracy and consistency across multiple sources.</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-gavel'></i></div><div class='arch-t'>Compliance</div></div><div class='arch-d'>21 CFR Part 11 — electronic records and signatures.</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-plug'></i></div><div class='arch-t'>Interoperability</div></div><div class='arch-d'>Genomics, assays and ADMET locked in incompatible formats.</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-server'></i></div><div class='arch-t'>Scalability</div></div><div class='arch-d'>A 500,000-compound campaign can overwhelm infrastructure.</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-arrows-spin'></i></div><div class='arch-t'>Manual Processes</div></div><div class='arch-d'>Hand-entry work that integrated workflows are built to remove.</div></div></div><div class='arch-note'>Five failure modes, one cascade — siloed data at the root, higher cost at the end.</div></div>",
+    "segments": [
+      "Here are all five challenges side by side, so you can hold them in one view before we meet them in the wild.",
+      "Data quality is accuracy and consistency across sources. Compliance is 21 CFR Part 11. Interoperability is the incompatible-formats problem you met in Module Eight.",
+      "Scalability is sheer volume — think five hundred thousand compounds in one screening campaign — and manual processes are the hand-entry work that integrated workflows remove.",
+      "Notice how different these failure modes are. That is why no single fix solves them all — keep this map in mind for the scenarios ahead."
+    ]
+  },
+  {
     "type": "content",
     "label": "Real Scenarios",
     "title": "When Challenges <span class=\"hl\">Show Up</span>",
@@ -483,6 +496,16 @@ const slides = [
   },
   {
     "type": "content",
+    "label": "Chain Reaction",
+    "title": "How the Five <span class=\"key\">Feed Each Other</span>",
+    "segments": [
+      "Notice how these five challenges <span class=\"em\">feed each other</span>. Manual entry creates quality gaps, quality gaps surface as compliance findings, and those findings turn into months of lost time.",
+      "Siloed data makes interoperability impossible — you cannot standardize what every team stores differently — and a five hundred thousand compound campaign only multiplies the manual work.",
+      "This is the <span class=\"key\">cascade</span> from the start of this module, now with names attached: fix the data at the root, and the cost never reaches the patient."
+    ]
+  },
+  {
+    "type": "content",
     "label": "Consequences",
     "title": "The Cost of <span class=\"key\">Getting It Wrong</span>",
     "segments": [
@@ -490,6 +513,18 @@ const slides = [
       "An inspection that finds inadequate data controls issues a <span class=\"key\">Form 483</span> observation. Left unresolved, that escalates to a <span class=\"key\">warning letter</span>.",
       "At that point a submission can slip by months, and in the worst cases an entire trial's data is ruled <span class=\"em\">unreliable</span>.",
       "Every one of those outcomes traces back to one of the five challenges we just walked through."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "Enforcement Path",
+    "title": "From Finding to <span class=\"hl\">Unreliable Data</span>",
+    "content": "<div class='arch-diagram' style='max-width:min(780px,calc(100vw - 460px))'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-magnifying-glass'></i></div><div class='arch-t'>Inspection Finding</div><div class='arch-d'>Inadequate data controls</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-file-circle-exclamation'></i></div><div class='arch-t'>Form 483</div><div class='arch-d'>Observation issued</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node accent'><div class='arch-ico'><i class='fas fa-triangle-exclamation'></i></div><div class='arch-t'>Warning Letter</div><div class='arch-d'>Observation left unresolved</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node primary'><div class='arch-ico'><i class='fas fa-hourglass-half'></i></div><div class='arch-t'>Months of Delay</div><div class='arch-d'>Submission slips; data ruled unreliable</div></div></div><div class='arch-cap'>Each arrow is a chance to fix the data — at a fraction of the final cost.</div></div>",
+    "segments": [
+      "Let's trace how a data problem becomes a regulatory one, step by step.",
+      "On the left, an inspection finds inadequate data controls — and that triggers a Form 483 observation.",
+      "If that observation is left unresolved, it escalates to a warning letter, and the submission can slip by months.",
+      "At the far right, the worst case: an entire trial's data is ruled unreliable. Every arrow on this path was a chance to fix the data first."
     ]
   },
   {
@@ -901,6 +936,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1051,8 +1090,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1561,5 +1629,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

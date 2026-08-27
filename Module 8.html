@@ -51,6 +51,7 @@
 <title>Module 8: The Technology Ecosystem | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -469,10 +470,31 @@ const slides = [
   },
   {
     "type": "content",
+    "label": "Sharp Edges",
+    "title": "The Most Common <span class=\"hl\">Mix-Ups</span>",
+    "segments": [
+      "Let's lock in the distinctions that trip people up. <span class=\"key\">EDC holds the clinical results</span> — data captured directly from investigator sites. <span class=\"key\">CTMS holds the operational picture</span> — sites, patients, visits, budgets, timelines. Confusing the two is the most common mistake in this space.",
+      "The same split exists at the bench: the <span class=\"key\">ELN</span> records the experiment itself — what was done, why, and what happened — while <span class=\"key\">LIMS</span> tracks the samples, assays, and workflows from the moment a sample enters the lab.",
+      "And keep the final handoff straight: integrated data platforms import curated data <span class=\"em\">into EDC</span> to inform trial design — not the other way around, and not as a replacement for EDC."
+    ]
+  },
+  {
+    "type": "content",
     "label": "Cloud Platforms",
     "title": "<span class=\"hl\">Cloud Platforms</span>",
     "segments": [
       "For storing and processing genuinely large datasets, <span class=\"key\">cloud platforms</span> are the answer, providing on-demand, scalable compute that neither EDC nor safety databases are built for."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "The Architecture",
+    "title": "From Bench to <span class=\"hl\">Decision</span>",
+    "content": "<div class='arch-diagram'><div class='arch-stack'><div class='arch-layer'><div class='arch-ltag'>Capture</div><div class='arch-litems'><span class='arch-chip'>ELN — experiments</span><span class='arch-chip'>LIMS — samples &amp; assays</span><span class='arch-chip'>EDC — clinical data</span><span class='arch-chip'>CTMS — operations</span></div></div><div class='arch-layer'><div class='arch-ltag'>Platform</div><div class='arch-litems'><span class='arch-chip'>Data lake</span><span class='arch-chip'>Databases</span><span class='arch-chip'>Warehouses</span><span class='arch-chip'>Cloud compute</span></div></div><div class='arch-layer accent'><div class='arch-ltag'>Use</div><div class='arch-litems'><span class='arch-chip'>Integrated data platforms</span><span class='arch-chip outline'>Clinical trial design</span></div></div></div><div class='arch-cap'>Different tools for different jobs — all feeding one connected ecosystem</div></div>",
+    "segments": [
+      "Here is the whole ecosystem arranged as one architecture. The capture layer is where data is born: the <span class=\"key\">ELN</span> records the experiment, <span class=\"key\">LIMS</span> tracks samples and assays, <span class=\"key\">EDC</span> captures clinical trial data, and <span class=\"key\">CTMS</span> runs the operational side of the trial.",
+      "The platform layer holds and processes it all — data lakes, databases, warehouses, and the on-demand, scalable compute that cloud platforms provide.",
+      "And the use layer is where it pays off: integrated data platforms curate everything and feed it into clinical trial design. Different tools for different jobs, all feeding one connected ecosystem."
     ]
   },
   {
@@ -482,6 +504,18 @@ const slides = [
     "segments": [
       "Integrated data platforms connect with EDC systems too: their curated data can be <span class=\"em\">imported directly into EDC systems</span> to inform clinical trial design — not the other way around, and not as a replacement for EDC.",
       "EDC, LIMS, cloud platforms, databases, and warehouses — different tools for different jobs, all feeding one connected ecosystem."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "The Journey",
+    "title": "One Compound's <span class=\"hl\">Data Journey</span>",
+    "content": "<div class='arch-diagram'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-book'></i></div><div class='arch-t'>ELN</div><div class='arch-d'>First experiment recorded</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-vials'></i></div><div class='arch-t'>LIMS</div><div class='arch-d'>Samples &amp; assays tracked</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-cloud'></i></div><div class='arch-t'>Data Lake &amp; Cloud</div><div class='arch-d'>Pooled at scale</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-arrows-turn-to-dots'></i></div><div class='arch-t'>Integrated Platform</div><div class='arch-d'>Curated &amp; connected</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node primary'><div class='arch-ico'><i class='fas fa-clipboard-list'></i></div><div class='arch-t'>EDC</div><div class='arch-d'>Informs trial design</div></div></div><div class='arch-cap'>From the first notebook entry to the first trial design</div></div>",
+    "segments": [
+      "Let's watch one compound travel the whole stack. It begins in the <span class=\"key\">ELN</span> — the very first experiment recorded, signed, and timestamped.",
+      "Its samples and assay results are tracked through <span class=\"key\">LIMS</span>, and everything pools into the data lake and cloud platforms, where genuinely large datasets live.",
+      "Integrated data platforms then curate that data — and the curated result flows directly into <span class=\"key\">EDC</span>, informing the design of the compound's first clinical trial.",
+      "That is the connected ecosystem in motion: every system owns a slice of the lifecycle, and the handoffs between them carry the science forward."
     ]
   },
   {
@@ -880,6 +914,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1030,8 +1068,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1540,5 +1607,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

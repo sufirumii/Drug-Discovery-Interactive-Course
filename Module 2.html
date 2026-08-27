@@ -51,6 +51,7 @@
 <title>Module 2: Drug Discovery: Business Overview | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -461,12 +462,35 @@ const slides = [
   },
   {
     "type": "content",
+    "label": "Deeper Look",
+    "title": "How the Business <span class=\"hl\">Reads the Odds</span>",
+    "segments": [
+      "Let's read that ten percent the way the business actually does. No company stakes its future on one molecule — discovery runs as a <span class=\"key\">portfolio</span>, with many candidates moving at once.",
+      "The logic is unforgiving but simple. Most candidates will fail, so the rare successes must <span class=\"em\">carry the cost of all the failures</span> — failure is priced into every approved medicine.",
+      "This is also why the industry lives by the phrase <span class=\"key\">fail early, fail cheaply</span>. A cheap failure still teaches you something about the target or the chemistry; an expensive one teaches the same lesson for hundreds of millions.",
+      "And it explains the business case for data in one sentence: every decision that can be moved to an earlier, cheaper stage is money that stays in the portfolio."
+    ]
+  },
+  {
+    "type": "content",
     "label": "The Cost Curve",
     "title": "Why Late Failure <span class=\"key\">Hurts</span>",
     "segments": [
       "Not all failures cost the same, and this is the single most important economic fact in the industry. A compound dropped at hit discovery costs <span class=\"em\">thousands</span>. One dropped in Phase three costs <span class=\"em\">hundreds of millions</span>.",
       "A single Phase three trial runs <span class=\"key\">$100M-$500M</span> depending on the therapeutic area, and Phase two is where most compounds die, at roughly <span class=\"key\">30%</span> success.",
       "That asymmetry shapes the entire strategy of modern discovery: <span class=\"em\">fail early, fail cheaply</span>, and use data to pull every decision as far to the left as possible."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "The Cost Ladder",
+    "title": "The Rising Cost of <span class=\"hl\">Failure</span>",
+    "content": "<div class='arch-diagram'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-vial'></i></div><div class='arch-t'>Hit Discovery</div><div class='arch-d'>A drop here costs thousands</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-microscope'></i></div><div class='arch-t'>Preclinical</div><div class='arch-d'>Costs climb, bets grow</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node accent'><div class='arch-ico'><i class='fas fa-users'></i></div><div class='arch-t'>Phase 2</div><div class='arch-d'>~30% success — most compounds die here</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-file-medical'></i></div><div class='arch-t'>Phase 3</div><div class='arch-d'>$100M–$500M per trial</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node primary'><div class='arch-ico'><i class='fas fa-rocket'></i></div><div class='arch-t'>Approval</div><div class='arch-d'>Reached by ~10% of candidates</div></div></div><div class='arch-cap'>Every step right makes failure more expensive — so pull decisions left</div></div>",
+    "segments": [
+      "Here is that cost curve drawn as a pipeline. Follow it left to right, and notice how every step forward makes failure more expensive.",
+      "A compound dropped at hit discovery costs only thousands. Keep moving and the bets grow — all the way to Phase two, where most compounds die, at roughly thirty percent success.",
+      "Survive that, and a single Phase three trial runs one hundred million to five hundred million dollars — so a failure there costs hundreds of millions.",
+      "That is the entire economic argument for better data: the cheapest failure is the one that happens earliest."
     ]
   },
   {
@@ -487,6 +511,18 @@ const slides = [
       "<span class=\"key\">Target identification</span>, where genomics and knowledge graphs narrow the search from thousands of candidate proteins down to a handful.",
       "<span class=\"key\">Lead discovery</span>, where virtual screening evaluates millions of molecules in silico before anyone sets up a physical assay.",
       "And <span class=\"key\">clinical design</span>, where outcomes from historical trials sharpen how patients and endpoints are chosen. Each of these removes weeks or months, but only if the underlying data is clean and comparable."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "Leverage Map",
+    "title": "Where Data <span class=\"hl\">Buys Time</span>",
+    "content": "<div class='arch-diagram'><div class='arch-grid'><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-bullseye'></i></div><div class='arch-t'>Target Identification</div></div><div class='arch-d'>Genomics and knowledge graphs narrow the search</div><ul><li>From thousands of candidate proteins</li><li>Down to a handful</li></ul></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-magnifying-glass'></i></div><div class='arch-t'>Lead Discovery</div></div><div class='arch-d'>Virtual screening before any wet lab</div><ul><li>Millions of molecules in silico</li><li>Physical assays run later, on fewer</li></ul></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-clipboard-check'></i></div><div class='arch-t'>Clinical Design</div></div><div class='arch-d'>History sharpens the plan</div><ul><li>Patients chosen with past outcomes</li><li>Endpoints chosen the same way</li></ul></div></div><div class='arch-cap'>Each point removes weeks or months — only if the data is clean and comparable</div></div>",
+    "segments": [
+      "Here are the three leverage points as a map. First, target identification — genomics and knowledge graphs narrow thousands of candidate proteins down to a handful.",
+      "Second, lead discovery — virtual screening evaluates millions of molecules in silico, before anyone sets up a physical assay.",
+      "And third, clinical design — outcomes from historical trials sharpen how patients and endpoints are chosen.",
+      "Notice the caption, because it carries the honest caveat: each of these removes weeks or months, but only when the underlying data is clean and comparable."
     ]
   },
   {
@@ -884,6 +920,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1034,8 +1074,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1544,5 +1613,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

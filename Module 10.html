@@ -51,6 +51,7 @@
 <title>Module 10: Data Engineering & AI | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -466,6 +467,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "Architecture",
+    "title": "One <span class=\"hl\">Governed Store</span> at the Center",
+    "content": "<div class='arch-diagram'><div class='arch-hub'><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-book'></i><div><div class='arch-t' style='font-weight:700'>ELN</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>Electronic lab notebooks</div></div></div><div class='arch-sat'><i class='fas fa-vials'></i><div><div class='arch-t' style='font-weight:700'>LIMS</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>Samples and assay records</div></div></div><div class='arch-sat'><i class='fas fa-flask'></i><div><div class='arch-t' style='font-weight:700'>Compound Data</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>The compound libraries</div></div></div></div><div class='arch-link'><i class='fas fa-arrow-right'></i></div><div class='arch-core'><i class='fas fa-warehouse'></i><div class='arch-t' style='font-weight:800'>Data Lakehouse</div><div style='font-size:0.62rem;color:rgba(255,255,255,0.85)'>One governed store</div></div><div class='arch-link'><i class='fas fa-arrow-right'></i></div><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-brain'></i><div><div class='arch-t' style='font-weight:700'>AI Models</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>AlphaFold, generative, ADMET</div></div></div><div class='arch-sat'><i class='fas fa-chart-line'></i><div><div class='arch-t' style='font-weight:700'>Live Dashboards</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>APIs and streaming, not batch</div></div></div><div class='arch-sat'><i class='fas fa-robot'></i><div><div class='arch-t' style='font-weight:700'>Agentic Workflows</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>Autonomous multi-step science</div></div></div></div></div><div class='arch-cap'>Centralize once — every tool downstream draws from the same governed data.</div></div>",
+    "segments": [
+      "Here is how the lakehouse actually sits in the architecture. On the left are the sources — ELN notebooks, LIMS records, and compound data, each born in a different system.",
+      "In the center sits the lakehouse itself: one governed store, centralizing all of it.",
+      "On the right, everything that draws from it — the AI models, the live dashboards, and the agentic workflows running on top.",
+      "That is the architectural bet: centralize once, and every tool downstream gets the same clean, governed data."
+    ]
+  },
+  {
     "type": "content",
     "label": "FAIR Data",
     "title": "The Foundation: <span class=\"hl\">FAIR Data</span>",
@@ -483,6 +496,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "The Full Stack",
+    "title": "How the Layers <span class=\"hl\">Stack Up</span>",
+    "content": "<div class='arch-diagram' style='max-width:min(780px,calc(100vw - 460px))'><div class='arch-stack'><div class='arch-layer'><div class='arch-ltag'>AI Applications</div><div class='arch-litems'><span class='arch-chip'>AlphaFold</span><span class='arch-chip'>Generative design</span><span class='arch-chip'>ADMET prediction</span><span class='arch-chip'>Agentic AI</span></div></div><div class='arch-layer accent'><div class='arch-ltag'>Discipline</div><div class='arch-litems'><span class='arch-chip outline'>FAIR data</span><span class='arch-chip outline'>GxP-compliant MLOps</span><span class='arch-chip outline'>Real-time integration</span></div></div><div class='arch-layer'><div class='arch-ltag'>Central Store</div><div class='arch-litems'><span class='arch-chip'>Data lakehouse</span><span class='arch-chip'>One governed store</span></div></div><div class='arch-layer'><div class='arch-ltag'>Sources</div><div class='arch-litems'><span class='arch-chip'>ELN</span><span class='arch-chip'>LIMS</span><span class='arch-chip'>Compound data</span></div></div></div><div class='arch-note'>Every layer depends on the one beneath it — no foundation, no AI.</div></div>",
+    "segments": [
+      "Now let's stack everything from this module into a single picture, top to bottom.",
+      "Up top sit the AI applications you have met — AlphaFold, generative design, ADMET prediction, and agentic AI. They only work because of what sits underneath.",
+      "The middle layer is the discipline: FAIR data — findable, accessible, interoperable, reusable — plus GxP-compliant MLOps and real-time integration.",
+      "And at the bottom, the lakehouse, pulling ELN, LIMS, and compound data into one governed store. No foundation, no AI — that is this module in one picture."
+    ]
+  },
+  {
     "type": "content",
     "label": "Preconditions",
     "title": "What Makes AI <span class=\"key\">Work Here</span>",
@@ -490,6 +515,16 @@ const slides = [
       "Three conditions have to hold before any of this helps at all.",
       "Enough data, in a <span class=\"em\">consistent format</span>, with the <span class=\"key\">negative results</span> included. That last one is the most commonly missing.",
       "A dataset of only successes teaches a model nothing about failure, and in drug discovery, knowing what does not work is most of the value."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Negative Results",
+    "title": "Why Failures Are <span class=\"hl\">Fuel</span>",
+    "segments": [
+      "Here is why that third precondition matters so much. A model trained only on successes learns <span class=\"em\">nothing about failure</span> — it will confidently propose more of the same chemistry.",
+      "In drug discovery, most compounds do not make it. So the failures are <span class=\"key\">most of the data</span> — and a lakehouse that captures negative results is worth far more than one that records only the wins.",
+      "When you hear that AI needs enough data, hear it as enough <span class=\"em\">honest</span> data — consistent in format, and complete about what did not work."
     ]
   },
   {
@@ -906,6 +941,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1056,8 +1095,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1566,5 +1634,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

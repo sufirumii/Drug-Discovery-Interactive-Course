@@ -51,6 +51,7 @@
 <title>Module 4: Key Terminologies | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -441,6 +442,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "ADMET, Unpacked",
+    "title": "Five Letters, <span class=\"hl\">Five Questions</span>",
+    "content": "<div class='arch-diagram'><div class='arch-grid'><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-syringe'></i></div><div class='arch-t'>Absorption</div></div><div class='arch-d'>Can it get into the body at all?</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-route'></i></div><div class='arch-t'>Distribution</div></div><div class='arch-d'>Can it travel to where it is needed?</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-recycle'></i></div><div class='arch-t'>Metabolism</div></div><div class='arch-d'>How does the body break it down?</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-arrow-right-from-bracket'></i></div><div class='arch-t'>Excretion</div></div><div class='arch-d'>How does it leave the body again?</div></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-triangle-exclamation'></i></div><div class='arch-t'>Toxicity</div></div><div class='arch-d'>Does it cause harm along the way?</div></div></div><div class='arch-cap'>Five answers, one verdict — pharmacokinetics and safety in a single word</div></div>",
+    "segments": [
+      "Let's unpack that first term, because each letter of ADMET asks the molecule a different question. Absorption comes first — can it get into the body at all after it is dosed?",
+      "Then distribution — can it travel to where it is actually needed? And metabolism — how does the body chemically break it down along the way?",
+      "Excretion asks how it leaves the body again, and toxicity asks the hardest question of all — does it cause harm anywhere on that journey?",
+      "Five answers, one verdict. A molecule that fails any of these cannot become a medicine, no matter how active it looked against its target."
+    ]
+  },
+  {
     "type": "content",
     "label": "Term 2",
     "title": "Agonist vs. <span class=\"hl\">Antagonist</span>",
@@ -496,6 +509,29 @@ const slides = [
       "<span class=\"key\">Selectivity</span> is how cleanly a compound hits its intended target and leaves everything else alone. Poor selectivity is one of the most common origins of side effects.",
       "The <span class=\"key\">therapeutic index</span> is the gap between the dose that helps and the dose that harms. A wide gap makes a safer medicine.",
       "Together with ADMET, these are what turn a merely active molecule into a usable one."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "The Vocabulary Map",
+    "title": "Every Term, <span class=\"hl\">One Map</span>",
+    "content": "<div class='arch-diagram'><div class='arch-stack'><div class='arch-layer accent'><div class='arch-ltag'>The Progression</div><div class='arch-litems'><span class='arch-chip'>Target</span><span class='arch-chip'>Hit</span><span class='arch-chip'>Lead</span><span class='arch-chip'>Candidate</span><span class='arch-chip'>IND</span></div></div><div class='arch-layer'><div class='arch-ltag'>At the Target</div><div class='arch-litems'><span class='arch-chip outline'>Agonist</span><span class='arch-chip outline'>Antagonist</span><span class='arch-chip outline'>IC50</span><span class='arch-chip outline'>Potency</span><span class='arch-chip outline'>Efficacy</span></div></div><div class='arch-layer'><div class='arch-ltag'>Makes It Usable</div><div class='arch-litems'><span class='arch-chip'>ADMET</span><span class='arch-chip'>Selectivity</span><span class='arch-chip'>Therapeutic Index</span><span class='arch-chip'>Bioavailability</span></div></div></div><div class='arch-cap'>Three questions: where is it in the journey, what does it do, and can the body live with it</div></div>",
+    "segments": [
+      "Here is the whole module's vocabulary on one slide, sorted into three bands. The top band is the progression you already know — target, hit, lead, candidate, IND.",
+      "The middle band is what a molecule does at its target: agonist and antagonist, the IC50 measurement, and the crucial difference between potency and efficacy.",
+      "And the bottom band is what makes a molecule usable in a real body — ADMET, selectivity, the therapeutic index, and bioavailability.",
+      "A quick self-test before the recap: pick any term and say which band it belongs to. If you can do that, you own this vocabulary."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Deeper Look",
+    "title": "These Terms <span class=\"hl\">Live in Data</span>",
+    "segments": [
+      "One last shift in perspective, because these are not just quiz words. Every term on that map is something <span class=\"key\">measured and recorded</span> — a value that ends up in a database.",
+      "An <span class=\"em\">IC50</span> is a number attached to one compound tested against one target. ADMET results arrive the same way — one property, one measurement, one record.",
+      "And <span class=\"key\">SAR</span> is literally structure-activity pairs stored side by side: change the structure, record the activity, compare the two.",
+      "That is why this vocabulary matters so much — learn the terms, and you can read the data the entire industry runs on."
     ]
   },
   {
@@ -897,6 +933,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1047,8 +1087,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1557,5 +1626,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

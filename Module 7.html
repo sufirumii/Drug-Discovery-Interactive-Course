@@ -51,6 +51,7 @@
 <title>Module 7: Industry Standards | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -492,6 +493,29 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "The Big Picture",
+    "title": "The Standards <span class=\"hl\">Stack</span>",
+    "content": "<div class='arch-diagram'><div class='arch-stack'><div class='arch-layer'><div class='arch-ltag'>Principles</div><div class='arch-litems'><span class='arch-chip'>FAIR</span><span class='arch-chip'>ALCOA+</span></div></div><div class='arch-layer'><div class='arch-ltag'>Structure</div><div class='arch-litems'><span class='arch-chip'>CDASH — collect</span><span class='arch-chip'>SDTM — tabulate</span><span class='arch-chip'>ADaM — map</span></div></div><div class='arch-layer'><div class='arch-ltag'>Terminology</div><div class='arch-litems'><span class='arch-chip'>MedDRA</span></div></div><div class='arch-layer'><div class='arch-ltag'>Exchange</div><div class='arch-litems'><span class='arch-chip'>HL7</span></div></div><div class='arch-layer accent'><div class='arch-ltag'>Legal</div><div class='arch-litems'><span class='arch-chip outline'>21 CFR Part 11</span></div></div></div><div class='arch-cap'>Each layer answers a different question about the same data</div></div>",
+    "segments": [
+      "Here is every standard from this module arranged as one stack. At the top, principles: <span class=\"key\">FAIR</span> — findable, accessible, interoperable, reusable — and <span class=\"key\">ALCOA+</span>, the checklist a good record must pass.",
+      "Below that, structure: the <span class=\"key\">CDISC</span> family. You collect with CDASH, tabulate with SDTM, and map into ADaM for analysis.",
+      "Then terminology — <span class=\"key\">MedDRA</span>, so adverse events and conditions are described the same way worldwide — and exchange, <span class=\"key\">HL7</span>, so health information moves between systems.",
+      "And underneath it all, the legal layer: <span class=\"key\">21 CFR Part 11</span>, the regulation that makes electronic records and electronic signatures trustworthy to regulators."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "In Practice",
+    "title": "One Record, <span class=\"hl\">Every Standard</span>",
+    "segments": [
+      "To see how the stack works together, take a single adverse event recorded in a trial.",
+      "<span class=\"key\">MedDRA</span> supplies the term — one consistent vocabulary, with the System Organ Class at the top of its hierarchy.",
+      "<span class=\"key\">CDISC</span> gives that record its structure — collected under CDASH, tabulated in SDTM, mapped into ADaM for analysis. <span class=\"key\">HL7</span> lets it travel between systems, and <span class=\"key\">21 CFR Part 11</span> makes the electronic record and its signature legally trustworthy.",
+      "No single standard is enough on its own. They create value as a set — structure, terminology, exchange, and legal trust, all wrapped around the same record."
+    ]
+  },
+  {
     "type": "content",
     "label": "The Objection",
     "title": "Why Standards Feel Like <span class=\"key\">Overhead</span>",
@@ -499,6 +523,18 @@ const slides = [
       "It is worth answering the obvious objection. Standards slow a team down today in order to save time later, and that saving is invisible.",
       "But the alternative is worse. Non-standard data cannot be pooled across trials, cannot be reused by a later programme, and cannot be submitted without expensive remediation.",
       "The cost of standardising is paid <span class=\"key\">once</span>. The cost of not standardising is paid <span class=\"key\">every single time</span> the data is touched again."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "The Payoff",
+    "title": "What Standards <span class=\"hl\">Unlock</span>",
+    "content": "<div class='arch-diagram'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-database'></i></div><div class='arch-t'>Siloed Data</div><div class='arch-d'>Every trial, its own format</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-table'></i></div><div class='arch-t'>Structured</div><div class='arch-d'>CDISC: CDASH · SDTM · ADaM</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-book-medical'></i></div><div class='arch-t'>Named</div><div class='arch-d'>MedDRA terminology</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-share-nodes'></i></div><div class='arch-t'>Exchangeable</div><div class='arch-d'>HL7 between systems</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node primary'><div class='arch-ico'><i class='fas fa-arrow-trend-up'></i></div><div class='arch-t'>Reusable</div><div class='arch-d'>Pooled across trials</div></div></div><div class='arch-cap'>Each arrow is one standard doing one job — together they turn fragments into reusable evidence</div></div>",
+    "segments": [
+      "This flow is the answer to that objection. On the far left, data sits siloed — every trial in its own format, impossible to pool.",
+      "Each arrow then applies one standard: <span class=\"key\">CDISC</span> structures it, <span class=\"key\">MedDRA</span> names it, and <span class=\"key\">HL7</span> moves it between systems.",
+      "At the far right is the result: data that can be pooled across trials, reused by a later programme, and submitted without expensive remediation.",
+      "Standardize once, and every later use inherits the benefit — that is the payoff hiding behind the overhead."
     ]
   },
   {
@@ -904,6 +940,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1054,8 +1094,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1564,5 +1633,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

@@ -51,6 +51,7 @@
 <title>Module 5: Stakeholders in Drug Discovery | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -483,6 +484,40 @@ const slides = [
     ]
   },
   {
+    "type": "content",
+    "label": "One Program",
+    "title": "Six Roles, <span class=\"hl\">Six Data Needs</span>",
+    "segments": [
+      "Here is the pattern worth noticing: all six roles work on the <span class=\"key\">same program</span>, yet each one leans on a different slice of its data.",
+      "The research scientist designs the experiments and picks the targets, the medicinal chemist refines molecules through <span class=\"key\">SAR</span> data, and the computational chemist runs candidates through <span class=\"em\">virtual screening</span> before anything reaches a bench.",
+      "The project manager watches timelines and milestones, the regulatory specialist watches <span class=\"em\">safety and toxicity data</span>, and the data engineer builds the pipelines that move it all between systems.",
+      "One program, six different readers — which is exactly why the data has to be shared, consistent, and understandable across every one of them."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "The Ecosystem",
+    "title": "The Program <span class=\"hl\">at the Center</span>",
+    "content": "<div class='arch-diagram'><div class='arch-hub'><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-flask-vial'></i><div class='arch-t'>Research Scientist</div></div><div class='arch-sat'><i class='fas fa-atom'></i><div class='arch-t'>Medicinal &amp; Computational Chemists</div></div><div class='arch-sat'><i class='fas fa-diagram-project'></i><div class='arch-t'>Project Manager</div></div><div class='arch-sat'><i class='fas fa-user-shield'></i><div class='arch-t'>Regulatory Specialist</div></div><div class='arch-sat'><i class='fas fa-database'></i><div class='arch-t'>Data Engineer</div></div></div><div class='arch-link'><i class='fas fa-arrow-right'></i></div><div class='arch-core'><i class='fas fa-capsules'></i><div class='arch-t'>The Program</div></div><div class='arch-link'><i class='fas fa-arrow-left'></i></div><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-building'></i><div class='arch-t'>Sponsors — fund the work</div></div><div class='arch-sat'><i class='fas fa-handshake'></i><div class='arch-t'>CROs — contracted studies</div></div><div class='arch-sat'><i class='fas fa-landmark'></i><div class='arch-t'>Regulators — review evidence</div></div><div class='arch-sat'><i class='fas fa-user'></i><div class='arch-t'>Patients — receive the medicine</div></div><div class='arch-sat'><i class='fas fa-coins'></i><div class='arch-t'>Payers — decide reimbursement</div></div></div></div><div class='arch-cap'>The internal team on the left — the wider external ecosystem on the right</div></div>",
+    "segments": [
+      "Now let's zoom out. On the left is the internal team — the six roles you just met, from the research scientist down to the data engineer.",
+      "On the right is the wider ecosystem you saw at the start of this module: sponsors who fund the work, CROs who run contracted studies, regulators who review the evidence, patients who receive the medicine, and payers who decide reimbursement.",
+      "And notice what sits at the center: the program itself. Every stakeholder, internal or external, is aligned on that one goal — turning an idea into a new medicine for patients."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "Handoffs",
+    "title": "How Work and Data <span class=\"hl\">Move</span>",
+    "content": "<div class='arch-diagram'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-building'></i></div><div class='arch-t'>Sponsors</div><div class='arch-d'>Fund and direct</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-flask-vial'></i></div><div class='arch-t'>Internal Team</div><div class='arch-d'>Discover and design</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-handshake'></i></div><div class='arch-t'>CROs</div><div class='arch-d'>Contracted studies</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-landmark'></i></div><div class='arch-t'>Regulators</div><div class='arch-d'>Review the evidence</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node primary'><div class='arch-ico'><i class='fas fa-user'></i></div><div class='arch-t'>Patients &amp; Payers</div><div class='arch-d'>Receive and reimburse</div></div></div><div class='arch-cap'>Every handoff moves funding, work, or evidence — and data travels with each one</div></div>",
+    "segments": [
+      "Let's follow one program around the whole ecosystem. A sponsor funds it, and the internal team turns that funding into experiments, compounds, and candidates.",
+      "Work that gets contracted out goes to CROs, who run those studies and hand the results back.",
+      "The evidence then goes to regulators for review — and only after approval do patients receive the medicine, with payers deciding whether it is reimbursed.",
+      "Notice that every arrow is a handoff of funding, work, or evidence. Each handoff is carried by data, which is why it has to stay consistent and understandable as it moves between stakeholders."
+    ]
+  },
+  {
     "type": "summary",
     "label": "Recap",
     "title": "Six <span class=\"key\">Roles</span>",
@@ -882,6 +917,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1032,8 +1071,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1542,5 +1610,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

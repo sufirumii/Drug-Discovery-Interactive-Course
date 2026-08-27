@@ -51,6 +51,7 @@
 <title>Module 11: Course Summary | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -467,6 +468,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "Knowledge Map",
+    "title": "The Whole Course, <span class=\"hl\">One Map</span>",
+    "content": "<div class='arch-diagram'><div class='arch-hub'><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-route'></i><div><div class='arch-t' style='font-weight:700'>Process</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>10–15 years, ~10% succeed</div></div></div><div class='arch-sat'><i class='fas fa-database'></i><div><div class='arch-t' style='font-weight:700'>Data &amp; Vocabulary</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>ADMET, IC50, SAR</div></div></div><div class='arch-sat'><i class='fas fa-users'></i><div><div class='arch-t' style='font-weight:700'>People</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>Five stakeholders</div></div></div></div><div class='arch-link'><i class='fas fa-arrow-right'></i></div><div class='arch-core'><i class='fas fa-flask'></i><div class='arch-t' style='font-weight:800'>Drug Discovery</div><div style='font-size:0.62rem;color:rgba(255,255,255,0.85)'>Evidence-based gates</div></div><div class='arch-link'><i class='fas fa-arrow-right'></i></div><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-clipboard-check'></i><div><div class='arch-t' style='font-weight:700'>Standards</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>CDISC, MedDRA, Part 11</div></div></div><div class='arch-sat'><i class='fas fa-server'></i><div><div class='arch-t' style='font-weight:700'>Systems</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>LIMS, EDC, cloud</div></div></div><div class='arch-sat'><i class='fas fa-brain'></i><div><div class='arch-t' style='font-weight:700'>AI</div><div style='font-size:0.62rem;color:var(--muted);line-height:1.3'>AlphaFold to agentic</div></div></div></div></div><div class='arch-cap'>Six domains, one discipline — every one of them decided by data.</div></div>",
+    "segments": [
+      "Here is the entire course as one map. In the middle, drug discovery itself — a sequence of evidence-based gates, not a conveyor belt.",
+      "On the left sit the essentials: a ten to fifteen year process, the shared vocabulary of ADMET, IC50, and SAR, and the five stakeholders who rely on it every day.",
+      "On the right, what keeps it trustworthy and what is changing it — CDISC, MedDRA, and 21 CFR Part 11; LIMS, EDC, and cloud platforms; and AI, from AlphaFold all the way to agentic workflows.",
+      "Notice how every satellite touches the core. That is what all working together really looks like."
+    ]
+  },
+  {
     "type": "content",
     "label": "Synthesis",
     "title": "One Molecule's <span class=\"key\">Journey</span>",
@@ -478,6 +491,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "The Funnel",
+    "title": "Ten Million to <span class=\"hl\">One</span>",
+    "content": "<div class='arch-diagram'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-dna'></i></div><div class='arch-t'>Kinase Flagged</div><div class='arch-d'>Genomics study</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-magnifying-glass'></i></div><div class='arch-t'>10M Screened</div><div class='arch-d'>Virtual screen</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-vials'></i></div><div class='arch-t'>40 Hits</div><div class='arch-d'>HTS on 2,000 picks</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-flask'></i></div><div class='arch-t'>3 Leads</div><div class='arch-d'>Hit-to-lead</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-sliders'></i></div><div class='arch-t'>1 Optimized</div><div class='arch-d'>ADMET and selectivity</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node primary'><div class='arch-ico'><i class='fas fa-file-signature'></i></div><div class='arch-t'>IND Filed</div><div class='arch-d'>Into Phase 1</div></div></div><div class='arch-cap'>Every gate on this path was decided on data — the whole course in one funnel.</div></div>",
+    "segments": [
+      "Now watch the same journey as a funnel — the numbers tell the story.",
+      "A genomics study flags one kinase. A virtual screen of ten million compounds proposes two thousand worth testing, and high-throughput screening finds forty genuine hits.",
+      "Hit-to-lead narrows forty to three. Lead optimization tunes ADMET and selectivity on one of them, preclinical toxicology clears it, and an IND is filed.",
+      "From ten million to one — and every arrow between them was a decision made on data. That is this entire course in a single picture."
+    ]
+  },
+  {
     "type": "content",
     "label": "If You Remember Three Things",
     "title": "What to <span class=\"key\">Take Away</span>",
@@ -486,6 +511,16 @@ const slides = [
       "First, the pipeline is a sequence of <span class=\"key\">evidence-based gates</span>, not a conveyor belt. Nothing advances without data to justify it.",
       "Second, the shared vocabulary exists for a reason: it lets a chemist, a clinician and a regulator describe the same molecule the <span class=\"em\">same way</span>.",
       "And third, the <span class=\"key\">data is the asset</span>. Individual molecules come and go. The structured knowledge you build around them compounds."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "The Compounding Asset",
+    "title": "Why <span class=\"key\">Data Is the Asset</span>",
+    "segments": [
+      "Let's take the third takeaway one step further. The data is the asset because it <span class=\"em\">compounds</span> — molecules come and go, but the structured knowledge you build around them stays.",
+      "A failed program still teaches the next one: the SAR patterns, the ADMET warnings, the targets that did not validate. Every result, positive or negative, raises the starting point of whoever comes next.",
+      "So as you leave this course, ask not only <span class=\"em\">did this molecule advance</span> — ask <span class=\"em\">did the data get better</span>. That is the mindset this whole journey has been building."
     ]
   },
   {
@@ -902,6 +937,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1052,8 +1091,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1562,5 +1630,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

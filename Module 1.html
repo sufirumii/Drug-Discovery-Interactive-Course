@@ -51,6 +51,7 @@
 <title>Module 1: Introduction to Drug Discovery | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -461,6 +462,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "The Pillars",
+    "title": "The Three Pillars, <span class=\"hl\">Side by Side</span>",
+    "content": "<div class='arch-diagram'><div class='arch-grid'><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-flask'></i></div><div class='arch-t'>Compounds</div></div><div class='arch-d'>Structured records of chemical compounds</div><ul><li>Structures and properties</li><li>Synthesis routes</li><li>How a molecule behaves</li></ul></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-dna'></i></div><div class='arch-t'>Targets</div></div><div class='arch-d'>The biology a drug acts on</div><ul><li>Usually a protein</li><li>Behind a disease mechanism</li><li>Pathways a drug can reach</li></ul></div><div class='arch-card'><div class='arch-head'><div class='arch-ico'><i class='fas fa-heart-pulse'></i></div><div class='arch-t'>Clinical Outcomes</div></div><div class='arch-d'>Real results from real patients</div><ul><li>Actual trial outcomes</li><li>Never projections</li><li>Evidence you can build on</li></ul></div></div><div class='arch-cap'>Compounds · Targets · Clinical outcomes — the three pillars in one view</div></div>",
+    "segments": [
+      "Here are the three pillars side by side. On the left, the compounds — structures, properties, synthesis routes, and how each molecule behaves.",
+      "In the middle, the targets — usually a protein, sitting behind a disease mechanism, waiting for the right molecule to act on it.",
+      "And on the right, clinical trial data with real outcomes — actual results from actual patients, never projections.",
+      "Notice how the pillars lean on each other. A question that starts with a compound often ends at a target, and finally at a clinical outcome — which is why all three belong to one integrated picture."
+    ]
+  },
+  {
     "type": "content",
     "label": "What's Not Included",
     "title": "What This Data <span class=\"hl\">Is Not</span>",
@@ -493,6 +506,17 @@ const slides = [
   },
   {
     "type": "content",
+    "label": "Deeper Look",
+    "title": "What <span class=\"hl\">Structured</span> Actually Means",
+    "segments": [
+      "So what does structured really mean? A research paper reports a compound's potency somewhere inside a sentence or a table. Structured data turns that sentence into <span class=\"key\">searchable fields</span> — compound, target, measurement, result.",
+      "That is the difference between reading and querying. Raw text has to be read page by page; structured records can be <span class=\"em\">searched, filtered and counted</span> across millions of entries in seconds.",
+      "And one well-formed record becomes far more powerful when it sits beside <span class=\"key\">millions of others just like it</span> — patterns appear that no single lab could ever spot alone.",
+      "So when you hear structured data in this course, picture exactly that: clean, connected fields a researcher can query — not a stack of papers to read."
+    ]
+  },
+  {
+    "type": "content",
     "label": "The Sources",
     "title": "Where the Data <span class=\"key\">Comes From</span>",
     "segments": [
@@ -500,6 +524,18 @@ const slides = [
       "Four main streams. <span class=\"em\">In-house experiments</span>, the <span class=\"em\">published literature</span>, <span class=\"em\">patents</span>, and <span class=\"em\">public or commercial databases</span>.",
       "Excelra's own resources sit in that last group. <span class=\"key\">GOSTAR</span> holds over 10.6M chemical structures and 35M measured bioactivities across more than 79K targets, curated from primary literature and patents.",
       "The value there is not the size. It is that a human has read, checked and structured every record, which is what makes it safe to base a decision on."
+    ]
+  },
+  {
+    "type": "concept",
+    "label": "The Ecosystem",
+    "title": "Four Streams, <span class=\"hl\">One Ecosystem</span>",
+    "content": "<div class='arch-diagram'><div class='arch-hub'><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-vial'></i><div class='arch-t'>In-house experiments</div></div><div class='arch-sat'><i class='fas fa-book'></i><div class='arch-t'>Published literature</div></div></div><div class='arch-link'><i class='fas fa-arrow-right'></i></div><div class='arch-core'><i class='fas fa-database'></i><div class='arch-t'>Structured Discovery Data</div></div><div class='arch-link'><i class='fas fa-arrow-left'></i></div><div class='arch-sat-col'><div class='arch-sat'><i class='fas fa-certificate'></i><div class='arch-t'>Patents</div></div><div class='arch-sat'><i class='fas fa-server'></i><div class='arch-t'>Public &amp; commercial databases</div></div></div></div><div class='arch-cap'>GOSTAR alone: 10.6M structures · 35M measured bioactivities · 79K targets</div></div>",
+    "segments": [
+      "Let's place the four streams into one picture. Every stream on the outside flows toward the same destination at the center — structured discovery data a researcher can actually query.",
+      "On the left are the streams a company generates or reads itself: in-house experiments, and the published literature.",
+      "On the right, patents, and the public or commercial databases — where Excelra's own GOSTAR sits, holding over 10.6 million structures and 35 million measured bioactivities across 79 thousand targets.",
+      "The important part is the middle. Whichever stream a record starts in, what arrives at the center has been read, checked and structured by a human — and that is exactly what makes it safe to base a decision on."
     ]
   },
   {
@@ -899,6 +935,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1049,8 +1089,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1559,5 +1628,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>

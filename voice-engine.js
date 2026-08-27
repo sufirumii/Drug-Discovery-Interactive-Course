@@ -371,25 +371,36 @@
    */
   var LEXICON = [
     // ── Regulatory & quality ──
-    ['FDA',      'eff dee ay'],
-    ['EMA',      'ee em ay'],
+    // NOTE ON THE LETTER "A": the obvious respelling "ay" is a real
+    // English dictionary word (a variant of "aye") that speech engines
+    // pronounce /aɪ/ — which is exactly why "AI" used to come out as
+    // "II" and "FDA" as "eff dee eye". A single capital "A" token is
+    // read as the letter name /eɪ/ by every engine instead, so all
+    // A-containing initialisms below use it.
+    ['FDA',      'eff dee A'],
+    ['EMA',      'ee em A'],
     ['IND',      'eye en dee'],
-    ['NDA',      'en dee ay'],
-    ['BLA',      'bee ell ay'],
-    ['CTA',      'see tee ay'],
+    ['NDA',      'en dee A'],
+    ['BLA',      'bee ell A'],
+    ['CTA',      'see tee A'],
+    ['PMDA',     'pee em dee A'],
+    ['NMPA',     'en em pee A'],
     ['CFR',      'see eff arr'],
     ['GLP',      'gee ell pee'],
     ['GMP',      'gee em pee'],
     ['GCP',      'gee see pee'],
-    ['QA',       'kew ay'],
+    ['GxP',      'gee ex pee'],
+    ['QA',       'kew A'],
     ['SOP',      'ess oh pee'],
     ['ALCOA',    'AL-koh-ah'],
     ['SEND',     'send'],
     ['IRB',      'eye arr bee'],
+    ['ICH',      'eye see aitch'],
+    ['CMC',      'see em see'],
     // ── Data standards ──
     ['CDISC',    'see-disk'],
     ['SDTM',     'ess dee tee em'],
-    ['ADaM',     'AY-dam'],
+    ['ADaM',     'Adam'],        // how practitioners actually say the CDISC analysis model
     ['CDASH',    'see-dash'],
     ['MedDRA',   'MED-druh'],
     ['SOC',      'ess oh see'],
@@ -410,11 +421,15 @@
     ['LIMS',     'limz'],
     ['CTMS',     'see tee em ess'],
     ['SDMS',     'ess dee em ess'],
+    ['eCTD',     'ee see tee dee'],
+    ['ePRO',     'ee proh'],
     ['ERP',      'ee arr pee'],
-    ['API',      'ay pee eye'],
+    ['API',      'A pee eye'],
     ['ETL',      'ee tee ell'],
     ['SQL',      'sequel'],
-    ['AI',       'ay eye'],
+    // The client's explicit request: never let the engine attempt "AI"
+    // (which it reads as the word "eye" or "II") — always expand it.
+    ['AI',       'Artificial Intelligence'],
     ['ML',       'em ell'],
     ['MLOps',    'em ell ops'],
     ['LLM',      'ell ell em'],
@@ -422,34 +437,38 @@
     ['GPU',      'gee pee you'],
     ['SaaS',     'sass'],
     ['RBAC',     'arr-back'],
+    ['UI',       'you eye'],
+    ['URL',      'you are ell'],
     // ── Science & assays ──
     ['ADMET',    'AD-met'],
     ['ADME',     'AD-mee'],
-    ['SAR',      'ess ay arr'],
-    ['QSAR',     'kew-ess-ay-arr'],
+    ['DMPK',     'dee em pee kay'],
+    ['SAR',      'ess A arr'],
+    ['QSAR',     'kew-ess-A-arr'],
     ['HTS',      'aitch tee ess'],
     ['uHTS',     'ultra aitch tee ess'],
     ['IC50',     'eye see fifty'],
     ['EC50',     'ee see fifty'],
+    ['PCSK9',    'pee see ess kay nine'],
     ['Ki',       'kay eye'],
     ['Kd',       'kay dee'],
     ['PK',       'pee kay'],
     ['PD',       'pee dee'],
-    ['MoA',      'em oh ay'],
+    ['MoA',      'em oh A'],
     ['SPR',      'ess pee arr'],
     ['NMR',      'en em arr'],
     ['LC-MS',    'ell see mass spec'],
     ['cryo-EM',  'cry-oh ee em'],
     ['hERG',     'H-erg'],
     ['CYP',      'sip'],
-    ['CYP3A4',   'sip three ay four'],
+    ['CYP3A4',   'sip three A four'],
     ['P-gp',     'pee glycoprotein'],
     ['BBB',      'bee bee bee'],
     ['CRISPR',   'CRISS-per'],
-    ['siRNA',    'ess eye arr en ay'],
-    ['mRNA',     'em arr en ay'],
-    ['DNA',      'dee en ay'],
-    ['RNA',      'arr en ay'],
+    ['siRNA',    'ess eye arr en A'],
+    ['mRNA',     'em arr en A'],
+    ['DNA',      'dee en A'],
+    ['RNA',      'arr en A'],
     ['PROTAC',   'PRO-tack'],
     ['PDB',      'pee dee bee'],
     ['GPCR',     'gee pee see arr'],
@@ -458,12 +477,14 @@
     ['NPV',      'en pee vee'],
     ['ROI',      'arr oh eye'],
     ['RWE',      'arr double-you ee'],
+    ['RWD',      'arr double-you dee'],
     ['R&D',      'arr and dee'],
     ['CRO',      'see arr oh'],
     ['KOL',      'kay oh ell'],
     ['GOSTAR',   'GO-star'],
     ['GOBIOM',   'GO-bye-om'],
     ['CTOD',     'see tod'],
+    ['DiMasi',   'dih-MAH-see'],
     ['AlphaFold','Alpha-Fold'],
     ['in vitro', 'in VEE-troh'],
     ['in vivo',  'in VEE-voh'],
@@ -471,7 +492,7 @@
     ['de novo',  'day NOH-voh'],
     ['moiety',   'MOY-uh-tee'],
     ['ligand',   'LIG-and'],
-    ['assay',    'ASS-ay'],
+    ['assay',    'ASS-say'],      // 'ASS-ay' risked the ay->/aɪ/ reading
     ['analogue', 'ANN-uh-log'],
     ['analog',   'ANN-uh-log'],
     ['pharmacokinetics', 'farma-co-kin-ETT-icks'],
@@ -510,7 +531,10 @@
       // \b does not fire next to '-' or '&', so guard with explicit
       // non-word-ish lookarounds built from character classes that are
       // safe in every browser (no lookbehind — Safari < 16.4).
-      return { re: new RegExp('(^|[^A-Za-z0-9-])' + term + '(?![A-Za-z0-9-])', 'g'),
+      // The TRAILING guard allows a hyphen after the term so compounds
+      // like "AI-driven" or "FAIR-compliant" are still expanded — the
+      // expansion simply becomes "Artificial Intelligence-driven".
+      return { re: new RegExp('(^|[^A-Za-z0-9-])' + term + '(?![A-Za-z0-9])', 'g'),
                to: '$1' + pair[1] };
     });
 

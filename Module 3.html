@@ -51,6 +51,7 @@
 <title>Module 3: The End-to-End Process | Excelra</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="presentation-enhance.css">
 <style>
   :root {
     --bg: #ffffff;
@@ -714,6 +715,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "The Engine Room",
+    "title": "The Optimization <span class=\"hl\">Loop</span>",
+    "content": "<div class='arch-diagram'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-pen-ruler'></i></div><div class='arch-t'>Design</div><div class='arch-d'>Plan the next, better molecule</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-flask'></i></div><div class='arch-t'>Make</div><div class='arch-d'>Synthesize it in the lab</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-vials'></i></div><div class='arch-t'>Test</div><div class='arch-d'>Measure activity, ADMET, safety</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node primary'><div class='arch-ico'><i class='fas fa-chart-line'></i></div><div class='arch-t'>Analyse</div><div class='arch-d'>Compare against what the candidate needs</div></div></div><div class='arch-cap'>…and the analysis feeds the next design — round after round</div></div>",
+    "segments": [
+      "Before we leave the stages behind, let's zoom in on the middle of the pipeline — because stages four and five do not happen once. They run as a loop.",
+      "A chemist designs the next, better molecule. It is made in the lab, tested for activity, ADMET and safety, and the results are analysed against what the candidate still needs.",
+      "Then that analysis feeds the next design — around and around, round after round, until the candidate is strong enough to advance.",
+      "Hit-to-Lead and Lead Optimization are simply this loop run with discipline — three to twelve months of it in Hit-to-Lead alone."
+    ]
+  },
+  {
     "type": "content",
     "label": "The Gates",
     "title": "What the Diagram <span class=\"key\">Does Not Show</span>",
@@ -724,6 +737,18 @@ const slides = [
     ]
   },
   {
+    "type": "concept",
+    "label": "Gates, Drawn In",
+    "title": "The Pipeline, <span class=\"hl\">With Its Gates</span>",
+    "content": "<div class='arch-diagram'><div class='arch-flow'><div class='arch-node'><div class='arch-ico'><i class='fas fa-magnifying-glass'></i></div><div class='arch-t'>Hit Discovery</div><div class='arch-d'>Produces activity evidence</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node accent'><div class='arch-ico'><i class='fas fa-code-branch'></i></div><div class='arch-t'>Gate</div><div class='arch-d'>Go · No-Go</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-screwdriver-wrench'></i></div><div class='arch-t'>Hit-to-Lead</div><div class='arch-d'>Optimizes the hits</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node accent'><div class='arch-ico'><i class='fas fa-code-branch'></i></div><div class='arch-t'>Gate</div><div class='arch-d'>Go · No-Go</div></div><div class='arch-arrow'><i class='fas fa-arrow-right'></i></div><div class='arch-node'><div class='arch-ico'><i class='fas fa-sliders'></i></div><div class='arch-t'>Lead Optimization</div><div class='arch-d'>Refines the strongest candidate</div></div></div><div class='arch-cap'>The same gate repeats between every pair of stages — all the way to IND Filing</div></div>",
+    "segments": [
+      "Here is the pipeline with the missing piece finally drawn in. Between each pair of neighboring stages sits a gate — a deliberate go or no-go decision.",
+      "Follow the pattern: a stage produces evidence, and its gate checks that evidence against criteria agreed in advance. Pass, and the candidate moves forward.",
+      "Miss the criteria, and the journey stops right there — no matter how promising the chemistry looked.",
+      "The diagram shows three neighboring stages, but the same gate repeats between every pair — all seven stages, all the way to the IND filing."
+    ]
+  },
+  {
     "type": "content",
     "label": "The Handoffs",
     "title": "Where Data <span class=\"key\">Gets Lost</span>",
@@ -731,6 +756,17 @@ const slides = [
       "The riskiest moments in this pipeline are not the experiments. They are the handoffs between them.",
       "A result that lives only in one team's spreadsheet. An <span class=\"em\">assay condition</span> nobody wrote down. A compound identifier that changes format between two systems.",
       "None of those are scientific failures. They are <span class=\"key\">data failures</span>, and they are the most common reason good work has to be repeated."
+    ]
+  },
+  {
+    "type": "content",
+    "label": "Deeper Look",
+    "title": "What a <span class=\"hl\">Good Handoff</span> Looks Like",
+    "segments": [
+      "So what does a good handoff look like? The result travels as a <span class=\"key\">structured record</span> — compound, measurement, and the conditions it was measured under, all together in one place.",
+      "Identifiers stay <span class=\"em\">consistent between systems</span>, so the same compound is recognizable wherever it goes — no format changes, no guesswork.",
+      "And nothing lives only in one team's spreadsheet or one person's memory — <span class=\"key\">the context travels with the data</span>, so the next team can trust what they receive.",
+      "That is the quiet difference between a pipeline that keeps repeating its good work, and one that builds on it stage after stage."
     ]
   },
   {
@@ -1128,6 +1164,10 @@ function toggleMute() {
   btnMute.innerHTML = isMuted ? '<i class="fas fa-volume-xmark"></i>' : '<i class="fas fa-volume-high"></i>';
   btnMute.classList.toggle('active', isMuted);
   if (isMuted) stopNarrationAudio();
+  // Report the new mute state to the parent course page so its voice-
+  // control mirror stays honest — otherwise saying "mute" after using
+  // this button could toggle the player the wrong way round.
+  try { window.parent && window.parent.postMessage({ type: 'mute-state-presentation', muted: isMuted }, '*'); } catch (e) {}
 }
 const btnFullscreen = document.getElementById('btnFullscreen');
 function updateFullscreenBtn() {
@@ -1278,8 +1318,37 @@ window.addEventListener('message', event => {
   // "play"/"pause"/"restart"/"mute") actually reach into this iframe's
   // own playback state, which it otherwise has no way to touch directly.
   if (event.data.type === 'pause-presentation') { pauseForBackground(); return; }
-  if (event.data.type === 'resume-presentation') { if (!isPlaying) togglePlay(); return; }
-  if (event.data.type === 'restart-presentation') { isPlaying = false; updatePlayBtn(); goToSection(0); return; }
+  if (event.data.type === 'resume-presentation') {
+    // If the start screen is still up, the presentation has never been
+    // started — so "play" must press Begin for real, exactly like a click
+    // would. The old code just called togglePlay(), which started the
+    // intro video's AUDIO behind the frozen start screen: you could hear
+    // it start, but nothing on screen moved — the exact "I say play, the
+    // video stays frozen" bug that was reported.
+    const _vcSS = document.getElementById('startScreen');
+    if (_vcSS && _vcSS.style.display !== 'none' && !_vcSS.classList.contains('hidden')) {
+      const _vcSB = document.getElementById('startBtn');
+      if (_vcSB) _vcSB.click();
+      return;
+    }
+    if (!isPlaying) togglePlay();
+    return;
+  }
+  if (event.data.type === 'restart-presentation') {
+    // Restarting something that was never started: leave the start screen
+    // alone instead of shuffling section views behind it.
+    const _vcSS2 = document.getElementById('startScreen');
+    if (_vcSS2 && _vcSS2.style.display !== 'none' && !_vcSS2.classList.contains('hidden')) return;
+    isPlaying = false; updatePlayBtn(); goToSection(0); return;
+  }
+  // Idempotent mute from the voice keywords "mute" / "unmute": apply the
+  // DESIRED state rather than blindly toggling, so repeating a command —
+  // or speaking it after using the player's own mute button — can never
+  // flip the player the wrong way round.
+  if (event.data.type === 'set-mute-presentation') {
+    if (!!event.data.muted !== isMuted) toggleMute();
+    return;
+  }
   if (event.data.type === 'toggle-mute-presentation') { toggleMute(); return; }
 });
 </script>
@@ -1788,5 +1857,6 @@ window.addEventListener('message', event => {
   if(window.presentationVoice) hook(); else window.addEventListener('load',hook);
 })();
 </script>
+<script src="presentation-enhance.js"></script>
 </body>
 </html>
